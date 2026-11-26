@@ -233,7 +233,7 @@
       var old = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null') || {}, s = clone(D.settings);
       ['coverId', 'coverStillId', 'avatarId', 'logoId'].forEach(function (k) { delete s[k]; });
       s.coverSlides = (s.coverSlides || []).map(function (x) { return { url: x.url, type: x.type, still: x.still, cap: x.cap }; });
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ settings: s, education: D.education.map(function (e) { var x = clone(e); delete x.logoId; return x; }), career: D.career, years: D.years, content: S.admin || S.com ? old.content : D.content, version: D.version }));
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ settings: s, education: D.education.map(function (e) { var x = clone(e); delete x.logoId; return x; }), career: D.career.map(function (c) { var x = clone(c); delete x.logoId; return x; }), years: D.years, content: S.admin || S.com ? old.content : D.content, version: D.version }));
     } catch (e) { }
   }
 
@@ -269,6 +269,7 @@
     logo: { w: 512, h: 512, png: true, max: 2, label: 'โลโก้' },
     avatar: { w: 900, h: 1100, png: false, max: 3, label: 'รูปครู' },
     edu: { w: 400, h: 400, png: true, max: 2, label: 'โลโก้สถานศึกษา' },
+    car: { w: 400, h: 400, png: true, max: 2, label: 'โลโก้ที่ทำงาน' },
     slide: { w: 2400, h: 1200, png: false, max: 10, label: 'สไลด์ภาพปก' }
   };
   function doUpload(kind, file, extra, cb) {
@@ -441,7 +442,7 @@
   }
   function careerHtml() {
     if (!D.career.length) return '<p class="small muted">ยังไม่มีข้อมูล</p>';
-    return D.career.map(function (c) { return '<div class="tl-item"><span class="y">' + blank(c.period) + '</span><span class="t">' + blank(c.role) + '</span><span class="small muted">' + blank(c.place) + '</span></div>'; }).join('');
+    return D.career.map(function (c) { return '<div class="tl-item edu"><span class="logo">' + (c.logoUrl ? '<img src="' + esc(c.logoUrl) + '" alt="โลโก้ ' + esc(c.place) + '">' : ic('brief', 24)) + '</span><span class="edu-t"><span class="y">' + blank(c.period) + '</span><span class="t">' + blank(c.role) + '</span><span class="small muted">' + blank(c.place) + '</span></span></div>'; }).join('');
   }
   function fieldsHtml(n) {
     var f = (D.settings.profileFields || []).slice(0, n || 99);
@@ -567,7 +568,8 @@
         '<span class="row" style="gap:2px;flex-wrap:nowrap">' + mv('edu', i, d.edu.length) + '<button class="btn icon sm danger" data-act="row-del" data-k="edu" data-i="' + i + '" aria-label="ลบแถว ' + (i + 1) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
     var car = d.car.map(function (c, i) {
-      return '<div class="erow c3"><input class="inp" data-b="car.' + i + '.period" value="' + esc(c.period) + '" placeholder="2562 – ปัจจุบัน" aria-label="ช่วงเวลา แถว ' + (i + 1) + '"><input class="inp" data-b="car.' + i + '.role" value="' + esc(c.role) + '" placeholder="ตำแหน่ง" aria-label="ตำแหน่ง แถว ' + (i + 1) + '"><input class="inp" data-b="car.' + i + '.place" value="' + esc(c.place) + '" placeholder="หน่วยงาน" aria-label="หน่วยงาน แถว ' + (i + 1) + '">' +
+      return '<div class="erow c4"><span style="position:relative"><label class="logo-up" for="car-logo-' + i + '" title="อัปโหลดโลโก้">' + (c.logoUrl ? '<img src="' + esc(c.logoUrl) + '" alt="">' : ic('upload', 18)) + '<span class="sr">อัปโหลดโลโก้ที่ทำงาน แถว ' + (i + 1) + '</span></label><input type="file" id="car-logo-' + i + '" data-up="car" data-i="' + i + '" accept="image/png,image/jpeg,image/webp" style="display:none">' + (c.logoUrl ? '<button class="iph-x" style="top:-6px;right:-6px" data-act="car-logo-del" data-i="' + i + '" aria-label="ลบโลโก้ แถว ' + (i + 1) + '">' + ic('x', 12) + '</button>' : '') + '</span>' +
+        '<input class="inp" data-b="car.' + i + '.period" value="' + esc(c.period) + '" placeholder="2562 – ปัจจุบัน" aria-label="ช่วงเวลา แถว ' + (i + 1) + '"><input class="inp" data-b="car.' + i + '.role" value="' + esc(c.role) + '" placeholder="ตำแหน่ง" aria-label="ตำแหน่ง แถว ' + (i + 1) + '"><input class="inp" data-b="car.' + i + '.place" value="' + esc(c.place) + '" placeholder="หน่วยงาน" aria-label="หน่วยงาน แถว ' + (i + 1) + '">' +
         '<span class="row" style="gap:2px;flex-wrap:nowrap">' + mv('car', i, d.car.length) + '<button class="btn icon sm danger" data-act="row-del" data-k="car" data-i="' + i + '" aria-label="ลบแถว ' + (i + 1) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
     return adminShell('admin-profile', 'หน้าปกและประวัติ', 'ภาพปก รูปครู ข้อมูลส่วนตัว ประวัติการศึกษา และประวัติการทำงาน · รูปอัปโหลดทันที ข้อความกดบันทึกครั้งเดียว', '<a class="btn" href="#profile">' + ic('eye', 16) + ' ดูหน้าประวัติ</a><button class="btn primary" data-act="draft-save">' + ic('check', 16) + ' บันทึก</button>',
@@ -587,7 +589,7 @@
         (d.edu.length ? '<div class="erow h"><span>โลโก้</span><span>ระดับ</span><span>วุฒิ / สาขา</span><span>สถานศึกษา</span><span>ปีที่สำเร็จ</span><span></span></div>' + edu : '<p class="small muted">ยังไม่มี กดเพิ่มแถว</p>') +
         '<p class="small muted">โลโก้สถานศึกษา PNG พื้นโปร่งใสดีที่สุด ไม่เกิน 2 MB · เรียงจากล่าสุดไปเก่าสุด</p></div>' +
       '<div class="card" style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><div class="sec-h"><h3>' + ic('brief', 18) + ' ประวัติการทำงาน</h3><button class="btn sm" data-act="row-add" data-k="car">' + ic('plus', 15) + ' เพิ่มแถว</button></div>' +
-        (d.car.length ? '<div class="erow c3 h"><span>ช่วงเวลา</span><span>ตำแหน่ง</span><span>หน่วยงาน</span><span></span></div>' + car : '<p class="small muted">ยังไม่มี กดเพิ่มแถว</p>') + '</div>');
+        (d.car.length ? '<div class="erow c4 h"><span>โลโก้</span><span>ช่วงเวลา</span><span>ตำแหน่ง</span><span>หน่วยงาน</span><span></span></div>' + car : '<p class="small muted">ยังไม่มี กดเพิ่มแถว</p>') + '</div>');
   }
   function mv(k, i, n) {
     return '<button class="btn icon sm" data-act="row-mv" data-k="' + k + '" data-i="' + i + '" data-d="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนขึ้น">' + ic('chev', 15).replace('<svg', '<svg style="transform:rotate(-90deg)"') + '</button><button class="btn icon sm" data-act="row-mv" data-k="' + k + '" data-i="' + i + '" data-d="1"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="เลื่อนลง">' + ic('chev', 15).replace('<svg', '<svg style="transform:rotate(90deg)"') + '</button>';
@@ -4372,7 +4374,7 @@
       case 'draft-discard': confirmBox('ยกเลิกการแก้ไขทั้งหมดที่ยังไม่บันทึก?', 'ยกเลิกการแก้ไข', function () { discardDraft(); render(); toast('ยกเลิกการแก้ไขแล้ว'); }, true); break;
       case 'row-add':
         var L = listOf(k);
-        if (k === 'pf') L.push(['', '']); else if (k === 'edu') L.push({ id: '', level: '', degree: '', inst: '', year: '', logoUrl: '', logoId: '' }); else L.push({ id: '', period: '', role: '', place: '' });
+        if (k === 'pf') L.push(['', '']); else if (k === 'edu') L.push({ id: '', level: '', degree: '', inst: '', year: '', logoUrl: '', logoId: '' }); else L.push({ id: '', period: '', role: '', place: '', logoUrl: '', logoId: '' });
         markList(k); render(); setTimeout(function () { var ins = document.querySelectorAll('[data-b^="' + k + '.' + (L.length - 1) + '."]'); if (ins[0]) ins[0].focus(); }, 20);
         break;
       case 'row-del': listOf(k).splice(i, 1); markList(k); render(); break;
@@ -4381,6 +4383,7 @@
         if (j < 0 || j >= L2.length) break;
         var tmp = L2[i]; L2[i] = L2[j]; L2[j] = tmp; markList(k); render(); break;
       case 'edu-logo-del': var de = ensureDraft().edu[i]; de.logoUrl = ''; de.logoId = ''; markDirty('edu'); render(); break;
+      case 'car-logo-del': var dc = ensureDraft().car[i]; dc.logoUrl = ''; dc.logoId = ''; markDirty('car'); render(); break;
       case 'img-del':
         confirmBox('ลบ' + ({ cover: 'ภาพปก (กลับไปใช้ลายเริ่มต้น)', avatar: 'รูปครู', logo: 'โลโก้โรงเรียน' })[k] + '?', 'ลบ', function () {
           api('removeImage', { kind: k }, { loader: 'กำลังลบรูป' }, function (err, res) { if (err) { toast(err); return; } D.settings = res.settings; if (S.draft) ['cover', 'coverId', 'coverType', 'coverSize', 'coverStill', 'coverStillId', 'logo', 'logoId', 'avatar', 'avatarId'].forEach(function (x) { S.draft.s[x] = res.settings[x]; }); cachePublic(); render(); toast('ลบแล้ว'); });
@@ -4551,12 +4554,12 @@
     if (t.id === 'visitor-skin') quickSet({ visitorSkin: t.checked }, t.checked ? 'ผู้ชมเลือกชุดธีมเองได้แล้ว' : 'ผู้ชมจะเห็นชุดธีมของเว็บเท่านั้น');
     if (t.getAttribute && t.getAttribute('data-up')) {
       var kind = t.getAttribute('data-up'), f = t.files && t.files[0], idx = +t.getAttribute('data-i');
-      if (kind === 'edu') {
-        var row = ensureDraft().edu[idx];
-        doUpload('edu', f, { rowId: row.id || '' }, function (res) {
+      if (kind === 'edu' || kind === 'car') {
+        var row = ensureDraft()[kind][idx];
+        doUpload(kind, f, { rowId: row.id || '' }, function (res) {
           row.logoUrl = res.file.url; row.logoId = res.file.id;
-          var saved = row.id ? find(D.education, 'id', row.id) : null;
-          if (saved) { saved.logoUrl = res.file.url; saved.logoId = res.file.id; } else markDirty('edu');
+          var saved = row.id ? find(kind === 'edu' ? D.education : D.career, 'id', row.id) : null;
+          if (saved) { saved.logoUrl = res.file.url; saved.logoId = res.file.id; } else markDirty(kind);
           render();
         });
       } else doUpload(kind, f, {}, function () { render(); });
