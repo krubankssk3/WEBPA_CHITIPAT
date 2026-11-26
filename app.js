@@ -1,4 +1,4 @@
-/* แฟ้มผลงานและการประเมินครู — app.js (เฟส 4) · ES5 เท่านั้น */
+/* แฟ้มผลงานและการประเมินครู — app.js (เฟส 6) · ES5 เท่านั้น */
 (function () {
   'use strict';
   var ICON = {
@@ -74,6 +74,8 @@
   function find(arr, key, val) { for (var i = 0; i < arr.length; i++) { if (arr[i][key] === val) return arr[i]; } return null; }
   function seeded(seed) { var s = seed; return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; }; }
 
+  /* QR Code Generator for JavaScript · Copyright (c) 2009 Kazuhiko Arase · MIT license · ใช้สร้าง QR ของแบบประเมิน */
+  var qrcode=function(){var qrcode=function(t,r){var e=t,n=c[r],o=null,i=0,a=null,u=[],f={},g=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=y.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=y.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=y.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=y.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=k.getRSBlocks(t,r),o=A(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),y.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=y.getErrorCorrectPolynomial(c),h=C(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=b(t);break;case"Alphanumeric":e=M(t);break;case"Byte":e=x(t);break;case"Kanji":e=m(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=k.getRSBlocks(t,n),o=A(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),y.getLengthInBits(a.getMode(),t)),a.write(o)}var c=0;for(i=0;i<r.length;i++)c+=r[i].dataCount;if(o.getLengthInBits()<=8*c)break}e=t}g(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){g(!0,e);var n=y.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+B([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+B(n.id)+'">'+B(n.text)+"</title>":"",l+=e.text?'<description id="'+B(e.id)+'">'+B(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return S(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=B(e),o+='"'),o+="/>"};var B=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};qrcode.stringToBytes=(qrcode.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,qrcode.createStringToBytes=function(t,r){var e=function(){for(var e=D(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var t,r,e,n,o,i=1,a=2,u=4,f=8,c={L:1,M:0,Q:3,H:2},g=0,l=1,h=2,s=3,v=4,d=5,w=6,p=7,y=(t=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],r=1335,e=7973,o=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(n={}).getBCHTypeInfo=function(t){for(var e=t<<10;o(e)-o(r)>=0;)e^=r<<o(e)-o(r);return 21522^(t<<10|e)},n.getBCHTypeNumber=function(t){for(var r=t<<12;o(r)-o(e)>=0;)r^=e<<o(r)-o(e);return t<<12|r},n.getPatternPosition=function(r){return t[r-1]},n.getMaskFunction=function(t){switch(t){case g:return function(t,r){return(t+r)%2==0};case l:return function(t,r){return t%2==0};case h:return function(t,r){return r%3==0};case s:return function(t,r){return(t+r)%3==0};case v:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case d:return function(t,r){return t*r%2+t*r%3==0};case w:return function(t,r){return(t*r%2+t*r%3)%2==0};case p:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},n.getErrorCorrectPolynomial=function(t){for(var r=C([1],0),e=0;e<t;e+=1)r=r.multiply(C([1,B.gexp(e)],0));return r},n.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case i:return 10;case a:return 9;case u:case f:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case i:return 12;case a:return 11;case u:return 16;case f:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case i:return 14;case a:return 13;case u:return 16;case f:return 12;default:throw"mode:"+t}}},n.getLostPoint=function(qrcode){for(var t=qrcode.getModuleCount(),r=0,e=0;e<t;e+=1)for(var n=0;n<t;n+=1){for(var o=0,i=qrcode.isDark(e,n),a=-1;a<=1;a+=1)if(!(e+a<0||t<=e+a))for(var u=-1;u<=1;u+=1)n+u<0||t<=n+u||0==a&&0==u||i==qrcode.isDark(e+a,n+u)&&(o+=1);o>5&&(r+=3+o-5)}for(e=0;e<t-1;e+=1)for(n=0;n<t-1;n+=1){var f=0;qrcode.isDark(e,n)&&(f+=1),qrcode.isDark(e+1,n)&&(f+=1),qrcode.isDark(e,n+1)&&(f+=1),qrcode.isDark(e+1,n+1)&&(f+=1),0!=f&&4!=f||(r+=3)}for(e=0;e<t;e+=1)for(n=0;n<t-6;n+=1)qrcode.isDark(e,n)&&!qrcode.isDark(e,n+1)&&qrcode.isDark(e,n+2)&&qrcode.isDark(e,n+3)&&qrcode.isDark(e,n+4)&&!qrcode.isDark(e,n+5)&&qrcode.isDark(e,n+6)&&(r+=40);for(n=0;n<t;n+=1)for(e=0;e<t-6;e+=1)qrcode.isDark(e,n)&&!qrcode.isDark(e+1,n)&&qrcode.isDark(e+2,n)&&qrcode.isDark(e+3,n)&&qrcode.isDark(e+4,n)&&!qrcode.isDark(e+5,n)&&qrcode.isDark(e+6,n)&&(r+=40);var c=0;for(n=0;n<t;n+=1)for(e=0;e<t;e+=1)qrcode.isDark(e,n)&&(c+=1);return r+=Math.abs(100*c/t/t-50)/5*10},n),B=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function C(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=B.gexp(B.glog(n.getAt(e))+B.glog(t.getAt(o)));return C(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=B.glog(n.getAt(0))-B.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=B.gexp(B.glog(t.getAt(o))+r);return C(e,0).mod(t)}};return n}var k=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case c.L:return t[4*(r-1)+0];case c.M:return t[4*(r-1)+1];case c.Q:return t[4*(r-1)+2];case c.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],g=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(g,l));return a},e}(),A=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},b=function(t){var r=i,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+a(t.charAt(e));return r},a=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},x=function(t){var r=u,e=qrcode.stringToBytes(t),n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=0;r<e.length;r+=1)t.put(e[r],8)}};return n},m=function(t){var r=f,e=qrcode.stringToBytesFuncs.SJIS;if(!e)throw"sjis not supported.";!function(){var t=e("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var n=e(t),o={getMode:function(){return r},getLength:function(t){return~~(n.length/2)},write:function(t){for(var r=n,e=0;e+1<r.length;){var o=(255&r[e])<<8|255&r[e+1];if(33088<=o&&o<=40956)o-=33088;else{if(!(57408<=o&&o<=60351))throw"illegal char at "+(e+1)+"/"+o;o-=49472}o=192*(o>>>8&255)+(255&o),t.put(o,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return o},L=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},D=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},S=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=L(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=L();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return qrcode}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)};
   var THEMES = {
     teal: { name: 'เขียวหยก', a: '#0c6a57', s: '#dfeee9', ad: '#4cb79c', sd: '#16332c', cv: '#0c5145', cv2: '#07362d', hi: '#a9dccd' },
     indigo: { name: 'น้ำเงินคราม', a: '#3046a8', s: '#e3e7f7', ad: '#8b9cf0', sd: '#1e2547', cv: '#1f2d6e', cv2: '#141d48', hi: '#b9c4f5' },
@@ -186,14 +188,14 @@
   }
   function setContent(c) { var o = {}; for (var k in EMPTY_CONTENT) o[k] = (c && c[k]) || []; D.content = o; }
   function setPublic(data, fromCache) {
-    D.settings = data.settings; D.education = data.education || []; D.career = data.career || []; D.years = data.years || []; D.version = data.version || '';
+    D.settings = data.settings; D.education = data.education || []; D.career = data.career || []; D.years = data.years || []; D.version = data.version || ''; if ('survey' in data) D.survey = data.survey || null;
     if ((!S.admin || !D.admin) && !S.com) setContent(data.content);
     if (!S.fy || !yearOf(S.fy)) S.fy = +D.settings.defaultFy || (D.years[0] && D.years[0].fy) || fyNow(new Date());
     if (!fromCache) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) { } }
   }
   function setAdmin(data) {
     D.docs = {};
-    D.admin = { logs: data.logs || [], mustChange: !!data.mustChange, sheetUrl: data.sheetUrl, folderUrl: data.folderUrl };
+    D.admin = { logs: data.logs || [], evalSum: data.evalSum || { salary: [], survey: [] }, mustChange: !!data.mustChange, sheetUrl: data.sheetUrl, folderUrl: data.folderUrl };
     D.logs = data.logs || [];
     setPublic({ settings: data.settings, education: data.education, career: data.career, years: data.years, version: data.version }, true);
     setContent(data.content);
@@ -401,13 +403,13 @@
 
   function siteHead(r) {
     var s = D.settings;
-    var nav = NAV.map(function (it) { var on = r === it[0] || (it[0] === 'gallery' && r.indexOf('album-') === 0) || (it[0] === 'pa' && (r === 'agreement' || r === 'idplan')); return '<a href="#' + it[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + it[1] + '</a>'; }).join('');
+    var nav = NAV.concat(D.survey ? [['survey', 'ประเมินครู']] : []).map(function (it) { var on = r === it[0] || (it[0] === 'gallery' && r.indexOf('album-') === 0) || (it[0] === 'pa' && (r === 'agreement' || r === 'idplan')); return '<a href="#' + it[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + it[1] + '</a>'; }).join('');
     var right = (S.com ? '' : fySelect('fy-sel')) + (S.com ? '<a class="btn primary login-ic" href="#committee" aria-label="หน้าให้คะแนน (กรรมการ)" title="หน้าให้คะแนน (กรรมการ)">' + ic('pen', 18) + '</a>' : '') + (S.com ? '' : S.admin ? '<a class="btn primary login-ic" href="#admin" aria-label="หลังบ้าน" title="หลังบ้าน">' + ic('grid', 18) + '</a>' : '<a class="btn login-ic" href="#login" aria-label="เข้าสู่ระบบ" title="เข้าสู่ระบบ">' + ic('lock', 18) + '</a>');
     return '<div class="info-strip"><div class="wrap">' + clock() + '<span>ปีงบประมาณปัจจุบัน <b class="js-fy"></b> · <span class="js-sem"></span></span><button class="strip-btn" data-act="a11y" aria-label="การแสดงผล ขนาดตัวอักษร และโหมดสี">' + ic('sun', 15) + ' การแสดงผล</button></div></div>' +
       '<header class="site-head"><div class="wrap"><a class="brand" href="#home" aria-label="แฟ้มผลงานครู หน้าหลัก">' + seal() + '<span class="brand-t"><b>แฟ้มผลงานครู</b><span>' + esc(s.school) + ' ' + esc(s.area) + '</span></span></a><nav class="nav" aria-label="เมนูหลัก">' + nav + '</nav>' + right + '</div></header>';
   }
   function siteFoot() {
-    return '<footer class="foot"><div class="wrap"><span>' + FOOTER + '</span><span>Google Apps Script + Google Sheets</span></div></footer>';
+    return '<footer class="foot"><div class="wrap"><span>' + FOOTER + '</span><span><a href="#verify">ตรวจสอบเอกสาร</a> · Google Apps Script + Google Sheets</span></div></footer>';
   }
   function pub(r, inner, top) { return siteHead(r) + comBanner(r) + (top || '') + '<main class="pub"><div class="wrap">' + inner + '</div></main>' + siteFoot(); }
   function slideArt(x, paused) { var src = x.type === 'image/gif' && paused && x.still ? x.still : x.url; return '<img src="' + esc(src) + '" alt="">'; }
@@ -515,7 +517,9 @@
       '<div class="grp">ภาพรวม</div>' + L('admin', 'grid', 'แดชบอร์ด') +
       '<div class="grp">ข้อมูลครู</div>' + L('admin-profile', 'user', 'หน้าปกและประวัติ') +
       '<div class="grp">แฟ้ม PA ปีงบ ' + S.fy + '</div>' + L('admin-agreement', 'pen', 'ข้อตกลง PA') + L('admin-pa', 'file', 'แฟ้ม PA') + L('admin-idplan', 'target', 'ID Plan') + L('admin-committee', 'users', 'กรรมการและผลประเมิน') +
+      '<div class="grp">การประเมินอื่น</div>' + L('admin-salary', 'coins', 'เลื่อนเงินเดือน') + L('admin-survey', 'chat', 'แบบประเมินความพึงพอใจ') +
       '<div class="grp">ผลงาน</div>' + L('admin-works', 'folder', 'คลังผลงาน', D.content.works.length) + L('admin-gallery', 'image', 'ภาพกิจกรรม', D.content.albums.length) + L('admin-videos', 'video', 'วิดีโอ', D.content.videos.length) + L('admin-awards', 'award', 'รางวัล/อบรม', D.content.awards.length) + L('admin-systems', 'code', 'ระบบที่จัดทำ', D.content.systems.length) +
+      '<div class="grp">เครื่องมือ</div>' + L('admin-stats', 'chart', 'สถิติและกราฟ') + L('admin-verify', 'shield', 'ตรวจสอบเอกสาร (QR)') + '<a href="#report">' + ic('print', 18) + ' รายงาน PDF</a><a href="#present">' + ic('slides', 18) + ' โหมดนำเสนอ</a>' +
       '<div class="grp">ระบบ</div>' + L('admin-years', 'cal', 'ปีงบประมาณและสีธีม') + L('admin-themes', 'spark', 'ชุดธีมและฟอนต์') + L('admin-settings', 'gear', 'ตั้งค่า', must ? '!' : 0) + L('admin-logs', 'list', 'บันทึกการใช้งาน') +
       '<a href="#home">' + ic('eye', 18) + ' ดูหน้าสาธารณะ</a><button class="lnk" data-act="logout">' + ic('logout', 18) + ' ออกจากระบบ</button></nav>' +
       '<main class="amain"><div class="ctx-bar"><b class="small">ปีงบที่ดูอยู่</b>' + fySelect('fy-sel-a') + '<span class="small muted">สีของหลังบ้านและหน้าสาธารณะเปลี่ยนตามปีงบที่เลือก</span><span class="ctx-clock">' + clock() + '</span></div>' +
@@ -533,8 +537,8 @@
     var noFile = c.works.filter(function (w) { return !w.fileUrl && !w.link; }).length, noLink = c.videos.filter(function (v) { return !v.url; }).length;
     if (noFile) todo += '<a class="todo" href="#admin-works"><span class="dot warn"></span><span style="flex:1">ผลงานที่ยังไม่มีไฟล์หรือลิงก์ ' + noFile + ' รายการ</span>' + ic('chev', 14) + '</a>';
     if (noLink) todo += '<a class="todo" href="#admin-videos"><span class="dot warn"></span><span style="flex:1">วิดีโอที่ยังไม่ใส่ลิงก์ ' + noLink + ' รายการ</span>' + ic('chev', 14) + '</a>';
-    todo += comTodo();
-    var next = [['5', 'เลื่อนเงินเดือน แบบประเมินครู รายงาน PDF สถิติ โหมดนำเสนอ QR ตรวจสอบ'], ['6', 'LINE OA ปฏิทิน ผู้ช่วย AI สำรองข้อมูล ความปลอดภัย']];
+    todo += comTodo() + evalTodo();
+    var next = [['7', 'LINE OA ปฏิทิน ผู้ช่วย AI สำรองข้อมูล ความปลอดภัย']];
     return adminShell('admin', 'สวัสดีครับ ' + esc(s.nick || s.name), 'ภาพรวมของแฟ้มผลงาน · ปีงบประมาณที่แสดงในหน้าหลัก ' + (s.defaultFy || '-'), '<a class="btn" href="#home">' + ic('eye', 16) + ' ดูหน้าสาธารณะ</a>',
       '<div class="grid4"><div class="kpi"><span class="l">ความครบของหน้าประวัติ</span><span class="v">' + sc.pct + '%</span><div class="prog"><i style="width:' + sc.pct + '%"></i></div></div>' +
       '<a class="kpi" href="#admin-works"><span class="l">ผลงานทั้งหมด</span><span class="v">' + c.works.length + '</span><span class="small muted">ปีงบ ' + S.fy + ' · ' + fyW + ' รายการ</span></a>' +
@@ -1682,7 +1686,7 @@
     }
     var load = ag ? loadTotal(ag, 0) + ' / ' + loadTotal(ag, 1) : '-';
     return pub('pa', docStrip('pa') +
-      '<div class="card raised" style="margin-top:16px"><div class="pa-head"><div><span class="eyebrow">ผลการพัฒนางานตามข้อตกลง (PA)</span><h1 style="margin-top:4px">ปีงบประมาณ ' + S.fy + '</h1><p class="muted">รอบการประเมิน ' + fd(g[0]) + ' – ' + fd(g[1]) + ' · ประเมินปีละ 1 ครั้ง</p></div><div class="row">' + docPill(pa.status) + (S.admin ? '<a class="btn primary" href="#admin-pa">' + ic('edit', 16) + ' แก้ไขแฟ้ม</a>' : '') + '</div></div>' +
+      '<div class="card raised" style="margin-top:16px"><div class="pa-head"><div><span class="eyebrow">ผลการพัฒนางานตามข้อตกลง (PA)</span><h1 style="margin-top:4px">ปีงบประมาณ ' + S.fy + '</h1><p class="muted">รอบการประเมิน ' + fd(g[0]) + ' – ' + fd(g[1]) + ' · ประเมินปีละ 1 ครั้ง</p></div><div class="row">' + docPill(pa.status) + '<a class="btn" href="#present">' + ic('slides', 16) + ' โหมดนำเสนอ</a><a class="btn" href="#report">' + ic('print', 16) + ' รายงาน PDF</a>' + (S.admin ? '<a class="btn primary" href="#admin-pa">' + ic('edit', 16) + ' แก้ไขแฟ้ม</a>' : '') + '</div></div>' +
       '<div class="kv"><div>ชื่อ<b>' + esc(st2.name) + '</b></div><div>ตำแหน่ง<b>' + esc(st2.position) + '</b></div><div>กลุ่มสาระ<b>' + blank(st2.subject) + '</b></div><div>ภาระงาน (ภาค 2 / ภาค 1)<b class="num">' + load + ' ชม./สัปดาห์</b></div></div></div>' +
       '<section class="sec">' + tabs + '<div style="display:flex;flex-direction:column;gap:12px">' + body + '</div></section>');
   }
@@ -2436,13 +2440,844 @@
   window.addEventListener('beforeunload', function (e) { if (S.comDirty) { e.preventDefault(); e.returnValue = ''; } });
   window.addEventListener('pagehide', function () { if (S.comDirty) comSave(true); });
 
+  /* =====================================================================
+     เฟส 5: ประเมินเพื่อเลื่อนเงินเดือน (ปีงบละ 2 รอบ) · แบบประเมินความพึงพอใจ (ตอบผ่าน QR)
+     ===================================================================== */
+  var SAL_LEVELS = ['ดีเด่น', 'ดีมาก', 'ดี', 'พอใช้', 'ต้องปรับปรุง'];
+  var SAL_ST = { draft: ['ประเมินตนเอง (ร่าง)', 'off'], sent: ['ส่งผู้บริหารแล้ว', 'warn'], done: ['ได้รับผลแล้ว', 'good'] };
+  var SAL_DEF = [
+    { k: 'a1', g: 'a', label: 'ผลการปฏิบัติงานตามมาตรฐานตำแหน่ง', max: 40 }, { k: 'a2', g: 'a', label: 'ผลที่เกิดกับผู้เรียน', max: 20 }, { k: 'a3', g: 'a', label: 'งานที่ได้รับมอบหมายเพิ่มเติม', max: 10 },
+    { k: 'b1', g: 'b', label: 'การรักษาวินัย', max: 10 }, { k: 'b2', g: 'b', label: 'การปฏิบัติตนตามคุณธรรม จริยธรรม', max: 10 }, { k: 'b3', g: 'b', label: 'การปฏิบัติตนตามจรรยาบรรณวิชาชีพ', max: 10 }
+  ];
+  var SAL_G = { a: 'องค์ประกอบที่ 1 ผลสัมฤทธิ์ของงาน', b: 'องค์ประกอบที่ 2 พฤติกรรมการปฏิบัติงาน' };
+  var SV_ROLE = { student: 'นักเรียน', parent: 'ผู้ปกครอง', teacher: 'ครู/บุคลากร' };
+  var SV_CLS = ['ป.1', 'ป.2', 'ป.3', 'ป.4', 'ป.5', 'ป.6', 'ม.1', 'ม.2', 'ม.3'];
+  var SV_DEF = ['ครูเตรียมการสอนมาอย่างดีและอธิบายเข้าใจง่าย', 'ครูใช้สื่อหรือเทคโนโลยีที่ช่วยให้เรียนรู้ได้ดีขึ้น', 'ครูเปิดโอกาสให้ซักถามและแสดงความคิดเห็น', 'ครูวัดผลอย่างยุติธรรมและแจ้งผลชัดเจน', 'ครูเอาใจใส่และช่วยเหลือนักเรียนเป็นรายบุคคล', 'ครูตรงต่อเวลาและเป็นแบบอย่างที่ดี', 'ความพึงพอใจโดยรวมต่อการเรียนวิชานี้'];
+  S.sal = {}; S.salDraft = null; S.salRound = 0; S.sv = null; S.svSel = ''; S.svAll = false; S.svPub = null; S.svDone = null;
+
+  /* ---------- QR (สร้างในเครื่อง ไม่ต้องพึ่งบริการภายนอก) ---------- */
+  function qrSvg(text, size, label) {
+    var q = qrcode(0, 'M'); q.addData(text); q.make();
+    var n = q.getModuleCount(), d = '';
+    for (var r = 0; r < n; r++) { var c = 0; while (c < n) { if (q.isDark(r, c)) { var s = c; while (c < n && q.isDark(r, c)) c++; d += 'M' + s + ' ' + r + 'h' + (c - s) + 'v1h-' + (c - s) + 'z'; } else c++; } }
+    return '<svg class="qrc" viewBox="-3 -3 ' + (n + 6) + ' ' + (n + 6) + '" width="' + size + '" height="' + size + '" role="img" aria-label="' + esc(label || 'QR code') + '" shape-rendering="crispEdges"><rect x="-3" y="-3" width="' + (n + 6) + '" height="' + (n + 6) + '" fill="#fff"/><path d="' + d + '" fill="#111"/></svg>';
+  }
+  function svUrl() { return siteUrl() + '#survey'; }
+  function thPeriod(fy, r) { var g = roundRange(fy, r); return thDateFull(g[0]).replace('วันที่ ', '') + ' ถึง ' + thDateFull(g[1]).replace('วันที่ ', ''); }
+  function roundNow() { var d = new Date(), m = d.getMonth() + 1; return { fy: fyNow(d), r: (m >= 10 || m <= 3) ? 1 : 2 }; }
+
+  /* =====================================================================
+     1) ประเมินเพื่อเลื่อนเงินเดือน
+     ===================================================================== */
+  function salCalc(items, sc) {
+    var t = 0, max = 0, g = { a: [0, 0], b: [0, 0] };
+    items.forEach(function (it) { var v = +sc[it.k] || 0; t += v; max += it.max; g[it.g][0] += v; g[it.g][1] += it.max; });
+    var pct = max ? t / max * 100 : 0;
+    return { total: t, max: max, pct: pct, g: g, level: pct >= 90 ? 'ดีเด่น' : pct >= 80 ? 'ดีมาก' : pct >= 70 ? 'ดี' : pct >= 60 ? 'พอใช้' : 'ต้องปรับปรุง' };
+  }
+  function levelCls(lv) { return { 'ดีเด่น': 'good', 'ดีมาก': 'good', 'ดี': 'info', 'พอใช้': 'warn', 'ต้องปรับปรุง': 'bad' }[lv] || 'off'; }
+  function salKey() { if (!S.salRound) S.salRound = S.fy === roundNow().fy ? roundNow().r : 1; return S.fy + '-' + S.salRound; }
+  function needSal(force) {
+    var k = salKey(); if ((S.sal[k] && !force) || S.salLoading === k) return;
+    S.salLoading = k;
+    api('salaryGet', { fy: S.fy, round: S.salRound }, { loader: false }, function (err, res) {
+      S.salLoading = '';
+      if (err) { S.salErr = err; toast('โหลดแบบเลื่อนเงินเดือนไม่สำเร็จ: ' + err); render(); return; }
+      S.salErr = ''; S.sal[res.fy + '-' + res.round] = res; if (S.salDraft && S.salDraft.key === res.fy + '-' + res.round && !S.salDraft.dirty) S.salDraft = null;
+      if (route() === 'admin-salary' || route() === 'salary-print') render();
+    });
+  }
+  function salDraft() {
+    var k = salKey(), res = S.sal[k]; if (!res) return null;
+    if (!S.salDraft || S.salDraft.key !== k) {
+      var rec = res.rec;
+      S.salDraft = { key: k, fy: res.fy, round: res.round, items: rec ? rec.items : res.items, scores: clone(rec ? rec.scores : {}), note: rec ? rec.note : '', status: rec ? rec.status : 'draft', official: clone(rec ? rec.official : { score: '', level: '', raise: '', date: '', note: '' }), useNew: false, dirty: false };
+    }
+    return S.salDraft;
+  }
+  function salSumHtml() {
+    var d = S.salDraft; if (!d) return '';
+    var c = salCalc(d.items, d.scores), res = S.sal[d.key];
+    return '<span class="eyebrow">สรุปผลประเมินตนเอง</span><div class="row" style="align-items:baseline;gap:6px;margin:6px 0 10px"><span class="sum-big">' + fix(c.total, 2) + '</span><span class="muted">/ ' + c.max + '</span></div>' +
+      ['a', 'b'].filter(function (g) { return c.g[g][1]; }).map(function (g) { return '<div class="sum-line"><span>' + SAL_G[g].replace(/^องค์ประกอบที่ \d /, '') + '</span><b class="num">' + fix(c.g[g][0], 2) + ' / ' + c.g[g][1] + '</b></div>'; }).join('') +
+      '<div class="sum-line"><span>คิดเป็นร้อยละ</span><b class="num">' + fix(c.pct, 2) + '</b></div><div style="margin:10px 0"><span class="pill ' + levelCls(c.level) + '">ระดับ ' + c.level + '</span></div>' +
+      (d.official.score !== '' && d.official.score != null ? '<div class="sum-line"><span>ผลจากผู้บริหาร</span><b class="num">' + fix(+d.official.score, 2) + (d.official.level ? ' · ' + esc(d.official.level) : '') + '</b></div>' : '') +
+      (d.official.raise !== '' && d.official.raise != null ? '<div class="sum-line"><span>เลื่อนเงินเดือน</span><b class="num">ร้อยละ ' + fix(+d.official.raise, 2) + '</b></div>' : '') +
+      '<p class="small muted" style="margin-top:8px">ดีเด่น 90–100 · ดีมาก 80–89 · ดี 70–79 · พอใช้ 60–69 · ต้องปรับปรุง ต่ำกว่า 60 (คิดจากร้อยละ)</p>' +
+      (res && res.list.length ? '<h4 style="margin-top:12px">ทุกรอบที่บันทึกไว้</h4><div class="tbl-wrap" style="margin-top:6px"><table class="tbl"><tbody>' + res.list.map(function (h) { return '<tr' + (h.id === 'sal-' + d.fy + '-' + d.round ? ' class="on"' : '') + '><td class="small">' + h.fy + ' รอบ ' + h.round + '</td><td class="r num">' + fix(h.total, 1) + '</td><td class="small">' + esc(h.official && h.official.raise !== '' && h.official.raise != null ? 'เลื่อน ' + h.official.raise + '%' : h.level) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '');
+  }
+  function renderSalSum() { var el = $('sal-sum'); if (el) el.innerHTML = salSumHtml(); }
+  function aSalary() {
+    var k = salKey(), res = S.sal[k];
+    var seg = '<div class="seg" role="group" aria-label="รอบการประเมิน">' + [1, 2].map(function (r) { return '<button type="button" data-act="sal-round" data-k="' + r + '" class="' + (S.salRound === r ? 'on' : '') + '">รอบ ' + r + ' (' + (r === 1 ? '1 ต.ค. – 31 มี.ค.' : '1 เม.ย. – 30 ก.ย.') + ')</button>'; }).join('') + '</div>';
+    if (!res) { needSal(); return adminShell('admin-salary', 'ประเมินเพื่อเลื่อนเงินเดือน ปีงบ ' + S.fy, 'ปีงบละ 2 รอบ · ข้อมูลส่วนนี้เห็นเฉพาะเจ้าของแฟ้ม', seg, '<div class="card" aria-busy="true" style="display:flex;flex-direction:column;gap:12px"><div class="sk" style="height:26px;width:40%"></div><div class="sk" style="height:140px"></div>' + (S.salErr ? '<div class="err">' + esc(S.salErr) + ' <button class="btn sm" data-act="sal-reload">ลองใหม่</button></div>' : '') + '</div>'); }
+    var d = salDraft(), g = roundRange(S.fy, S.salRound), c = C();
+    var works = c.works.filter(function (w) { return w.date >= g[0] && w.date <= g[1]; }).length, awards = c.awards.filter(function (a) { return a.date >= g[0] && a.date <= g[1]; }), hrs = awards.reduce(function (t, a) { return t + (+a.hours || 0); }, 0);
+    var itemsChanged = res.rec && JSON.stringify(res.rec.items) !== JSON.stringify(res.items) && !d.useNew;
+    function row(it, i) {
+      var v = d.scores[it.k];
+      return '<div class="srow sal-row"><span class="code">' + (i + 1) + '</span><div><div>' + esc(it.label) + '</div>' + (i === 0 && it.g === 'a' ? '<button class="btn sm" style="margin-top:4px;padding:2px 8px" data-act="sal-pa">' + ic('link', 14) + ' เติมจากผล PA</button>' : '') + '</div><div class="row" style="gap:6px;flex-wrap:nowrap"><input type="number" class="inp num" style="text-align:right;width:92px" min="0" max="' + it.max + '" step="0.5" data-sal="' + it.k + '" value="' + (v === undefined || v === '' ? '' : v) + '" aria-label="' + esc(it.label) + ' คะแนนเต็ม ' + it.max + '"><span class="small muted">/ ' + it.max + '</span></div></div>';
+    }
+    var n = 0, groups = ['a', 'b'].map(function (gk) {
+      var its = d.items.filter(function (it) { return it.g === gk; }); if (!its.length) return '';
+      var mx = its.reduce(function (t, it) { return t + it.max; }, 0);
+      return '<div class="card"><span class="eyebrow">' + SAL_G[gk].split(' ')[0] + ' ' + SAL_G[gk].split(' ')[1] + '</span><h3>' + SAL_G[gk].replace(/^องค์ประกอบที่ \d /, '') + ' (' + mx + ' คะแนน)</h3>' + its.map(function (it) { return row(it, n++); }).join('') + '</div>';
+    }).join('');
+    var stSeg = '<div class="seg" role="group" aria-label="สถานะ">' + Object.keys(SAL_ST).map(function (s) { return '<button type="button" data-act="sal-status" data-k="' + s + '" class="' + (d.status === s ? 'on' : '') + '">' + SAL_ST[s][0] + '</button>'; }).join('') + '</div>';
+    var o = d.official;
+    var off = '<div class="card" style="display:flex;flex-direction:column;gap:12px"><span class="eyebrow">บันทึกหลังผู้บริหารแจ้งผล</span><h3>ผลการประเมินและการเลื่อนเงินเดือน</h3><div class="grid3">' +
+      '<div class="field"><label for="so-score">คะแนนที่ได้รับ (เต็ม 100)</label><input id="so-score" type="number" min="0" max="100" step="0.01" class="inp num" data-salo="score" value="' + esc(o.score) + '"></div>' +
+      '<div class="field"><label for="so-level">ระดับผลการประเมิน</label><select id="so-level" class="inp" data-salo="level"><option value="">ยังไม่ทราบ</option>' + SAL_LEVELS.map(function (l) { return '<option' + (o.level === l ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="so-raise">ได้เลื่อนร้อยละ</label><input id="so-raise" type="number" min="0" max="10" step="0.01" class="inp num" data-salo="raise" value="' + esc(o.raise) + '" placeholder="เช่น 3.5"></div></div>' +
+      '<div class="grid2"><div class="field"><label for="so-date">วันที่มีผล</label><input id="so-date" type="date" class="inp" data-salo="date" value="' + esc(o.date) + '"></div><div class="field"><label for="so-note">หมายเหตุ</label><input id="so-note" class="inp" maxlength="500" data-salo="note" value="' + esc(o.note) + '" placeholder="เช่น เลขที่คำสั่ง"></div></div></div>';
+    return adminShell('admin-salary', 'ประเมินเพื่อเลื่อนเงินเดือน ปีงบ ' + S.fy, 'รอบที่ ' + S.salRound + ' · ' + thPeriod(S.fy, S.salRound) + ' · ข้อมูลส่วนนี้เห็นเฉพาะเจ้าของแฟ้ม',
+      seg + '<button class="btn" data-act="sal-items">' + ic('gear', 16) + ' ปรับหัวข้อ</button><a class="btn" href="#salary-print">' + ic('print', 16) + ' พิมพ์</a><button class="btn primary" data-act="sal-save">' + ic('check', 16) + ' บันทึก</button>',
+      docSaveBar(d.dirty, 'sal') +
+      '<div class="note">' + ic('folder', 15) + ' ในรอบนี้มีผลงาน ' + works + ' ชิ้น · รางวัล/อบรม ' + awards.length + ' รายการ (' + hrs + ' ชม.) ใช้อ้างอิงได้ · หัวข้อและคะแนนเต็มปรับให้ตรงกับแบบที่ สพป. ใช้ได้ที่ปุ่ม “ปรับหัวข้อ”</div>' +
+      (itemsChanged ? '<div class="note warn-note">' + ic('gear', 15) + ' รอบนี้บันทึกด้วยหัวข้อชุดเดิม คะแนนจึงยังคิดตามชุดเดิม <button class="btn sm" data-act="sal-newitems">เปลี่ยนเป็นหัวข้อชุดใหม่</button></div>' : '') +
+      '<div class="row" style="margin:14px 0 4px;gap:10px"><b class="small">สถานะ</b>' + stSeg + '</div>' +
+      '<div class="score-layout" style="margin-top:12px"><div style="display:flex;flex-direction:column;gap:14px">' + groups +
+        '<div class="card"><div class="field"><label for="sal-note">หลักฐานอ้างอิง / หมายเหตุ</label><textarea id="sal-note" class="inp" rows="3" maxlength="2000" data-salnote="1" placeholder="เช่น ผลงานและรางวัลที่ใช้ประกอบรอบนี้">' + esc(d.note) + '</textarea></div></div>' + off + '</div>' +
+        '<aside class="card raised sticky" id="sal-sum">' + salSumHtml() + '</aside></div>');
+  }
+  function salSave(cb) {
+    var d = S.salDraft; if (!d) return;
+    api('salarySave', { fy: d.fy, round: d.round, scores: d.scores, note: d.note, status: d.status, official: d.official, useNewItems: d.useNew }, { loader: 'กำลังบันทึก' }, function (err, res) {
+      if (err) { toast(err); return; }
+      S.sal[res.fy + '-' + res.round] = res; S.salDraft = null; if (D.admin && D.admin.evalSum) D.admin.evalSum.salary = res.list.slice(0, 6);
+      render(); toast('บันทึกแบบประเมินเลื่อนเงินเดือนแล้ว'); if (cb) cb();
+    });
+  }
+  function salTouch() { markDocDirty(S.salDraft, 'sal'); renderSalSum(); }
+  function salItemsForm() {
+    var items = (S.sal[salKey()] || {}).items || SAL_DEF;
+    S.salItemsEdit = clone(items);
+    openModal('หัวข้อการประเมินเพื่อเลื่อนเงินเดือน', '<div id="sal-items-box">' + salItemsRows() + '</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="sal-it-add">' + ic('plus', 14) + ' เพิ่มหัวข้อ</button><button class="btn sm" data-act="sal-it-reset">ใช้ชุดเริ่มต้น</button></div>' +
+      '<p class="small muted" style="margin-top:10px">ใช้กับรอบที่ยังไม่เคยบันทึก รอบที่บันทึกแล้วยังคิดคะแนนตามหัวข้อเดิม จนกว่าจะกด “เปลี่ยนเป็นหัวข้อชุดใหม่”</p><div id="f-err"></div>',
+      '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="sal-it-save">' + ic('check', 16) + ' บันทึกหัวข้อ</button>', true);
+  }
+  function salItemsRows() {
+    var L = S.salItemsEdit, tot = L.reduce(function (t, it) { return t + (+it.max || 0); }, 0);
+    return L.map(function (it, i) {
+      return '<div class="sal-it"><select class="inp" data-salit="' + i + ':g" aria-label="องค์ประกอบ ข้อ ' + (i + 1) + '"><option value="a"' + (it.g === 'a' ? ' selected' : '') + '>ผลสัมฤทธิ์</option><option value="b"' + (it.g === 'b' ? ' selected' : '') + '>พฤติกรรม</option></select><input class="inp" data-salit="' + i + ':label" value="' + esc(it.label) + '" maxlength="200" aria-label="หัวข้อ ข้อ ' + (i + 1) + '"><input class="inp num" type="number" min="1" max="100" step="0.5" data-salit="' + i + ':max" value="' + it.max + '" aria-label="คะแนนเต็ม ข้อ ' + (i + 1) + '"><button class="btn icon sm danger" data-act="sal-it-del" data-i="' + i + '" aria-label="ลบหัวข้อ ' + (i + 1) + '">' + ic('trash', 14) + '</button></div>';
+    }).join('') + '<p class="small ' + (tot === 100 ? 'muted' : 'warn-t') + '" style="margin-top:6px">คะแนนเต็มรวม ' + tot + (tot === 100 ? '' : ' (แบบส่วนใหญ่ใช้ 100 คะแนน)') + '</p>';
+  }
+  function salaryPrint() {
+    var bar = '<div class="rep-bar"><a class="btn" href="#admin-salary">' + ic('left', 16) + ' กลับ</a><b>แบบประเมินตนเองเพื่อเลื่อนเงินเดือน</b><span class="sp"></span><button class="btn primary" data-act="print">' + ic('print', 16) + ' พิมพ์ / บันทึก PDF</button></div>';
+    if (!S.admin) return bar + '<div class="rep-wrap"><div class="card empty" style="max-width:520px">' + ic('lock', 18) + ' เปิดได้เฉพาะเจ้าของแฟ้ม <a href="#login">เข้าสู่ระบบ</a></div></div>';
+    var res = S.sal[salKey()]; if (!res) { needSal(); return bar + '<div class="rep-wrap"><div class="sk" style="width:210mm;max-width:100%;height:300px"></div></div>'; }
+    var d = salDraft(), c = salCalc(d.items, d.scores), s = st(), o = d.official, n = 0;
+    var rows = ['a', 'b'].map(function (gk) {
+      var its = d.items.filter(function (it) { return it.g === gk; }); if (!its.length) return '';
+      return '<tr class="grp"><td colspan="3">' + SAL_G[gk] + '</td><td class="r num">' + fix(c.g[gk][0], 2) + '</td></tr>' + its.map(function (it) { n++; var v = d.scores[it.k]; return '<tr><td class="c">' + n + '</td><td>' + esc(it.label) + '</td><td class="r num">' + it.max + '</td><td class="r num">' + (v === undefined || v === '' ? '' : fix(+v, 2)) + '</td></tr>'; }).join('');
+    }).join('');
+    function sig(name, role) { return '<div class="paf-sig"><div class="paf-sl"><span>(ลงชื่อ)</span><span class="ln"></span><span>' + role + '</span></div><div>(' + (name ? esc(name) : '..................................................') + ')</div><div>' + thDateFull('') + '</div></div>'; }
+    return bar + '<div class="rep-wrap"><section class="a4 paf"><div class="paf-top"><span></span><span>ปีงบประมาณ ' + d.fy + ' รอบที่ ' + d.round + '</span></div>' +
+      '<div class="paf-title"><b>แบบสรุปผลการประเมินตนเองเพื่อประกอบการพิจารณาเลื่อนเงินเดือน</b><b>ข้าราชการครูและบุคลากรทางการศึกษา ตำแหน่ง ' + esc(s.position || 'ครู') + '</b><span>รอบการประเมิน ' + thPeriod(d.fy, d.round) + '</span></div>' + pafInfo() +
+      '<div class="a4-scroll"><table class="tbl paf-t"><thead><tr><th style="width:40px">ข้อ</th><th>รายการประเมิน</th><th style="width:80px">คะแนนเต็ม</th><th style="width:96px">ประเมินตนเอง</th></tr></thead><tbody>' + rows +
+      '<tr class="paf-sumrow"><td colspan="2" class="c">รวม</td><td class="r num">' + c.max + '</td><td class="r num">' + fix(c.total, 2) + '</td></tr></tbody></table></div>' +
+      '<p><b>สรุประดับผลการประเมินตนเอง</b> &nbsp; ' + SAL_LEVELS.map(function (l) { return pafCb(c.level === l) + l; }).join(' &nbsp; ') + ' <span class="small">(ร้อยละ ' + fix(c.pct, 2) + ')</span></p>' +
+      (o.score !== '' && o.score != null || o.level || (o.raise !== '' && o.raise != null) ? '<p><b>ผลจากผู้บังคับบัญชา</b> &nbsp; ' + (o.score !== '' && o.score != null ? 'คะแนน ' + fix(+o.score, 2) + ' ' : '') + (o.level ? 'ระดับ' + esc(o.level) + ' ' : '') + (o.raise !== '' && o.raise != null ? '· เลื่อนเงินเดือนร้อยละ ' + fix(+o.raise, 2) : '') + (o.date ? ' · มีผล ' + thDateFull(o.date).replace('วันที่ ', '') : '') + (o.note ? ' · ' + esc(o.note) : '') + '</p>' : '') +
+      '<h4>หลักฐานอ้างอิง / หมายเหตุ</h4><div class="paf-lines" style="min-height:104px">' + esc(d.note) + '</div>' +
+      '<div class="paf-sigs2" style="margin-top:6px">' + sig(s.name, 'ผู้รับการประเมิน') + sig('', 'ผู้บังคับบัญชา/ผู้ประเมิน') + '</div>' +
+      '</section></div>';
+  }
+
+  /* =====================================================================
+     2) แบบประเมินความพึงพอใจ
+     ===================================================================== */
+  function svLevel(v) { return v >= 4.51 ? 'มากที่สุด' : v >= 3.51 ? 'มาก' : v >= 2.51 ? 'ปานกลาง' : v >= 1.51 ? 'น้อย' : v > 0 ? 'น้อยที่สุด' : '–'; }
+  function svDev() { try { var v = localStorage.getItem('sv-dev'); if (!v) { v = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('sv-dev', v); } return v; } catch (e) { return ''; } }
+  function svBars(items, per, max) {
+    max = max || 5;
+    return '<div class="hbars" role="list">' + items.map(function (t, i) { var v = per[i] || 0; return '<div class="hb" role="listitem" title="' + esc((i + 1) + '. ' + t + ' · ' + fix(v, 2) + ' จาก ' + max) + '"><span class="hb-l">' + (i + 1) + '. ' + esc(t) + '</span><span class="hb-t"><i style="width:' + (v / max * 100) + '%"></i></span><b class="num">' + fix(v, 2) + '</b></div>'; }).join('') + '</div>';
+  }
+  function needSvPub() {
+    if (S.svPub || S.svPubLoading) return; S.svPubLoading = true;
+    api('surveyStats', {}, { loader: false }, function (err, res) { S.svPubLoading = false; if (err) { S.svPub = { results: [], err: err }; } else { S.svPub = res; if (res.survey !== undefined) D.survey = res.survey; } if (route() === 'survey') render(); });
+  }
+  function pSurvey() {
+    var sv = D.survey; needSvPub();
+    var res = S.svPub && S.svPub.results ? S.svPub.results : [];
+    var form = '';
+    if (sv) {
+      var done = null; try { done = localStorage.getItem('sv-done-' + sv.id); } catch (e) { }
+      if (S.svDone && S.svDone.id === sv.id) form = '<div class="card raised sv-thanks"><span class="pill good">' + ic('check', 13) + ' ส่งแบบประเมินแล้ว</span><h2>ขอบคุณสำหรับความคิดเห็น</h2><p class="muted">คะแนนเฉลี่ยที่ท่านให้ <b class="num">' + fix(S.svDone.avg, 2) + '</b> จาก 5' + (S.svDone.updated ? ' · แทนคำตอบเดิมของเครื่องนี้แล้ว' : '') + '</p><div class="row"><a class="btn primary" href="#home">กลับหน้าหลัก</a><button class="btn" data-act="sv-again">ตอบใหม่</button></div></div>';
+      else {
+        var role = S.svRole && sv.roles.indexOf(S.svRole) > -1 ? S.svRole : sv.roles[0];
+        var seg = '<div class="seg" role="radiogroup" aria-label="ผู้ประเมิน">' + sv.roles.map(function (k) { return '<button type="button" role="radio" aria-checked="' + (role === k) + '" data-act="sv-role" data-k="' + k + '" class="' + (role === k ? 'on' : '') + '">' + SV_ROLE[k] + '</button>'; }).join('') + '</div>';
+        var items = sv.items.map(function (t, i) {
+          var cells = ''; for (var v = 5; v >= 1; v--) cells += '<label><input type="radio" name="q' + i + '" value="' + v + '" aria-label="ข้อ ' + (i + 1) + ' ระดับ ' + v + '"></label>';
+          return '<div class="lik" id="svq-' + i + '"><span>' + (i + 1) + '. ' + esc(t) + '</span>' + cells + '</div>';
+        }).join('');
+        form = '<form class="card" id="survey-form" style="display:flex;flex-direction:column;gap:16px" novalidate>' + (done ? '<div class="note small">' + ic('check', 14) + ' เครื่องนี้เคยส่งแบบประเมินรอบนี้แล้ว ส่งอีกครั้งจะแทนคำตอบเดิม</div>' : '') +
+          '<div class="row" style="justify-content:space-between;align-items:flex-end"><div class="field"><label>ผู้ประเมิน</label>' + seg + '</div>' +
+          (role !== 'teacher' ? '<div class="field" style="min-width:160px"><label for="sv-class">ระดับชั้น' + (role === 'parent' ? 'ของบุตรหลาน' : '') + '</label><select id="sv-class" class="inp"><option value="">ไม่ระบุ</option>' + SV_CLS.map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></div>' : '') + '</div>' +
+          '<div class="lik-wrap"><div class="lik h" aria-hidden="true"><span>รายการประเมิน</span><span>5<br>มากที่สุด</span><span>4<br>มาก</span><span>3<br>ปานกลาง</span><span>2<br>น้อย</span><span>1<br>น้อยที่สุด</span></div>' + items + '</div>' +
+          '<div class="field"><label for="sv-comment">ข้อเสนอแนะเพิ่มเติม (ไม่บังคับ)</label><textarea id="sv-comment" class="inp" maxlength="500" placeholder="สิ่งที่อยากให้ครูทำต่อ หรือปรับปรุง"></textarea></div>' +
+          '<div class="hp-field" aria-hidden="true"><label for="sv-web">เว็บไซต์</label><input id="sv-web" tabindex="-1" autocomplete="off"></div>' +
+          '<div id="sv-err"></div><div class="row" style="justify-content:space-between"><span class="small muted">ไม่ต้องระบุชื่อ ระบบเก็บเฉพาะประเภทผู้ประเมินและระดับชั้น</span><button class="btn primary" type="submit" id="sv-btn">' + ic('check', 16) + ' ส่งแบบประเมิน</button></div></form>';
+      }
+      form = '<div><span class="eyebrow">' + esc(sv.label) + (sv.closeAt ? ' · ปิดรับ ' + fd(sv.closeAt) : '') + '</span><h1>แบบประเมินความพึงพอใจต่อการจัดการเรียนรู้</h1><p class="muted">ของ ' + esc(st().name) + ' · ' + esc(st().subject || '') + '</p>' + (sv.note ? '<p class="small">' + esc(sv.note) + '</p>' : '') + '</div>' + form;
+    } else form = '<div class="card empty">' + ic('chat', 18) + ' ขณะนี้ยังไม่เปิดรับแบบประเมิน</div>';
+    var results = res.length ? '<section style="display:flex;flex-direction:column;gap:14px;margin-top:22px"><div><span class="eyebrow">ผลที่เผยแพร่</span><h2>ผลการประเมินความพึงพอใจ</h2></div>' + res.map(function (r) {
+      return '<div class="card"><div class="row" style="justify-content:space-between;align-items:baseline"><h3>' + esc(r.label) + '</h3><span class="small muted">ผู้ตอบ ' + r.n + ' คน' + (r.open ? ' · กำลังเปิดรับ' : '') + '</span></div><div class="sv-kpis"><div><b class="num">' + fix(r.all, 2) + '</b><span>ค่าเฉลี่ยรวม (ระดับ' + svLevel(r.all) + ')</span></div>' + Object.keys(SV_ROLE).filter(function (k) { return r.byRole[k]; }).map(function (k) { return '<div><b class="num">' + r.byRole[k] + '</b><span>' + SV_ROLE[k] + '</span></div>'; }).join('') + '</div>' + (r.n ? svBars(r.items, r.per) : '<p class="small muted">ยังไม่มีผู้ตอบ</p>') + '</div>';
+    }).join('') + '</section>' : '';
+    return pub('survey', '<div class="sv-wrap">' + form + results + '</div>');
+  }
+  function svSubmit() {
+    var sv = D.survey, er = $('sv-err'), btn = $('sv-btn'); if (!sv) return;
+    var role = S.svRole && sv.roles.indexOf(S.svRole) > -1 ? S.svRole : sv.roles[0], ans = [], miss = [];
+    sv.items.forEach(function (t, i) { var c = document.querySelector('input[name="q' + i + '"]:checked'); if (c) ans.push(+c.value); else { ans.push(0); miss.push(i + 1); } });
+    Array.prototype.forEach.call(document.querySelectorAll('.lik.miss'), function (x) { x.classList.remove('miss'); });
+    if (miss.length) {
+      miss.forEach(function (m) { var el = $('svq-' + (m - 1)); if (el) el.classList.add('miss'); });
+      er.innerHTML = '<div class="err">ยังไม่ได้ตอบข้อ ' + miss.join(', ') + '</div>'; var f = $('svq-' + (miss[0] - 1)); if (f) f.scrollIntoView({ behavior: motionOff() ? 'auto' : 'smooth', block: 'center' }); return;
+    }
+    btn.disabled = true;
+    api('surveySubmit', { round: sv.id, role: role, cls: ($('sv-class') || {}).value || '', ans: ans, comment: $('sv-comment').value, hp: $('sv-web').value, dev: svDev() }, { loader: 'กำลังส่งแบบประเมิน' }, function (err, res) {
+      btn.disabled = false;
+      if (err) { er.innerHTML = '<div class="err">' + esc(err) + '</div>'; return; }
+      try { localStorage.setItem('sv-done-' + sv.id, '1'); } catch (e) { }
+      S.svDone = { id: sv.id, avg: res.avg || 0, updated: res.updated }; S.svPub = null; render(); window.scrollTo(0, 0);
+    });
+  }
+
+  /* ---------- หลังบ้าน: แบบประเมินความพึงพอใจ ---------- */
+  function needSv(id) {
+    if (S.svLoading) return; S.svLoading = true;
+    api('surveyAdmin', { id: id || S.svSel || '' }, { loader: false }, function (err, res) { S.svLoading = false; if (err) { S.svErr = err; toast(err); render(); return; } svSet(res); render(); });
+  }
+  function svSet(res) { S.sv = res; S.svSel = res.sel; if (D.admin && D.admin.evalSum) D.admin.evalSum.survey = res.rounds.slice(0, 3); }
+  function svCall(action, data, msg) {
+    api(action, data, { loader: 'กำลังบันทึก' }, function (err, res) {
+      if (err) { var fe = $('f-err'); if (fe) fe.innerHTML = '<div class="err">' + esc(err) + '</div>'; else toast(err); return; }
+      svSet(res); closeModal(); S.svPub = null; render(); if (msg) toast(msg);
+      if (action === 'saveSurveyRound') api('getPublic', {}, { loader: false }, function (e2, p) { if (!e2) D.survey = p.survey || null; });
+    });
+  }
+  function svRoundOf(id) { return S.sv ? find(S.sv.rounds, 'id', id) : null; }
+  function svStatus(r) { return r.isOpen ? '<span class="pill good">เปิดรับ</span>' : (r.open ? '<span class="pill warn">เลยวันปิดรับ</span>' : '<span class="pill off">ปิดรับ</span>'); }
+  function svForm(r) {
+    var def = { id: '', fy: S.fy, label: semNow(new Date()).replace('ปิดภาคเรียน', ''), items: SV_DEF, roles: ['student', 'parent', 'teacher'], open: true, closeAt: '', showPublic: false, note: '' };
+    r = r || def; S.svEdit = r.id;
+    var ys = D.years.slice().sort(function (a, b) { return b.fy - a.fy; });
+    openModal(r.id ? 'แก้ไขรอบแบบประเมิน' : 'สร้างรอบแบบประเมินความพึงพอใจ',
+      '<div class="grid2"><div class="field"><label for="sf-label">ชื่อรอบ</label><input id="sf-label" class="inp" maxlength="120" value="' + esc(r.label) + '" placeholder="ภาคเรียนที่ 2/2569"></div><div class="field"><label for="sf-fy">ปีงบประมาณ</label><select id="sf-fy" class="inp">' + ys.map(function (y) { return '<option value="' + y.fy + '"' + (y.fy === r.fy ? ' selected' : '') + '>' + y.fy + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="field"><label>ผู้ประเมิน</label><div class="row" style="gap:14px">' + Object.keys(SV_ROLE).map(function (k) { return '<label class="row small" style="gap:6px"><input type="checkbox" data-sf-role="' + k + '"' + (r.roles.indexOf(k) > -1 ? ' checked' : '') + ' style="width:18px;height:18px;accent-color:var(--accent)"> ' + SV_ROLE[k] + '</label>'; }).join('') + '</div></div>' +
+      '<div class="field"><label for="sf-items">ข้อคำถาม (บรรทัดละ 1 ข้อ · 3–20 ข้อ · มาตรวัด 5 ระดับ)</label><textarea id="sf-items" class="inp" rows="8">' + esc(r.items.join('\n')) + '</textarea>' + (r.id && r.n ? '<span class="hint">มีผู้ตอบแล้ว ' + r.n + ' คน แก้ถ้อยคำได้ แต่เปลี่ยนจำนวนข้อไม่ได้</span>' : '') + '</div>' +
+      '<div class="field"><label for="sf-note">คำชี้แจง (ไม่บังคับ)</label><input id="sf-note" class="inp" maxlength="300" value="' + esc(r.note) + '" placeholder="เช่น สำหรับนักเรียนที่เรียนคณิตศาสตร์กับครู"></div>' +
+      '<div class="grid2"><div class="field"><label for="sf-close">ปิดรับอัตโนมัติหลังวันที่ (ไม่บังคับ)</label><input id="sf-close" type="date" class="inp" value="' + esc(r.closeAt) + '"></div><div style="display:flex;flex-direction:column;gap:8px;justify-content:flex-end">' + chk('sf-open', r.open, 'เปิดรับคำตอบ (รอบอื่นจะปิดเอง)') + chk('sf-pub', r.showPublic, 'แสดงผลสรุปในหน้าสาธารณะ') + '</div></div><div id="f-err"></div>',
+      '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="sf-save">' + ic('check', 16) + ' บันทึก</button>', true);
+  }
+  function svCsv() {
+    var r = svRoundOf(S.svSel); if (!r || !S.sv) return;
+    var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var head = ['เวลา', 'ผู้ประเมิน', 'ระดับชั้น'].concat(r.items.map(function (t, i) { return 'ข้อ ' + (i + 1); })).concat(['ข้อเสนอแนะ', 'ซ่อน']);
+    var lines = [head.map(q).join(',')].concat(S.sv.resp.map(function (x) { return [x.at, SV_ROLE[x.role] || x.role, x.cls].concat(x.ans).concat([x.comment, x.hidden ? 'ใช่' : '']).map(q).join(','); }));
+    var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'แบบประเมิน_' + r.label.replace(/[\\/:*?"<>| ]+/g, '_') + '.csv'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 500);
+    toast('ดาวน์โหลดไฟล์ CSV แล้ว เปิดด้วย Excel หรือ Google Sheets ได้');
+  }
+  function aSurvey() {
+    if (!S.sv) { needSv(); return adminShell('admin-survey', 'แบบประเมินความพึงพอใจ', 'กำลังโหลดข้อมูล', '', '<div class="card" aria-busy="true" style="display:flex;flex-direction:column;gap:12px"><div class="sk" style="height:26px;width:40%"></div><div class="sk" style="height:140px"></div>' + (S.svErr ? '<div class="err">' + esc(S.svErr) + ' <button class="btn sm" data-act="sv-reload">ลองใหม่</button></div>' : '') + '</div>'); }
+    var rs = S.sv.rounds, r = svRoundOf(S.svSel), stt = S.sv.stats;
+    var list = rs.length ? '<div class="sv-rounds">' + rs.map(function (x) { return '<button class="sv-round' + (x.id === S.svSel ? ' on' : '') + '" data-act="sv-sel" data-id="' + x.id + '"><b>' + esc(x.label) + '</b><span class="small muted">ปีงบ ' + x.fy + ' · ผู้ตอบ ' + x.n + ' คน</span>' + svStatus(x) + '</button>'; }).join('') + '</div>' : '';
+    var body = '';
+    if (!r) body = '<div class="card empty" style="margin-top:14px">ยังไม่มีรอบแบบประเมิน กด “สร้างรอบใหม่” แล้วนำ QR ไปให้นักเรียนสแกน</div>';
+    else {
+      var hidden = S.sv.resp.filter(function (x) { return x.hidden; }).length;
+      var kpi = '<div class="grid4"><div class="kpi"><span class="l">ผู้ตอบ</span><span class="v">' + stt.n + '</span><span class="small muted">' + (hidden ? 'ซ่อนไว้ ' + hidden + ' คำตอบ' : 'ไม่รวมคำตอบที่ซ่อน') + '</span></div><div class="kpi"><span class="l">ค่าเฉลี่ยรวม (เต็ม 5)</span><span class="v">' + fix(stt.all, 2) + '</span><span class="small muted">ระดับ' + svLevel(stt.all) + '</span></div>' +
+        Object.keys(SV_ROLE).filter(function (k) { return r.roles.indexOf(k) > -1; }).slice(0, 2).map(function (k) { return '<div class="kpi"><span class="l">' + SV_ROLE[k] + '</span><span class="v">' + stt.byRole[k] + '</span><span class="small muted">' + (stt.byRole[k] ? 'เฉลี่ย ' + fix(stt.roleAvg[k], 2) : 'ยังไม่มี') + '</span></div>'; }).join('') + '</div>';
+      var dist = stt.dist.reduce(function (a, b) { return a + b; }, 0);
+      var distBars = '<div class="hbars">' + [5, 4, 3, 2, 1].map(function (v) { var c = stt.dist[v - 1], p = dist ? c / dist * 100 : 0; return '<div class="hb" title="ระดับ ' + v + ': ' + c + ' ครั้ง (' + fix(p, 1) + '%)"><span class="hb-l">ระดับ ' + v + ' · ' + ['', 'น้อยที่สุด', 'น้อย', 'ปานกลาง', 'มาก', 'มากที่สุด'][v] + '</span><span class="hb-t"><i style="width:' + p + '%"></i></span><b class="num">' + fix(p, 0) + '%</b></div>'; }).join('') + '</div>';
+      var cls = Object.keys(stt.cls).sort().map(function (k) { return '<span class="chip">' + esc(k) + ' · ' + stt.cls[k] + '</span>'; }).join('');
+      var shownResp = S.sv.resp.filter(function (x) { return S.svAll || x.comment; });
+      var rows = pageOf(shownResp, 'a-svr', perA()).map(function (x) {
+        return '<tr class="' + (x.hidden ? 'dim' : '') + '"><td class="num small" style="white-space:nowrap">' + fdt(x.at) + '</td><td class="small">' + (SV_ROLE[x.role] || '') + (x.cls ? ' ' + esc(x.cls) : '') + '</td><td class="num small">' + fix(x.ans.reduce(function (a, b) { return a + b; }, 0) / (x.ans.length || 1), 2) + '</td><td>' + (x.comment ? esc(x.comment) : '<span class="muted">–</span>') + '</td><td><button class="btn sm" data-act="sv-hide" data-id="' + x.id + '" data-k="' + (x.hidden ? '0' : '1') + '">' + (x.hidden ? ic('eye', 14) + ' นับรวม' : ic('x', 14) + ' ซ่อน') + '</button></td></tr>';
+      }).join('');
+      body = '<div class="card sv-head"><div class="row" style="justify-content:space-between;align-items:flex-start;gap:14px"><div style="flex:1;min-width:240px"><div class="row" style="gap:8px">' + svStatus(r) + (r.showPublic ? '<span class="chip">' + ic('eye', 13) + ' แสดงผลในหน้าสาธารณะ</span>' : '') + '</div><h2 style="margin:6px 0 2px">' + esc(r.label) + '</h2><p class="small muted">ปีงบ ' + r.fy + ' · ' + r.items.length + ' ข้อ · ' + r.roles.map(function (k) { return SV_ROLE[k]; }).join(' ') + (r.closeAt ? ' · ปิดรับหลัง ' + fd(r.closeAt) : '') + '</p>' +
+        '<div class="row" style="gap:6px;margin-top:10px"><button class="btn sm ' + (r.open ? '' : 'primary') + '" data-act="sv-toggle">' + (r.open ? ic('lock', 14) + ' ปิดรับ' : ic('check', 14) + ' เปิดรับ') + '</button><button class="btn sm" data-act="sv-edit">' + ic('edit', 14) + ' แก้ไข</button><a class="btn sm" href="#survey-poster">' + ic('print', 14) + ' โปสเตอร์ QR</a><a class="btn sm" href="#survey-report">' + ic('file', 14) + ' รายงานสรุป</a><button class="btn sm" data-act="sv-csv">' + ic('download', 14) + ' CSV</button><button class="btn sm danger" data-act="sv-del">' + ic('trash', 14) + ' ลบรอบ</button></div></div>' +
+        (r.isOpen ? '<div class="sv-qr">' + qrSvg(svUrl(), 132, 'QR แบบประเมิน') + '<span class="small muted">สแกนเพื่อตอบ</span><button class="btn sm" data-act="sv-copy">' + ic('copy', 14) + ' คัดลอกลิงก์</button></div>' : '') + '</div></div>' +
+        kpi + '<div class="grid2" style="align-items:start;margin-top:14px"><div class="card"><h3>ค่าเฉลี่ยรายข้อ</h3><p class="small muted">เต็ม 5 คะแนน</p>' + (stt.n ? svBars(r.items, stt.per) : '<p class="small muted" style="margin-top:8px">ยังไม่มีผู้ตอบ</p>') + '</div>' +
+        '<div class="card"><h3>สัดส่วนระดับที่เลือก</h3><p class="small muted">จากทุกข้อรวมกัน ' + dist + ' คำตอบ</p>' + (dist ? distBars : '') + (cls ? '<h4 style="margin-top:14px">ระดับชั้น</h4><div class="row" style="gap:6px;margin-top:6px">' + cls + '</div>' : '') + '</div></div>' +
+        '<div class="card" style="margin-top:14px"><div class="sec-h"><h3>' + (S.svAll ? 'คำตอบทั้งหมด' : 'ข้อเสนอแนะ') + '</h3><label class="row small" style="gap:6px"><input type="checkbox" id="sv-all"' + (S.svAll ? ' checked' : '') + ' style="width:18px;height:18px;accent-color:var(--accent)"> แสดงคำตอบที่ไม่มีข้อเสนอแนะด้วย</label></div><p class="small muted">ซ่อนคำตอบที่ไม่เหมาะสมหรือก่อกวนได้ คำตอบที่ซ่อนจะไม่ถูกนับในผลสรุป</p>' +
+        '<div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ประเมิน</th><th>เฉลี่ย</th><th>ข้อเสนอแนะ</th><th></th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="muted">ยังไม่มี</td></tr>') + '</tbody></table></div>' + pagerNav('a-svr') + '</div>';
+    }
+    return adminShell('admin-survey', 'แบบประเมินความพึงพอใจ', 'นักเรียน ผู้ปกครอง และครูตอบผ่านลิงก์หรือ QR โดยไม่ต้องระบุชื่อ · ใช้เป็นหลักฐานประกอบ PA และการเลื่อนเงินเดือน',
+      '<button class="btn" data-act="sv-reload">' + ic('refresh', 16) + ' โหลดใหม่</button><button class="btn primary" data-act="sv-new">' + ic('plus', 16) + ' สร้างรอบใหม่</button>', list + body);
+  }
+  function svPoster() {
+    var bar = '<div class="rep-bar"><a class="btn" href="#admin-survey">' + ic('left', 16) + ' กลับ</a><b>โปสเตอร์ QR แบบประเมิน</b><span class="sp"></span><button class="btn primary" data-act="print">' + ic('print', 16) + ' พิมพ์</button></div>';
+    var sv = D.survey, s = st();
+    if (!sv) return bar + '<div class="rep-wrap"><div class="card empty" style="max-width:520px">ยังไม่มีรอบที่เปิดรับคำตอบ เปิดรับได้ที่หน้า “แบบประเมินความพึงพอใจ”</div></div>';
+    return bar + '<div class="rep-wrap"><section class="a4 sv-poster">' + seal('big') + '<span class="eyebrow">' + esc(s.school) + '</span><h1>ช่วยประเมินการสอนของครูหน่อยนะ</h1><p class="sv-p-sub">แบบประเมินความพึงพอใจต่อการจัดการเรียนรู้ · ' + esc(sv.label) + '</p>' +
+      '<div class="sv-p-qr">' + qrSvg(svUrl(), 320, 'QR แบบประเมิน') + '</div><ol class="sv-p-steps"><li>เปิดกล้องมือถือ สแกน QR</li><li>เลือกว่าเป็นนักเรียน ผู้ปกครอง หรือครู</li><li>ตอบ ' + sv.items.length + ' ข้อ ใช้เวลาประมาณ 2 นาที ไม่ต้องใส่ชื่อ</li></ol>' +
+      '<p class="sv-p-url mono">' + esc(svUrl()) + '</p><p class="small muted">' + esc(s.name) + ' · ' + esc(s.subject || '') + (sv.closeAt ? ' · ปิดรับ ' + thDateFull(sv.closeAt).replace('วันที่ ', '') : '') + '</p></section></div>';
+  }
+  function svReport() {
+    var bar = '<div class="rep-bar"><a class="btn" href="#admin-survey">' + ic('left', 16) + ' กลับ</a><b>รายงานสรุปแบบประเมินความพึงพอใจ</b><span class="sp"></span><button class="btn primary" data-act="print">' + ic('print', 16) + ' พิมพ์ / บันทึก PDF</button></div>';
+    if (!S.admin) return bar + '<div class="rep-wrap"><div class="card empty">' + ic('lock', 18) + ' เปิดได้เฉพาะเจ้าของแฟ้ม</div></div>';
+    if (!S.sv) { needSv(); return bar + '<div class="rep-wrap"><div class="sk" style="width:210mm;max-width:100%;height:300px"></div></div>'; }
+    var r = svRoundOf(S.svSel), t = S.sv.stats, s = st();
+    if (!r) return bar + '<div class="rep-wrap"><div class="card empty">ยังไม่มีรอบแบบประเมิน</div></div>';
+    var cm = S.sv.resp.filter(function (x) { return !x.hidden && x.comment; });
+    return bar + '<div class="rep-wrap"><section class="a4 paf"><div class="paf-title"><b>รายงานผลการประเมินความพึงพอใจต่อการจัดการเรียนรู้</b><b>' + esc(s.name) + ' ตำแหน่ง ' + esc(s.position || 'ครู') + ' ' + esc(s.school) + '</b><span>' + esc(r.label) + ' · ปีงบประมาณ ' + r.fy + '</span></div>' +
+      '<p>ผู้ตอบแบบประเมินทั้งหมด <b>' + t.n + '</b> คน แบ่งเป็น ' + Object.keys(SV_ROLE).filter(function (k) { return r.roles.indexOf(k) > -1; }).map(function (k) { return SV_ROLE[k] + ' ' + t.byRole[k] + ' คน'; }).join(' · ') + '</p>' +
+      '<div class="a4-scroll"><table class="tbl paf-t"><thead><tr><th style="width:36px">ข้อ</th><th>รายการประเมิน</th><th style="width:70px">ค่าเฉลี่ย</th><th style="width:86px">ระดับ</th></tr></thead><tbody>' + r.items.map(function (it, i) { return '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(it) + '</td><td class="r num">' + fix(t.per[i], 2) + '</td><td class="c">' + svLevel(t.per[i]) + '</td></tr>'; }).join('') +
+      '<tr class="paf-sumrow"><td colspan="2" class="c">ค่าเฉลี่ยรวม</td><td class="r num">' + fix(t.all, 2) + '</td><td class="c">' + svLevel(t.all) + '</td></tr></tbody></table></div>' +
+      '<p class="small">เกณฑ์การแปลผล: 4.51–5.00 มากที่สุด · 3.51–4.50 มาก · 2.51–3.50 ปานกลาง · 1.51–2.50 น้อย · 1.00–1.50 น้อยที่สุด</p>' +
+      '<h4>ข้อเสนอแนะ (' + cm.length + ')</h4>' + (cm.length ? '<ol class="sv-cm">' + cm.slice(0, 40).map(function (x) { return '<li>' + esc(x.comment) + ' <span class="small muted">(' + (SV_ROLE[x.role] || '') + (x.cls ? ' ' + esc(x.cls) : '') + ')</span></li>'; }).join('') + '</ol>' + (cm.length > 40 ? '<p class="small muted">และอีก ' + (cm.length - 40) + ' รายการ (ดูทั้งหมดในไฟล์ CSV)</p>' : '') : '<p class="small muted">ไม่มี</p>') +
+      '<div class="paf-sig" style="margin-top:18px"><div class="paf-sl"><span>(ลงชื่อ)</span><span class="ln"></span><span>ผู้รายงาน</span></div><div>(' + esc(s.name) + ')</div><div>' + thDateFull('') + '</div></div></section></div>';
+  }
+
+  /** รายการที่ควรทำในแดชบอร์ด */
+  function evalTodo() {
+    var ev = D.admin && D.admin.evalSum; if (!ev) return '';
+    var o = '', rn = roundNow(), has = ev.salary.some(function (x) { return x.fy === rn.fy && x.round === rn.r; });
+    if (!has) o += '<a class="todo" href="#admin-salary" data-act="sal-go" data-fy="' + rn.fy + '" data-k="' + rn.r + '"><span class="dot warn"></span><span style="flex:1">ประเมินตนเองเพื่อเลื่อนเงินเดือน ปีงบ ' + rn.fy + ' รอบ ' + rn.r + '</span>' + ic('chev', 14) + '</a>';
+    var op = ev.survey.filter(function (x) { return x.isOpen; })[0];
+    if (op) o += '<a class="todo" href="#admin-survey"><span class="dot good"></span><span style="flex:1">แบบประเมินความพึงพอใจ “' + esc(op.label) + '” เปิดรับอยู่ · ผู้ตอบ ' + op.n + ' คน</span>' + ic('chev', 14) + '</a>';
+    return o;
+  }
+
+  /* ---------- เหตุการณ์ ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!el) return;
+    var act = el.getAttribute('data-act'), k = el.getAttribute('data-k'), id = el.getAttribute('data-id'), i = +el.getAttribute('data-i'), d = S.salDraft, r = svRoundOf(S.svSel);
+    switch (act) {
+      case 'sal-round': if (d && d.dirty) { confirmBox('มีการแก้ไขที่ยังไม่บันทึก เปลี่ยนรอบแล้วการแก้ไขจะหายไป?', 'เปลี่ยนรอบ', function () { S.salDraft = null; S.salRound = +k; render(); }); break; } S.salDraft = null; S.salRound = +k; render(); break;
+      case 'sal-go': S.fy = +el.getAttribute('data-fy'); S.salRound = +k; S.salDraft = null; location.hash = 'admin-salary'; break;
+      case 'sal-reload': S.salErr = ''; needSal(true); break;
+      case 'sal-save': salSave(); break;
+      case 'sal-discard': S.salDraft = null; render(); toast('ยกเลิกการแก้ไขแล้ว'); break;
+      case 'sal-status': if (d) { d.status = k; markDocDirty(d, 'sal'); render(); } break;
+      case 'sal-newitems': if (d) { d.items = S.sal[d.key].items; d.useNew = true; markDocDirty(d, 'sal'); render(); toast('ใช้หัวข้อชุดใหม่แล้ว กดบันทึกเพื่อยืนยัน'); } break;
+      case 'sal-pa':
+        var res = S.sal[salKey()], ref = res && res.pa.n ? res.pa : (res && res.paPrev.n ? res.paPrev : null), first = d && d.items.filter(function (x) { return x.g === 'a'; })[0];
+        if (!ref || !first) { toast('ยังไม่มีผล PA ที่กรรมการส่งแล้ว ของปีงบ ' + S.fy + ' หรือปีก่อนหน้า'); break; }
+        d.scores[first.k] = Math.round(ref.pct / 100 * first.max * 2) / 2; markDocDirty(d, 'sal'); render();
+        toast('เติมจากผล PA ปีงบ ' + ref.fy + ' (เฉลี่ยร้อยละ ' + fix(ref.pct, 2) + ' จากกรรมการ ' + ref.n + ' คน) = ' + d.scores[first.k] + '/' + first.max);
+        break;
+      case 'sal-items': salItemsForm(); break;
+      case 'sal-it-add': S.salItemsEdit.push({ k: '', g: 'b', label: '', max: 10 }); $('sal-items-box').innerHTML = salItemsRows(); break;
+      case 'sal-it-del': S.salItemsEdit.splice(i, 1); $('sal-items-box').innerHTML = salItemsRows(); break;
+      case 'sal-it-reset': S.salItemsEdit = clone(SAL_DEF); $('sal-items-box').innerHTML = salItemsRows(); break;
+      case 'sal-it-save':
+        api('saveSettings', { values: { salItems: S.salItemsEdit } }, { loader: 'กำลังบันทึก' }, function (err, res2) {
+          if (err) { $('f-err').innerHTML = '<div class="err">' + esc(err) + '</div>'; return; }
+          D.settings = res2.settings; closeModal(); S.sal = {}; S.salDraft = null; render(); toast('บันทึกหัวข้อแล้ว');
+        });
+        break;
+      case 'sv-role': S.svRole = k; var keep = {}; Array.prototype.forEach.call(document.querySelectorAll('#survey-form input[type=radio]:checked'), function (x) { keep[x.name] = x.value; }); var cmt = ($('sv-comment') || {}).value || '';
+        render(); for (var nm in keep) { var x2 = document.querySelector('input[name="' + nm + '"][value="' + keep[nm] + '"]'); if (x2) x2.checked = true; } if ($('sv-comment')) $('sv-comment').value = cmt; break;
+      case 'sv-again': S.svDone = null; render(); break;
+      case 'sv-reload': S.svErr = ''; needSv(); break;
+      case 'sv-sel': S.pages['a-svr'] = 1; S.svSel = id; needSv(id); break;
+      case 'sv-new': svForm(); break;
+      case 'sv-edit': if (r) svForm(r); break;
+      case 'sf-save':
+        var roles = []; Array.prototype.forEach.call(document.querySelectorAll('[data-sf-role]'), function (x) { if (x.checked) roles.push(x.getAttribute('data-sf-role')); });
+        svCall('saveSurveyRound', { item: { id: S.svEdit || '', fy: +$('sf-fy').value, label: $('sf-label').value, roles: roles, items: $('sf-items').value.split('\n').map(function (t) { return t.trim(); }).filter(String), note: $('sf-note').value, closeAt: $('sf-close').value, open: $('sf-open').checked, showPublic: $('sf-pub').checked } }, S.svEdit ? 'บันทึกแล้ว' : 'สร้างรอบแบบประเมินแล้ว');
+        break;
+      case 'sv-toggle': if (r) svCall('saveSurveyRound', { item: { id: r.id, fy: r.fy, label: r.label, roles: r.roles, items: r.items, note: r.note, closeAt: r.open ? r.closeAt : (r.closeAt && r.closeAt < new Date().toISOString().slice(0, 10) ? '' : r.closeAt), open: !r.open, showPublic: r.showPublic } }, r.open ? 'ปิดรับคำตอบแล้ว' : 'เปิดรับคำตอบแล้ว'); break;
+      case 'sv-del': if (r) confirmBox('ลบรอบ “' + esc(r.label) + '” และคำตอบทั้งหมด ' + r.n + ' รายการ? ลบแล้วกู้คืนไม่ได้ ควรดาวน์โหลด CSV เก็บไว้ก่อน', 'ลบรอบ', function () { svCall('deleteSurveyRound', { id: r.id }, 'ลบแล้ว'); }, true); break;
+      case 'sv-hide': svCall('hideSurveyResp', { id: id, hidden: k === '1' }, k === '1' ? 'ซ่อนคำตอบแล้ว ไม่นับในผลสรุป' : 'นับรวมแล้ว'); break;
+      case 'sv-csv': svCsv(); break;
+      case 'sv-copy': copyText(svUrl(), 'คัดลอกลิงก์แบบประเมินแล้ว'); break;
+    }
+  });
+  document.addEventListener('input', function (e) {
+    var t = e.target, d = S.salDraft; if (!t.getAttribute || !d) return;
+    var sk = t.getAttribute('data-sal'), so = t.getAttribute('data-salo');
+    if (sk) { var it = find(d.items, 'k', sk), v = t.value === '' ? '' : Math.max(0, Math.min(it ? it.max : 100, +t.value || 0)); d.scores[sk] = v; salTouch(); }
+    if (so && t.tagName !== 'SELECT') { d.official[so] = t.type === 'number' ? (t.value === '' ? '' : +t.value) : t.value; salTouch(); }
+    if (t.getAttribute('data-salnote')) { d.note = t.value; markDocDirty(d, 'sal'); }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target; if (!t.getAttribute) return;
+    if (t.getAttribute('data-sal') && S.salDraft) { var it = find(S.salDraft.items, 'k', t.getAttribute('data-sal')); if (it && +t.value > it.max) t.value = it.max; }
+    if (t.tagName === 'SELECT' && t.getAttribute('data-salo') && S.salDraft) { S.salDraft.official[t.getAttribute('data-salo')] = t.value; salTouch(); }
+    var si = t.getAttribute('data-salit'); if (si && S.salItemsEdit) { var p = si.split(':'), row = S.salItemsEdit[+p[0]]; row[p[1]] = p[1] === 'max' ? +t.value : t.value; if (p[1] === 'max') $('sal-items-box').innerHTML = salItemsRows(); }
+    if (t.id === 'sv-all') { S.svAll = t.checked; S.pages['a-svr'] = 1; render(); }
+    if (t.getAttribute('data-fy-sel') && S.salDraft && S.salDraft.dirty === false) S.salDraft = null;
+  });
+  document.addEventListener('submit', function (e) { if (e.target.id === 'survey-form') { e.preventDefault(); svSubmit(); } });
+  window.addEventListener('beforeunload', function (e) { if (S.salDraft && S.salDraft.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  /* =====================================================================
+     เฟส 6: สถิติและกราฟ · รายงาน PDF · โหมดนำเสนอ · ตรวจสอบเอกสารด้วย QR
+     ===================================================================== */
+  var PAGE_T = { home: 'หน้าหลัก', profile: 'ประวัติ', pa: 'แฟ้ม PA', agreement: 'ข้อตกลง PA', idplan: 'ID Plan', works: 'คลังผลงาน', gallery: 'ภาพกิจกรรม', videos: 'วิดีโอ', awards: 'รางวัล/อบรม', systems: 'ระบบที่จัดทำ', survey: 'แบบประเมิน', verify: 'ตรวจสอบเอกสาร', committee: 'หน้ากรรมการ', report: 'รายงาน PDF', present: 'โหมดนำเสนอ' };
+  var VF_TYPE = { award: 'รางวัล', cert: 'เกียรติบัตร', training: 'การอบรม' };
+  S.stats = null; S.statRange = 30; S.statMode = 'all'; S.vfl = null; S.vfRes = {}; S.slide = 0; S.lastTracked = '';
+
+  /* ---------- กราฟ SVG (ไม่ใช้ไลบรารี) ---------- */
+  function dfmt(n) { return Math.abs(n - Math.round(n)) < 1e-9 ? nfmt(n) : fix(n, n < 10 ? 2 : 1); }
+  function niceMax(m) { if (m <= 0) return 1; var e = Math.pow(10, Math.floor(Math.log(m) / Math.LN10)), f = m / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; }
+  function intMax(m) { return Math.max(1, Math.ceil(niceMax(Math.max(m, 1) / 4))) * 4; }
+  function bp(x, y, w, h, r) { if (h <= 0.5) return ''; r = Math.min(r, w / 2, h); return 'M' + x + ',' + (y + h) + 'V' + (y + r) + 'Q' + x + ',' + y + ' ' + (x + r) + ',' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + 'V' + (y + h) + 'Z'; }
+  function hbp(x, y, w, h, r) { if (w <= 0.5) return ''; r = Math.min(r, h / 2, w); return 'M' + x + ',' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + 'V' + (y + h - r) + 'Q' + (x + w) + ',' + (y + h) + ' ' + (x + w - r) + ',' + (y + h) + 'H' + x + 'Z'; }
+  function legendHtml(series) { return '<div class="legend">' + series.map(function (s) { return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + '</span>'; }).join('') + '</div>'; }
+  function tableView(head, rows) {
+    return '<details class="viz-table"><summary>ดูข้อมูลเป็นตาราง</summary><div class="tbl-wrap"><table class="tbl"><thead><tr>' + head.map(function (h, i) { return '<th' + (i ? ' class="r"' : '') + '>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr>' + r.map(function (c, i) { return '<td' + (i ? ' class="r num"' : '') + '>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></details>';
+  }
+  function vChart(o) {
+    var n = o.cats.length, m = o.series.length, all = [];
+    o.series.forEach(function (sr) { all = all.concat(sr.vals); });
+    var W = o.w || Math.max(380, n * (m * 13 + 22) + 60), H = o.h || 240, L = 44, R = 12, T = 16, B = 30, iw = W - L - R, ih = H - T - B;
+    var raw = Math.max.apply(null, all.concat([o.ref || 0])), mx = o.max || (o.int ? intMax(raw) : niceMax(raw)), f = o.fmt || dfmt, out = '';
+    for (var k = 0; k <= 4; k++) { var y = T + ih - k / 4 * ih; out += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '"/><text x="' + (L - 7) + '" y="' + (y + 4) + '" text-anchor="end">' + f(mx * k / 4) + '</text>'; }
+    var cw = iw / n, gw = Math.min(cw * 0.74, m * 24 + (m - 1) * 2), bw = (gw - (m - 1) * 2) / m;
+    o.cats.forEach(function (c, ci) {
+      var x0 = L + ci * cw + (cw - gw) / 2, tip = (o.catTip ? o.catTip[ci] : c) + o.series.map(function (sr) { return '\n' + (m > 1 ? sr.name + ': ' : '') + f(sr.vals[ci] || 0) + (o.unit ? ' ' + o.unit : ''); }).join('');
+      out += '<g class="col" data-tip="' + esc(tip) + '"><rect class="hit" x="' + (L + ci * cw) + '" y="' + T + '" width="' + cw + '" height="' + ih + '" rx="4"/>';
+      o.series.forEach(function (sr, si) { var v = sr.vals[ci] || 0, h = v / mx * ih; out += '<path class="bar" d="' + bp(x0 + si * (bw + 2), T + ih - h, bw, h, 4) + '" fill="' + sr.color + '"/>'; });
+      out += '<text x="' + (L + ci * cw + cw / 2) + '" y="' + (H - 10) + '" text-anchor="middle">' + esc(c) + '</text></g>';
+    });
+    if (o.ref != null) { var ry = T + ih - o.ref / mx * ih; out += '<line class="ref" x1="' + L + '" x2="' + (W - R) + '" y1="' + ry + '" y2="' + ry + '"/>'; }
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.aria) + '"><line class="ax" x1="' + L + '" x2="' + (W - R) + '" y1="' + (T + ih) + '" y2="' + (T + ih) + '"/>' + out + '</svg>';
+  }
+  function hChart(o) {
+    if (!o.items.length) return '<p class="small muted">ยังไม่มีข้อมูล</p>';
+    var n = o.items.length, rowH = 30, LW = o.lw || 150, W = o.w || 470, R = 56, T = 6, H = n * rowH + T * 2, iw = W - LW - R;
+    var mx = o.max || niceMax(Math.max.apply(null, o.items.map(function (x) { return x.v; }))), f = o.fmt || dfmt, out = '', cut = Math.round(LW / 7.2);
+    o.items.forEach(function (it, i) {
+      var y = T + i * rowH, w = it.v / mx * iw;
+      out += '<g class="row" data-tip="' + esc(it.tip || (it.l + '\n' + f(it.v) + (o.unit ? ' ' + o.unit : ''))) + '"><rect class="hit" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" rx="4"/>' +
+        '<text x="' + (LW - 10) + '" y="' + (y + rowH / 2 + 4) + '" text-anchor="end" style="fill:var(--ink)">' + esc(it.l.length > cut ? it.l.slice(0, cut - 1) + '…' : it.l) + '</text>' +
+        '<rect x="' + LW + '" y="' + (y + 7) + '" width="' + iw + '" height="' + (rowH - 14) + '" rx="4" style="fill:var(--surface-2)"/>' +
+        '<path class="bar" d="' + hbp(LW, y + 7, w, rowH - 14, 4) + '" fill="' + (it.color || o.color) + '"/>' +
+        '<text class="v" x="' + (LW + w + 6) + '" y="' + (y + rowH / 2 + 4) + '">' + f(it.v) + '</text></g>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.aria) + '">' + out + '</svg>';
+  }
+  function arcPath(cx, cy, R, r, a0, a1) {
+    if (a1 - a0 >= Math.PI * 2 - 1e-6) a1 = a0 + Math.PI * 2 - 1e-4;
+    var la = a1 - a0 > Math.PI ? 1 : 0;
+    function pt(rad, a) { return (cx + rad * Math.sin(a)).toFixed(2) + ',' + (cy - rad * Math.cos(a)).toFixed(2); }
+    return 'M' + pt(R, a0) + 'A' + R + ',' + R + ' 0 ' + la + ' 1 ' + pt(R, a1) + 'L' + pt(r, a1) + 'A' + r + ',' + r + ' 0 ' + la + ' 0 ' + pt(r, a0) + 'Z';
+  }
+  function donut(o) {
+    var tot = o.parts.reduce(function (t, x) { return t + x.v; }, 0), a = 0, segs = '', leg = '', gap = 0.035;
+    if (!tot) return '<p class="small muted">ยังไม่มีข้อมูล</p>';
+    o.parts.forEach(function (pt) {
+      if (!pt.v) return;
+      var a1 = a + pt.v / tot * Math.PI * 2, pc = pt.v / tot * 100, full = pt.v === tot;
+      segs += '<path class="seg" d="' + arcPath(90, 90, 84, 54, a + (full ? 0 : gap / 2), a1 - (full ? 0 : gap / 2)) + '" fill="' + pt.c + '" data-tip="' + esc(pt.l + '\n' + nfmt(pt.v) + (o.unit ? ' ' + o.unit : '') + ' · ' + fix(pc, 1) + '%') + '"/>';
+      a = a1;
+    });
+    o.parts.forEach(function (pt) { leg += '<div><i style="background:' + pt.c + '"></i><span>' + esc(pt.l) + '</span><b>' + nfmt(pt.v) + '</b><em>' + fix(pt.v / tot * 100, 1) + '%</em></div>'; });
+    return '<div class="donut-wrap"><svg viewBox="0 0 180 180" role="img" aria-label="' + esc(o.aria) + '">' + segs + '<text x="90" y="88" text-anchor="middle" class="v" style="font-size:26px">' + esc(o.big) + '</text><text x="90" y="110" text-anchor="middle">' + esc(o.small) + '</text></svg><div class="donut-leg">' + leg + '</div></div>';
+  }
+  function meter(o) {
+    var pct = Math.max(0, Math.min(1, o.v / o.max)), a0 = -Math.PI * 0.75, span = Math.PI * 1.5, a1 = a0 + span * pct, pa = a0 + span * (o.pass / o.max);
+    var tick = function (rad) { return [(90 + rad * Math.sin(pa)).toFixed(1), (96 - rad * Math.cos(pa)).toFixed(1)]; }, t1 = tick(58), t2 = tick(86);
+    return '<svg viewBox="0 0 180 160" role="img" aria-label="' + esc(o.aria) + '" style="max-width:240px;margin:0 auto">' +
+      '<path d="' + arcPath(90, 96, 80, 62, a0, a0 + span) + '" style="fill:var(--surface-2)"/>' + (pct > 0 ? '<path d="' + arcPath(90, 96, 80, 62, a0, a1) + '" style="fill:var(--accent)" data-tip="' + esc(o.tip) + '"/>' : '') +
+      '<line x1="' + t1[0] + '" y1="' + t1[1] + '" x2="' + t2[0] + '" y2="' + t2[1] + '" style="stroke:var(--bad);stroke-width:2.5"/>' +
+      '<text x="90" y="98" text-anchor="middle" class="v" style="font-size:30px">' + fix(o.v, 2) + '</text><text x="90" y="118" text-anchor="middle">จาก ' + o.max + ' · เกณฑ์ ' + o.pass + '</text></svg>';
+  }
+  function lineChart(o) {
+    var n = o.pts.length, W = o.w || 860, H = o.h || 240, L = 44, R = 46, T = 18, B = 30, iw = W - L - R, ih = H - T - B;
+    var raw = Math.max.apply(null, o.pts.map(function (x) { return x.v; }).concat([o.ref || 0])), mx = o.max || (o.int ? intMax(raw) : niceMax(raw)), f = o.fmt || dfmt, out = '';
+    for (var k = 0; k <= 4; k++) { var gy = T + ih - k / 4 * ih; out += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '"/><text x="' + (L - 7) + '" y="' + (gy + 4) + '" text-anchor="end">' + f(mx * k / 4) + '</text>'; }
+    function X(i) { return L + (n === 1 ? iw / 2 : i / (n - 1) * iw); }
+    function Y(v) { return T + ih - v / mx * ih; }
+    var d = o.pts.map(function (pt, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(pt.v).toFixed(1); }).join('');
+    var area = d + 'L' + X(n - 1).toFixed(1) + ',' + (T + ih) + 'L' + X(0).toFixed(1) + ',' + (T + ih) + 'Z';
+    out += '<path d="' + area + '" style="fill:' + o.color + ';opacity:.12"/><path d="' + d + '" style="fill:none;stroke:' + o.color + ';stroke-width:2;stroke-linejoin:round"/>';
+    if (o.ref != null) { var ry = Y(o.ref); out += '<line class="ref" x1="' + L + '" x2="' + (W - R) + '" y1="' + ry + '" y2="' + ry + '"/><text x="' + (W - R) + '" y="' + (ry - 6) + '" text-anchor="end" class="v">' + esc(o.refLabel || '') + '</text>'; }
+    var step = Math.max(1, Math.ceil(n / (o.xTicks || 8)));
+    o.pts.forEach(function (pt, i) { if ((i % step === 0 && n - 1 - i >= step / 2) || i === n - 1) out += '<text x="' + X(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + esc(pt.l) + '</text>'; });
+    var cw = iw / Math.max(1, n - 1);
+    o.pts.forEach(function (pt, i) {
+      out += '<g class="pt" data-tip="' + esc((pt.tip || pt.l) + '\n' + f(pt.v) + (o.unit ? ' ' + o.unit : '')) + '"><rect class="hit" x="' + (X(i) - cw / 2) + '" y="' + T + '" width="' + cw + '" height="' + ih + '"/><line class="guide" x1="' + X(i) + '" x2="' + X(i) + '" y1="' + T + '" y2="' + (T + ih) + '"/><circle class="dot" cx="' + X(i) + '" cy="' + Y(pt.v) + '" r="5" style="fill:' + o.color + ';stroke:var(--surface);stroke-width:2"/></g>';
+    });
+    var last = o.pts[n - 1];
+    out += '<circle cx="' + X(n - 1) + '" cy="' + Y(last.v) + '" r="5" style="fill:' + o.color + ';stroke:var(--surface);stroke-width:2"/><text class="v" x="' + (X(n - 1) + 8) + '" y="' + (Y(last.v) + 4) + '">' + f(last.v) + '</text>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.aria) + '"><line class="ax" x1="' + L + '" x2="' + (W - R) + '" y1="' + (T + ih) + '" y2="' + (T + ih) + '"/>' + out + '</svg>';
+  }
+  function tipEl() { var t = document.getElementById('viz-tip'); if (!t) { t = document.createElement('div'); t.id = 'viz-tip'; t.setAttribute('role', 'tooltip'); document.body.appendChild(t); } return t; }
+  document.addEventListener('mouseover', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-tip]') : null, t = tipEl();
+    if (!el) { t.style.display = 'none'; return; }
+    t.textContent = el.getAttribute('data-tip'); t.style.display = 'block';
+  });
+  document.addEventListener('mousemove', function (e) {
+    var t = document.getElementById('viz-tip'); if (!t || t.style.display !== 'block') return;
+    var x = e.clientX + 14, y = e.clientY + 14, w = t.offsetWidth, h = t.offsetHeight;
+    if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
+    if (y + h > window.innerHeight - 8) y = e.clientY - h - 14;
+    t.style.left = x + 'px'; t.style.top = y + 'px';
+  });
+
+  /* ---------- นับยอดเข้าชม (ไม่ระบุตัวตน · ไม่นับตอนแอดมินเข้า) ---------- */
+  function beacon(action, data) {
+    if (!configured()) return;
+    try { fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, data: data }), keepalive: true }).catch(function () { }); } catch (e) { }
+  }
+  function trackPage(r) {
+    if (S.admin || S.authPending || r === S.lastTracked) return;
+    var p = r.indexOf('album-') === 0 ? 'gallery' : (r.indexOf('verify-') === 0 ? 'verify' : r);
+    if (!PAGE_T[p]) return;
+    S.lastTracked = r;
+    var w = window.innerWidth, dv = w < 768 ? 'm' : (w < 1100 && 'ontouchstart' in window ? 't' : 'd'), u = 0;
+    try { var t = new Date().toISOString().slice(0, 10); if (localStorage.getItem('tp-vday') !== t) { localStorage.setItem('tp-vday', t); u = 1; } } catch (e) { }
+    beacon('hit', { p: p, d: dv, u: u });
+  }
+
+  /* ---------- สถิติและกราฟ (หลังบ้าน) ---------- */
+  function needStats(force) {
+    if ((S.stats && !force) || S.statsLoading) return; S.statsLoading = true;
+    api('statsGet', { days: 400 }, { loader: false }, function (err, res) { S.statsLoading = false; if (err) { S.statsErr = err; toast(err); render(); return; } S.statsErr = ''; S.stats = res; if (route() === 'admin-stats') render(); });
+  }
+  function dayList(today, n) {
+    var p = today.split('-'), base = Date.UTC(+p[0], +p[1] - 1, +p[2]), out = [];
+    for (var i = n - 1; i >= 0; i--) out.push(new Date(base - i * 864e5).toISOString().slice(0, 10));
+    return out;
+  }
+  function aStats() {
+    var seg = function (act, cur0, opts) { return '<div class="seg" role="group">' + opts.map(function (o) { return '<button type="button" data-act="' + act + '" data-k="' + o[0] + '" class="' + (String(cur0) === String(o[0]) ? 'on' : '') + '">' + o[1] + '</button>'; }).join('') + '</div>'; };
+    if (!S.stats) { needStats(); return adminShell('admin-stats', 'สถิติและกราฟ', 'กำลังโหลดข้อมูล', '', '<div class="card" aria-busy="true" style="display:flex;flex-direction:column;gap:12px"><div class="sk" style="height:26px;width:40%"></div><div class="sk" style="height:200px"></div>' + (S.statsErr ? '<div class="err">' + esc(S.statsErr) + ' <button class="btn sm" data-act="stat-reload">ลองใหม่</button></div>' : '') + '</div>'); }
+    var rng = S.statRange, map = {}, SER = ['var(--s1)', 'var(--s2)', 'var(--s3)'];
+    S.stats.rows.forEach(function (r) { map[r.date] = r.data; });
+    var days = dayList(S.stats.today, rng * 2), cur = days.slice(rng), prev = days.slice(0, rng);
+    function sum(list, k) { return list.reduce(function (t, d) { return t + ((map[d] || {})[k] || 0); }, 0); }
+    function sumPrefix(list, pre) { var o = {}; list.forEach(function (d) { var x = map[d] || {}; Object.keys(x).forEach(function (k) { if (k.indexOf(pre) === 0) o[k.slice(pre.length)] = (o[k.slice(pre.length)] || 0) + x[k]; }); }); return o; }
+    var tv = sum(cur, 'v'), pv = sum(prev, 'v'), tu = sum(cur, 'u'), dl = pv ? (tv - pv) / pv * 100 : null;
+    var ms = comMembers(); if (!ms) needComList(S.fy);
+    var rr = ms ? setRes(ms) : null, sg = scoring(), fr = fyRange(S.fy), c = C();
+    var hrs = c.awards.filter(function (a) { return inFy(a.date, S.fy); }).reduce(function (t, a) { return t + (+a.hours || 0); }, 0), goal = +st().hoursGoal || 20;
+    if (!S.sv) needSv();
+    var svr = S.sv && S.sv.rounds.filter(function (x) { return x.fy === S.fy; })[0], svs = svr && S.sv.sel === svr.id ? S.sv.stats : null;
+    var kpi = '<div class="grid4">' +
+      '<div class="kpi"><span class="l">ยอดเข้าชม ' + rng + ' วัน</span><span class="v">' + nfmt(tv) + '</span><span class="small ' + (dl === null ? 'muted">ยังไม่มีข้อมูลช่วงก่อนหน้า' : (dl >= 0 ? 'delta up">▲ ' : 'delta down">▼ ') + fix(Math.abs(dl), 1) + '% จาก ' + rng + ' วันก่อนหน้า') + '</span></div>' +
+      '<div class="kpi"><span class="l">ผู้เข้าชม (ไม่ซ้ำต่อวัน)</span><span class="v">' + nfmt(tu) + '</span><span class="small muted">เฉลี่ย ' + fix(tv / rng, 1) + ' ครั้งต่อวัน</span></div>' +
+      '<div class="kpi' + (rr && !rr.pass ? ' warn' : '') + '"><span class="l">คะแนน PA ปีงบ ' + S.fy + '</span><span class="v">' + (rr ? fix(rr.avg, 2) : '–') + '</span><span class="small muted">กรรมการส่งผล ' + (rr ? rr.n : 0) + '/' + (ms ? ms.length : 0) + ' คน</span></div>' +
+      '<div class="kpi' + (hrs < goal ? ' warn' : '') + '"><span class="l">ชั่วโมงอบรม ปีงบ ' + S.fy + '</span><span class="v">' + hrs + ' / ' + goal + '</span><span class="small muted">' + (svs ? 'ความพึงพอใจ ' + fix(svs.all, 2) + ' จาก ' + svs.n + ' คน' : 'ตัวชี้วัด 3.1') + '</span></div></div>';
+    var pts = cur.map(function (d) { var p = d.split('-'), x = map[d] || {}; return { l: +p[2] + ' ' + TH_M[+p[1] - 1], v: x.v || 0, tip: fd(d) + ' · ผู้เข้าชม ' + (x.u || 0) + ' คน' }; });
+    var pages = sumPrefix(cur, 'p:'), pageItems = Object.keys(pages).map(function (k) { return { l: PAGE_T[k] || k, v: pages[k] }; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 10);
+    var dev = sumPrefix(cur, 'd:'), wk = sumPrefix(cur, 'w:'), vk = sumPrefix(cur, 'v:');
+    var topW = Object.keys(wk).map(function (id) { var w = find(c.works, 'id', id); return w ? { l: w.title, v: wk[id], tip: w.title + '\nเปิดดู ' + wk[id] + ' ครั้ง' } : null; }).filter(Boolean).sort(function (a, b) { return b.v - a.v; }).slice(0, 5);
+    var topV = Object.keys(vk).map(function (id) { var v = find(c.videos, 'id', id); return v ? { l: v.title, v: vk[id], tip: v.title + '\nเปิดดู ' + vk[id] + ' ครั้ง' } : null; }).filter(Boolean).sort(function (a, b) { return b.v - a.v; }).slice(0, 5);
+    var views = '<section class="sec"><div class="sec-h"><h2>ยอดการเข้าชม</h2>' + seg('stat-range', rng, [[7, '7 วัน'], [30, '30 วัน'], [90, '90 วัน']]) + '</div><div class="stat-grid">' +
+      '<div class="card chart-card span2 viz"><h3>ยอดเข้าชมรายวัน</h3><p class="sub">ชี้ที่กราฟเพื่อดูยอดของแต่ละวัน · ไม่นับตอนเข้าระบบแอดมิน · ยอดของวันนี้อาจเข้ามาช้าไม่เกิน 10 นาที</p>' + lineChart({ pts: pts, color: 'var(--accent)', int: true, unit: 'ครั้ง', aria: 'ยอดเข้าชมรายวัน ' + rng + ' วัน รวม ' + nfmt(tv) + ' ครั้ง', xTicks: rng === 7 ? 7 : 8 }) + tableView(['วันที่', 'ยอดเข้าชม', 'ผู้เข้าชม'], cur.slice().reverse().map(function (d) { var x = map[d] || {}; return [fd(d), nfmt(x.v || 0), nfmt(x.u || 0)]; })) + '</div>' +
+      '<div class="card chart-card viz"><h3>หน้าที่มีคนเข้าชม</h3>' + hChart({ items: pageItems, color: 'var(--accent)', unit: 'ครั้ง', aria: 'ยอดเข้าชมแยกตามหน้า', lw: 120 }) + '</div>' +
+      '<div class="card chart-card viz"><h3>อุปกรณ์ที่ใช้เข้าชม</h3>' + donut({ parts: [{ l: 'มือถือ', v: dev.m || 0, c: SER[0] }, { l: 'คอมพิวเตอร์', v: dev.d || 0, c: SER[1] }, { l: 'แท็บเล็ต', v: dev.t || 0, c: SER[2] }], big: tv ? fix((dev.m || 0) / tv * 100, 0) + '%' : '–', small: 'ใช้มือถือ', unit: 'ครั้ง', aria: 'สัดส่วนอุปกรณ์ที่ใช้เข้าชม' }) + '</div>' +
+      '<div class="card chart-card viz"><h3>ผลงานที่มีคนเปิดดูมากที่สุด</h3>' + hChart({ items: topW, color: 'var(--accent)', unit: 'ครั้ง', aria: 'ผลงานยอดนิยม 5 อันดับ', lw: 190 }) + '</div>' +
+      '<div class="card chart-card viz"><h3>วิดีโอที่มีคนเปิดดูมากที่สุด</h3>' + hChart({ items: topV, color: 'var(--accent)', unit: 'ครั้ง', aria: 'วิดีโอยอดนิยม 5 อันดับ', lw: 190 }) + '</div></div></section>';
+    // คะแนนจากกรรมการ
+    var done = ms ? ms.filter(function (m) { return m.status === 'submitted' && m.data; }) : [], codes = IND_BASE.map(function (x) { return x.code; }), pa;
+    if (!ms) pa = '<div class="card" aria-busy="true"><div class="sk" style="height:160px"></div></div>';
+    else if (!done.length) pa = '<div class="card empty">ยังไม่มีกรรมการส่งผลในปีงบ ' + S.fy + ' <a href="#admin-committee">ไปหน้าคณะกรรมการ</a></div>';
+    else {
+      var mem = ms.map(function (m, i) { return { m: m, done: m.status === 'submitted' && !!m.data, color: SER[i % 3] }; });
+      var avgInd = codes.map(function (cd) { var t = 0; done.forEach(function (m) { t += +m.data.p1[cd] || 0; }); return t / done.length; });
+      var full = sg.p1Max + sg.p2Max, LW = 150, W = 520, iw = W - LW - 56;
+      var stack = mem.map(function (x) {
+        if (!x.done) return '<div class="small muted" style="padding:6px 0">' + esc(x.m.name) + ' · ยังไม่ส่งผล</div>';
+        var cc = paCalc(x.m.data), w1 = cc.p1 / full * iw, w2 = cc.p2 / full * iw, gx = LW + sg.passPct / 100 * iw;
+        return '<svg viewBox="0 0 ' + W + ' 34" role="img" aria-label="' + esc(x.m.name + ' รวม ' + fix(cc.total, 2)) + '"><text x="' + (LW - 10) + '" y="21" text-anchor="end" style="fill:var(--ink)">' + esc(x.m.name.length > 20 ? x.m.name.slice(0, 19) + '…' : x.m.name) + '</text><rect x="' + LW + '" y="8" width="' + iw + '" height="18" rx="4" style="fill:var(--surface-2)"/>' +
+          '<path class="seg" d="' + hbp(LW, 8, Math.max(0, w1 - 1), 18, 0) + '" fill="var(--s1)" data-tip="' + esc(x.m.name + '\nส่วนที่ 1: ' + fix(cc.p1, 2) + ' / ' + sg.p1Max) + '"/><path class="seg" d="' + hbp(LW + w1 + 1, 8, Math.max(0, w2 - 1), 18, 4) + '" fill="var(--s2)" data-tip="' + esc(x.m.name + '\nส่วนที่ 2: ' + fix(cc.p2, 2) + ' / ' + sg.p2Max) + '"/>' +
+          '<line x1="' + gx + '" x2="' + gx + '" y1="4" y2="30" style="stroke:var(--bad);stroke-width:1.5"/><text class="v" x="' + (LW + w1 + w2 + 6) + '" y="21">' + fix(cc.total, 2) + '</text></svg>';
+      }).join('');
+      var heat = '<table class="heat"><thead><tr><th></th>' + codes.map(function (cd) { return '<th>' + cd + '</th>'; }).join('') + '<th>รวม</th></tr></thead><tbody>' +
+        mem.map(function (x) { return '<tr><th class="rowh"><span class="legend"><span><i style="background:' + x.color + '"></i>' + esc(x.m.name) + '</span></span></th>' + codes.map(function (cd) { var v = x.done ? +x.m.data.p1[cd] || 0 : 0; return '<td style="background:' + (v ? 'color-mix(in srgb,var(--accent) ' + (v * 25) + '%,var(--surface))' : 'var(--surface-2)') + ';color:' + (v >= 3 ? 'var(--accent-ink)' : 'var(--ink)') + '" data-tip="' + esc(x.m.name + '\nตัวชี้วัด ' + cd + ': ' + (v ? 'ระดับ ' + v : 'ยังไม่ส่ง')) + '">' + (v || '–') + '</td>'; }).join('') + '<td style="background:var(--surface-2)">' + (x.done ? fix(paCalc(x.m.data).total, 1) : '–') + '</td></tr>'; }).join('') +
+        '</tbody></table><div class="legend" style="margin-top:6px">ระดับ <span><i style="background:color-mix(in srgb,var(--accent) 25%,var(--surface))"></i>1</span><span><i style="background:color-mix(in srgb,var(--accent) 50%,var(--surface))"></i>2</span><span><i style="background:color-mix(in srgb,var(--accent) 75%,var(--surface))"></i>3</span><span><i style="background:var(--accent)"></i>4</span></div>';
+      var catTip = IND_BASE.map(function (x) { return x.code + ' ' + x.name; });
+      var perInd = S.statMode === 'all'
+        ? '<h3>ระดับเฉลี่ยรายตัวชี้วัด (รวม ' + done.length + ' คน)</h3><p class="sub">ระดับ 1–4 · เส้นประสีแดง = ระดับ 3 (ตามที่คาดหวัง)</p>' + vChart({ cats: codes, series: [{ name: 'เฉลี่ย', color: 'var(--accent)', vals: avgInd }], max: 4, ref: 3, fmt: function (v) { return fix(v, v % 1 ? 1 : 0); }, aria: 'ระดับเฉลี่ยรายตัวชี้วัด', w: 860, catTip: catTip }) + tableView(['ตัวชี้วัด', 'ระดับเฉลี่ย'], codes.map(function (cd, i) { return [cd, fix(avgInd[i], 2)]; }))
+        : '<h3>ระดับรายตัวชี้วัด แยกรายกรรมการ</h3>' + legendHtml(mem.filter(function (x) { return x.done; }).map(function (x) { return { name: x.m.name, color: x.color }; })) + vChart({ cats: codes, series: mem.filter(function (x) { return x.done; }).map(function (x) { return { name: x.m.name, color: x.color, vals: codes.map(function (cd) { return +x.m.data.p1[cd] || 0; }) }; }), max: 4, fmt: function (v) { return fix(v, v % 1 ? 1 : 0); }, aria: 'ระดับรายตัวชี้วัดแยกรายกรรมการ', w: 900, catTip: catTip }) + '<div style="overflow-x:auto">' + heat + '</div>';
+      pa = '<div class="stat-grid"><div class="card chart-card viz"><h3>คะแนนเฉลี่ยรวม</h3><p class="sub">ปีงบ ' + S.fy + ' · ขีดแดง = เกณฑ์ผ่าน</p>' + meter({ v: rr.avg, max: full, pass: full * sg.passPct / 100, aria: 'คะแนนเฉลี่ย ' + fix(rr.avg, 2) + ' จาก ' + full, tip: 'คะแนนเฉลี่ย ' + fix(rr.avg, 2) }) + '<div style="text-align:center">' + resPill(rr) + '<div class="small muted" style="margin-top:4px">กรรมการแต่ละคนต้องให้ไม่ต่ำกว่าร้อยละ ' + sg.passPct + '</div></div></div>' +
+        '<div class="card chart-card viz"><h3>คะแนนรวมรายกรรมการ</h3><p class="sub">แท่งแบ่งเป็นส่วนที่ 1 และส่วนที่ 2 · ขีดแดง = เกณฑ์ร้อยละ ' + sg.passPct + '</p>' + legendHtml([{ name: 'ส่วนที่ 1 (เต็ม ' + sg.p1Max + ')', color: 'var(--s1)' }, { name: 'ส่วนที่ 2 (เต็ม ' + sg.p2Max + ')', color: 'var(--s2)' }]) + stack +
+        tableView(['กรรมการ', 'ส่วนที่ 1', 'ส่วนที่ 2', 'รวม'], mem.map(function (x) { if (!x.done) return [x.m.name, '–', '–', 'ยังไม่ส่ง']; var cc = paCalc(x.m.data); return [x.m.name, fix(cc.p1, 2), fix(cc.p2, 2), fix(cc.total, 2)]; })) + '</div>' +
+        '<div class="card chart-card span2 viz">' + perInd + '</div></div>';
+    }
+    var paSec = '<section class="sec"><div class="sec-h"><h2>คะแนนประเมินจากกรรมการ</h2>' + (done.length ? seg('stat-mode', S.statMode, [['all', 'รวม ' + done.length + ' คน'], ['person', 'แยกรายคน']]) : '') + '</div>' + pa + '</section>';
+    // ผลงาน แบบประเมิน การพัฒนาตนเอง
+    var fyW = c.works.filter(function (w) { return inFy(w.date, S.fy); });
+    var byCat = Object.keys(CATS).map(function (k) { return { l: CATS[k].label, v: fyW.filter(function (w) { return w.cat === k; }).length }; }).filter(function (x) { return x.v; }).sort(function (a, b) { return b.v - a.v; });
+    var months = [], mlab = [], cum = [], acc = 0;
+    for (var mi = 0; mi < 12; mi++) {
+      var mm = (9 + mi) % 12, yy = S.fy - 544 + (mm < 9 ? 1 : 0), key = yy + '-' + (mm < 9 ? '0' : '') + (mm + 1);
+      months.push(fyW.filter(function (w) { return w.date.slice(0, 7) === key; }).length); mlab.push(TH_M[mm]);
+      acc += c.awards.filter(function (a) { return a.date.slice(0, 7) === key; }).reduce(function (t, a) { return t + (+a.hours || 0); }, 0);
+      if (key <= new Date().toISOString().slice(0, 7) || S.fy < fyNow(new Date())) cum.push({ l: TH_M[mm], v: acc, tip: TH_MF[mm] + ' ' + (yy + 543) + ' (สะสม)' });
+    }
+    var other = '<section class="sec"><h2>ผลงาน แบบประเมิน และการพัฒนาตนเอง ปีงบ ' + S.fy + '</h2><div class="stat-grid">' +
+      '<div class="card chart-card viz"><h3>ผลงานแยกประเภท</h3>' + hChart({ items: byCat, color: 'var(--accent)', unit: 'ชิ้น', aria: 'จำนวนผลงานแยกประเภท', lw: 160 }) + '</div>' +
+      '<div class="card chart-card viz"><h3>ผลงานที่เพิ่มรายเดือน</h3><p class="sub">ต.ค. ' + ((S.fy - 1) % 100) + ' – ก.ย. ' + (S.fy % 100) + ' · รวม ' + fyW.length + ' ชิ้น</p>' + vChart({ cats: mlab, series: [{ name: 'ผลงาน', color: 'var(--accent)', vals: months }], int: true, unit: 'ชิ้น', aria: 'จำนวนผลงานรายเดือน', w: 560, h: 220 }) + '</div>' +
+      (svs ? '<div class="card chart-card viz"><h3>ผู้ตอบแบบประเมินความพึงพอใจ</h3><p class="sub">' + esc(svr.label) + '</p>' + donut({ parts: [{ l: 'นักเรียน', v: svs.byRole.student, c: SER[0] }, { l: 'ผู้ปกครอง', v: svs.byRole.parent, c: SER[1] }, { l: 'ครู/บุคลากร', v: svs.byRole.teacher, c: SER[2] }], big: String(svs.n), small: 'คน', unit: 'คน', aria: 'ผู้ตอบแบบประเมิน ' + svs.n + ' คน' }) + '</div>' +
+        '<div class="card chart-card viz"><h3>ความพึงพอใจรายข้อ</h3><p class="sub">ค่าเฉลี่ยเต็ม 5</p>' + hChart({ items: svr.items.map(function (t, i) { return { l: (i + 1) + '. ' + t, v: svs.per[i], tip: t + '\n' + fix(svs.per[i], 2) + ' จาก 5' }; }), max: 5, color: 'var(--accent)', fmt: function (v) { return fix(v, 2); }, aria: 'ค่าเฉลี่ยความพึงพอใจรายข้อ', lw: 210 }) + '</div>' : '') +
+      '<div class="card chart-card span2 viz"><h3>ชั่วโมงอบรมสะสม</h3><p class="sub">เส้นแดง = เป้าหมาย ' + goal + ' ชั่วโมง (ตัวชี้วัด 3.1)</p>' + (cum.length ? lineChart({ pts: cum, color: 'var(--accent)', int: true, unit: 'ชม.', ref: goal, refLabel: 'เป้า ' + goal + ' ชม.', aria: 'ชั่วโมงอบรมสะสม ' + acc + ' ชั่วโมง', xTicks: 12, h: 220 }) : '<p class="small muted">ยังไม่ถึงปีงบนี้</p>') + '</div></div></section>';
+    return adminShell('admin-stats', 'สถิติและกราฟ', 'ยอดเข้าชม คะแนนกรรมการ ผลงาน แบบประเมิน และชั่วโมงอบรม · ชี้ที่กราฟเพื่อดูตัวเลข · ไม่เก็บข้อมูลส่วนบุคคลของผู้เข้าชม',
+      '<button class="btn" data-act="stat-reload">' + ic('refresh', 16) + ' โหลดใหม่</button><button class="btn" data-act="stat-csv">' + ic('download', 16) + ' ส่งออก CSV</button>', kpi + views + paSec + other);
+  }
+  function statCsv() {
+    if (!S.stats) return;
+    var rows = [['วันที่', 'ยอดเข้าชม', 'ผู้เข้าชม', 'มือถือ', 'คอมพิวเตอร์', 'แท็บเล็ต'].concat(Object.keys(PAGE_T).map(function (k) { return PAGE_T[k]; }))];
+    S.stats.rows.forEach(function (r) { var x = r.data; rows.push([r.date, x.v || 0, x.u || 0, x['d:m'] || 0, x['d:d'] || 0, x['d:t'] || 0].concat(Object.keys(PAGE_T).map(function (k) { return x['p:' + k] || 0; }))); });
+    var blob = new Blob(['﻿' + rows.map(function (r) { return r.join(','); }).join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'สถิติการเข้าชม_' + S.stats.today + '.csv'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 500);
+  }
+
+  /* ---------- ตรวจสอบเอกสาร ---------- */
+  function vfUrl(code) { return siteUrl() + '#verify-' + code; }
+  function sha256File(file, cb) {
+    if (!window.crypto || !crypto.subtle) { cb('เบราว์เซอร์นี้คำนวณลายนิ้วมือไฟล์ไม่ได้'); return; }
+    var fr = new FileReader();
+    fr.onload = function () { crypto.subtle.digest('SHA-256', fr.result).then(function (buf) { var a = new Uint8Array(buf), h = ''; for (var i = 0; i < a.length; i++) h += ('0' + a[i].toString(16)).slice(-2); cb(null, h); }, function () { cb('คำนวณลายนิ้วมือไฟล์ไม่สำเร็จ'); }); };
+    fr.onerror = function () { cb('อ่านไฟล์ไม่สำเร็จ'); };
+    fr.readAsArrayBuffer(file);
+  }
+  function needVerify(code) {
+    if (!code || S.vfRes[code] || S.vfLoading === code) return; S.vfLoading = code;
+    api('verify', { code: code }, { loader: 'กำลังตรวจสอบ' }, function (err, res) { S.vfLoading = ''; S.vfRes[code] = err ? { kind: 'err', msg: err } : res; if (route().indexOf('verify') === 0) render(); });
+  }
+  function pVerify(code) {
+    code = String(code || '').toUpperCase(); if (code) needVerify(code);
+    var res = code ? S.vfRes[code] : null, out = '';
+    function kv(rows) { return '<dl class="kvlist small">' + rows.filter(function (r) { return r[1]; }).map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>'; }
+    function cmp(hash) {
+      if (!hash) return '<p class="small muted">ต้นฉบับไม่มีลายนิ้วมือไฟล์ให้เทียบ</p>';
+      var c = S.vfCmp && S.vfCmp.code === code ? S.vfCmp : null;
+      return '<div class="vf-cmp"><b class="small">เทียบไฟล์ที่ได้รับกับต้นฉบับ</b><p class="small muted">เลือกไฟล์ที่ได้รับมา ระบบคำนวณลายนิ้วมือในเครื่องของท่าน ไม่อัปโหลดไฟล์ขึ้นระบบ</p><label class="btn sm" style="align-self:flex-start">' + ic('upload', 14) + ' เลือกไฟล์<input type="file" id="vf-file" hidden></label>' +
+        (c ? (c.err ? '<div class="err">' + esc(c.err) + '</div>' : c.hash === hash ? '<span class="pill good">' + ic('check', 13) + ' ไฟล์ “' + esc(c.name) + '” ตรงกับต้นฉบับทุกไบต์</span>' : '<span class="pill bad">' + ic('x', 13) + ' ไฟล์ “' + esc(c.name) + '” ไม่ตรงกับต้นฉบับ อาจถูกแก้ไขหรือเป็นคนละไฟล์</span>') : '') + '</div>';
+    }
+    if (code && !res) out = '<div class="card" aria-busy="true"><div class="sk" style="height:120px"></div></div>';
+    else if (res && res.kind === 'award') {
+      out = '<div class="card raised vf-ok"><div class="vf-badge">' + ic('check', 26) + '</div><div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:10px"><span class="pill good" style="align-self:flex-start">พบเอกสารนี้ในแฟ้มผลงาน</span><h2>' + esc(res.title) + '</h2>' +
+        kv([['ประเภท', esc(VF_TYPE[res.type] || res.type) + (res.level ? ' · ระดับ' + esc(res.level) : '')], ['ผู้ได้รับ', esc(res.owner.name) + ' · ' + esc(res.owner.school)], ['วันที่', fd(res.date)], ['หน่วยงานที่มอบ', esc(res.org)], ['ชั่วโมง', res.hours ? res.hours + ' ชั่วโมง' : ''], ['รหัสเอกสาร', '<span class="mono">' + esc(res.code) + '</span>'], ['ลายนิ้วมือไฟล์ (SHA-256)', res.hash ? '<span class="mono vf-hash">' + res.hash + '</span>' : '']]) +
+        (res.fileUrl || res.imgUrl ? '<a class="btn sm" style="align-self:flex-start" href="' + esc(res.fileUrl || res.imgUrl) + '" target="_blank" rel="noopener">' + ic('ext', 14) + ' เปิดไฟล์ต้นฉบับ</a>' : (res.vis !== 'public' ? '<p class="small muted">' + ic('lock', 13) + ' ไฟล์ต้นฉบับไม่เปิดเผยต่อสาธารณะ</p>' : '')) + cmp(res.hash) + '</div>' + (res.imgUrl ? '<div class="vf-cert"><img src="' + esc(res.imgUrl) + '" alt="' + esc(res.title) + '"></div>' : '') + '</div>';
+    } else if (res && res.kind === 'report') {
+      var d = res.data || {}, cm = d.committee || {};
+      out = '<div class="card raised ' + (res.revoked ? 'vf-bad' : 'vf-ok') + '"><div class="vf-badge' + (res.revoked ? ' bad' : '') + '">' + ic(res.revoked ? 'x' : 'check', 26) + '</div><div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:10px">' +
+        (res.revoked ? '<span class="pill bad" style="align-self:flex-start">รหัสนี้ถูกยกเลิกแล้ว มีฉบับใหม่กว่า ติดต่อเจ้าของแฟ้ม</span>' : '<span class="pill good" style="align-self:flex-start">เอกสารออกจากระบบนี้จริง</span>') + '<h2>' + esc(res.title) + '</h2>' +
+        kv([['เจ้าของแฟ้ม', esc(res.owner.name) + ' · ตำแหน่ง ' + esc(res.owner.position) + ' · ' + esc(res.owner.school)], ['ออกเอกสารเมื่อ', fdt(res.issuedAt)], ['ตัวชี้วัดที่มีข้อมูล', (d.indFilled || 0) + ' จาก 15'], ['หลักฐาน ณ วันออก', 'ผลงาน ' + (d.works || 0) + ' · รางวัล/อบรม ' + (d.awards || 0) + ' · วิดีโอ ' + (d.videos || 0) + ' · อบรม ' + (d.hours || 0) + ' ชม.'],
+          ['ผลจากกรรมการ', cm.n ? 'ส่งผล ' + cm.n + '/' + cm.of + ' คน · เฉลี่ยร้อยละ ' + fix(cm.avgPct, 2) + ' · ' + (cm.pass ? 'ผ่านเกณฑ์' : 'ไม่ผ่านเกณฑ์') + (cm.complete ? '' : ' (ผลชั่วคราว)') : 'ยังไม่มีผล ณ วันออกเอกสาร'], ['รหัสเอกสาร', '<span class="mono">' + esc(res.code) + '</span>'], ['ลายนิ้วมือไฟล์ (SHA-256)', res.hash ? '<span class="mono vf-hash">' + res.hash + '</span>' + (res.hashName ? ' <span class="muted">(' + esc(res.hashName) + ')</span>' : '') : '']]) +
+        '<div class="row"><a class="btn sm" href="#pa">' + ic('file', 14) + ' เปิดแฟ้ม PA ปีงบ ' + res.fy + '</a></div>' + cmp(res.hash) + '</div></div>';
+    } else if (res) {
+      out = '<div class="card raised vf-bad"><div class="vf-badge bad">' + ic('x', 26) + '</div><div style="flex:1"><span class="pill bad">' + (res.kind === 'err' ? esc(res.msg) : 'ไม่พบรหัสนี้ในระบบ') + '</span><p style="margin-top:8px">ตรวจสอบว่าพิมพ์รหัส <span class="mono">' + esc(code) + '</span> ถูกต้อง หรือเอกสารอาจไม่ได้ออกจากระบบนี้ ติดต่อครูเจ้าของแฟ้มเพื่อยืนยัน</p></div></div>';
+    }
+    return pub('verify', '<div class="vf-wrap"><div style="display:flex;flex-direction:column;gap:10px"><span class="eyebrow">สำหรับผู้รับเอกสาร</span><h1>ตรวจสอบความถูกต้องของเอกสาร</h1><p class="muted">เกียรติบัตร วุฒิบัตร และรายงาน PA ของ ' + esc(st().name) + ' มี QR และรหัสตรวจสอบ สแกน QR หรือกรอกรหัสเพื่อยืนยันว่าเอกสารมีอยู่จริงในแฟ้ม และเทียบไฟล์ที่ได้รับกับต้นฉบับได้</p></div>' +
+      '<form id="vf-form" class="card raised" style="display:flex;flex-direction:column;gap:12px"><div class="field"><label for="vf-code">รหัสตรวจสอบ</label><input id="vf-code" class="inp mono" value="' + esc(code) + '" placeholder="เช่น BLL-2570-ABC234" autocomplete="off" autocapitalize="characters" spellcheck="false" style="font-size:17px;letter-spacing:.05em"></div>' +
+      '<button class="btn primary" type="submit">' + ic('search', 16) + ' ตรวจสอบ</button></form></div>' + (out ? '<div style="margin-top:18px">' + out + '</div>' : ''));
+  }
+  /* หลังบ้าน: รหัสตรวจสอบ */
+  function needVfl(force) {
+    if ((S.vfl && !force) || S.vflLoading) return; S.vflLoading = true;
+    api('verifyList', {}, { loader: false }, function (err, res) { S.vflLoading = false; if (err) { S.vflErr = err; toast(err); render(); return; } S.vflErr = ''; S.vfl = res; var r = route(); if (r === 'admin-verify' || r === 'report') render(); });
+  }
+  function vfCall(action, data, msg, cb) {
+    api(action, data, { loader: 'กำลังบันทึก' }, function (err, res) { if (err) { toast(err); return; } S.vfl = res; S.vfRes = {}; closeModal(); render(); if (msg) toast(msg); if (cb) cb(res); });
+  }
+  function reportCode(fy) { if (!S.vfl) return null; return S.vfl.reports.filter(function (x) { return x.fy === fy && !x.revoked; })[0] || null; }
+  function qrModal(code, title) {
+    S.qrCode = code;
+    openModal('QR ตรวจสอบเอกสาร', '<div class="qr-box">' + qrSvg(vfUrl(code), 220, 'QR ตรวจสอบ ' + code) + '<b class="mono">' + esc(code) + '</b><span class="small muted">' + esc(title) + '</span><span class="small muted mono" style="word-break:break-all">' + esc(vfUrl(code)) + '</span></div>' +
+      '<p class="small muted">ดาวน์โหลด QR ไปวางบนสำเนาเอกสารก่อนส่ง ผู้รับสแกนแล้วจะเห็นข้อมูลเอกสารนี้ในแฟ้ม</p>',
+      '<button class="btn" data-act="copy-vf">' + ic('copy', 16) + ' คัดลอกลิงก์</button><button class="btn primary" data-act="qr-dl">' + ic('download', 16) + ' ดาวน์โหลด QR</button>');
+  }
+  function qrDownload(code) {
+    var svg = qrSvg(vfUrl(code), 600, 'QR ' + code).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })); a.download = 'QR_' + code + '.svg'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 500);
+  }
+  function aVerify() {
+    if (!S.vfl) { needVfl(); return adminShell('admin-verify', 'ตรวจสอบเอกสาร (QR)', 'กำลังโหลด', '', '<div class="card" aria-busy="true"><div class="sk" style="height:160px"></div>' + (S.vflErr ? '<div class="err">' + esc(S.vflErr) + ' <button class="btn sm" data-act="vf-reload">ลองใหม่</button></div>' : '') + '</div>'); }
+    var reps = S.vfl.reports, c = C();
+    var rr = reps.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>รหัส</th><th>ปีงบ</th><th>ออกเมื่อ</th><th>ลายนิ้วมือไฟล์</th><th>สถานะ</th><th></th></tr></thead><tbody>' + reps.map(function (x) {
+      return '<tr class="' + (x.revoked ? 'dim' : '') + '"><td class="mono">' + esc(x.code) + '</td><td>' + x.fy + '</td><td class="small">' + fdt(x.issuedAt) + '</td><td class="small">' + (x.hash ? ic('check', 13) + ' ' + esc(x.hashName || 'แนบแล้ว') : '<span class="muted">ยังไม่แนบ</span>') + '</td><td>' + (x.revoked ? '<span class="pill off">ยกเลิกแล้ว</span>' : '<span class="pill good">ใช้งาน</span>') + '</td>' +
+        '<td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm" data-act="vf-qr" data-k="' + esc(x.code) + '">' + ic('search', 14) + ' QR</button><label class="btn sm" title="เลือกไฟล์ PDF ที่พิมพ์และส่งจริง ระบบเก็บเฉพาะลายนิ้วมือไฟล์">' + ic('upload', 14) + ' แนบลายนิ้วมือ<input type="file" accept="application/pdf" data-vfhash="' + esc(x.code) + '" hidden></label><button class="btn sm" data-act="vf-revoke" data-k="' + esc(x.code) + '" data-on="' + (x.revoked ? '0' : '1') + '">' + (x.revoked ? 'ใช้งานอีกครั้ง' : 'ยกเลิก') + '</button></div></td></tr>';
+    }).join('') + '</tbody></table></div>' : '<p class="small muted">ยังไม่เคยออกรหัสรายงาน</p>';
+    var aw = c.awards.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    var arows = pageOf(aw, 'a-vfa', perA()).map(function (a) {
+      var x = find(S.vfl.awards, 'id', a.id), code = x ? x.code : '';
+      return '<tr><td><b>' + esc(a.title) + '</b><br><span class="small muted">' + esc(VF_TYPE[a.type] || '') + (a.level ? ' · ระดับ' + esc(a.level) : '') + ' · ' + fd(a.date) + '</span></td><td class="mono small">' + esc(code) + '</td><td>' + visChipText(a.vis) + '</td><td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm" data-act="vf-qr" data-k="' + esc(code) + '" data-t="' + esc(a.title) + '">' + ic('search', 14) + ' QR</button><a class="btn sm" href="#verify-' + esc(code) + '">ทดสอบ</a></div></td></tr>';
+    }).join('');
+    return adminShell('admin-verify', 'ตรวจสอบเอกสาร (QR)', 'รหัสตรวจสอบสร้างด้วยกุญแจลับในระบบ ปลอมรหัสไม่ได้ · ผู้รับเอกสารตรวจที่หน้า “ตรวจสอบเอกสาร” หรือสแกน QR',
+      '<a class="btn" href="#verify">' + ic('ext', 16) + ' หน้าตรวจสอบ</a><button class="btn primary" data-act="vf-issue">' + ic('plus', 16) + ' ออกรหัสรายงาน PA ปีงบ ' + S.fy + '</button>',
+      '<div class="note">' + ic('shield', 15) + ' ขั้นตอนแนะนำ: ออกรหัสรายงาน → เปิด “รายงาน PDF” แล้วพิมพ์เป็น PDF (QR จะอยู่บนปก) → กด “แนบลายนิ้วมือ” เลือกไฟล์ PDF ที่จะส่งจริง ผู้รับนำไฟล์มาเทียบได้ว่าไม่ถูกแก้ไข</div>' +
+      '<section class="sec"><h2>รายงาน PA</h2>' + rr + '</section>' +
+      '<section class="sec"><h2>รางวัล เกียรติบัตร และการอบรม (' + aw.length + ')</h2><p class="small muted" style="margin-bottom:8px">รหัสของแต่ละรายการคงที่ ใช้ได้ทันที ไฟล์ที่แนบไว้ในระบบคือต้นฉบับที่ใช้เทียบ</p>' +
+      (aw.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>รายการ</th><th>รหัส</th><th>การเปิดเผย</th><th></th></tr></thead><tbody>' + arows + '</tbody></table></div>' + pagerNav('a-vfa') : '<p class="small muted">ยังไม่มีรางวัล/อบรม</p>') + '</section>');
+  }
+  function visChipText(v) { return v === 'public' ? '<span class="pill good">สาธารณะ</span>' : v === 'committee' ? '<span class="pill warn">เฉพาะกรรมการ</span>' : '<span class="pill off">ส่วนตัว</span>'; }
+
+  /* ---------- รายงาน PDF (พิมพ์จากเบราว์เซอร์) ---------- */
+  function reportFy() { return S.com ? S.com.committee.fy : S.fy; }
+  function pReport() {
+    var fy = reportFy(), back = S.admin ? 'admin' : (S.com ? 'committee' : 'pa');
+    var bar = function (mid) { return '<div class="rep-bar"><a class="btn" href="#' + back + '">' + ic('left', 16) + ' กลับ</a><b>รายงาน PDF</b>' + (mid || '') + '<span class="sp"></span>' + (S.admin ? fySelect('fy-sel-r') : '') + '<button class="btn primary" data-act="print">' + ic('print', 16) + ' พิมพ์ / บันทึก PDF</button></div>'; };
+    var docs = docsOf(fy); if (!docs) { needDocs(fy); return bar() + '<div class="rep-wrap"><div class="sk" style="width:210mm;max-width:100%;height:297mm"></div></div>'; }
+    if (docs.pa.hidden || docs.pa.locked) return bar() + '<div class="rep-wrap"><div class="card empty" style="max-width:560px">' + ic('lock', 18) + ' แฟ้ม PA ปีงบ ' + fy + ' ยังไม่เปิดให้ดู</div></div>';
+    var canScore = S.admin || !!S.com, ms = canScore ? comMembers() : null;
+    if (S.admin) { if (!ms) needComList(fy); needVfl(); }
+    var s = st(), sg = scoring(), g = fyRange(fy), pa = docs.pa, ag = docs.agree && docs.agree.teach ? docs.agree : null, c = C(), vc = S.admin ? reportCode(fy) : null, code = vc ? vc.code : '';
+    var pages = [];
+    var verifyBox = code ? '<div class="a4-verify">' + qrSvg(vfUrl(code), 84, 'QR ตรวจสอบเอกสาร') + '<div><b>ตรวจสอบความถูกต้องของเอกสาร</b><br>สแกน QR หรือกรอกรหัส <span class="mono">' + esc(code) + '</span><br>ที่ ' + esc(siteUrl()) + '#verify</div></div>' : '<div class="a4-verify">' + qrSvg(siteUrl() + '#pa', 84, 'QR แฟ้ม PA') + '<div><b>ดูหลักฐานฉบับเต็มออนไลน์</b><br>สแกน QR เพื่อเปิดแฟ้ม PA วิดีโอ และผลงานทั้งหมด</div></div>';
+    pages.push({ cover: true, b: '<div class="a4-cover">' + seal('a4-seal') + '<div><p class="a4-k">แบบรายงานผลการพัฒนางานตามข้อตกลง (PA)</p><h1>รายงานผลการปฏิบัติงานตามข้อตกลงในการพัฒนางาน</h1><p>ปีงบประมาณ ' + fy + '<br>(' + thDateFull(g[0]).replace('วันที่ ', '') + ' – ' + thDateFull(g[1]).replace('วันที่ ', '') + ')</p></div>' +
+      '<div class="a4-who"><p><b>' + esc(s.name) + '</b></p><p>ตำแหน่ง ' + esc(s.position || 'ครู') + (sg.acad ? ' วิทยฐานะ' + esc(sg.acad) : '') + (s.subject ? ' · ' + esc(s.subject) : '') + '</p><p>' + esc(s.school) + ' ' + esc(s.area) + '</p></div>' + verifyBox + '</div>' });
+    var ev = 0; IND_BASE.forEach(function (x) { ev += evidenceOf(x.code, fy).length; });
+    var hrsList = c.awards.filter(function (a) { return inFy(a.date, fy); }), hrs = hrsList.reduce(function (t, a) { return t + (+a.hours || 0); }, 0);
+    var info = [['ชื่อ–สกุล', esc(s.name)], ['ตำแหน่ง', esc(s.position || 'ครู') + (sg.acad ? ' วิทยฐานะ' + esc(sg.acad) : ' (ยังไม่มีวิทยฐานะ)')], ['สถานศึกษา', esc(s.school) + ' ' + esc(s.area)], ['กลุ่มสาระ/วิชาที่สอน', blank(s.subject)]];
+    (D.education || []).slice(0, 3).forEach(function (e, i) { info.push([i ? '' : 'วุฒิการศึกษา', esc([e.level, e.degree, e.inst, e.year].filter(Boolean).join(' · '))]); });
+    if (ag) ag.teach.forEach(function (t, i) { var lt = loadTotal(ag, i); info.push(['ภาระงานสอน ภาคเรียนที่ ' + esc(t.term), lt ? lt + ' ชั่วโมง/สัปดาห์' : '<span class="muted">ยังไม่ได้กรอกในแบบข้อตกลง</span>']); });
+    info.push(['หลักฐานที่ผูกกับตัวชี้วัด', ev + ' รายการ'], ['ชั่วโมงอบรม/พัฒนาตนเอง', hrs + ' ชั่วโมง (เป้าหมาย ' + (+s.hoursGoal || 20) + ' ชั่วโมง)']);
+    pages.push({ t: 'ข้อมูลผู้จัดทำข้อตกลง', b: '<table class="tbl"><tbody>' + info.map(function (f) { return '<tr><th style="width:34%">' + f[0] + '</th><td>' + f[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
+      '<h3 class="a4-sub">สารบัญ</h3><ol class="a4-toc"><li><span>ส่วนที่ 1 ข้อตกลงในการพัฒนางานตามมาตรฐานตำแหน่ง</span><b>3–5</b></li><li><span>ส่วนที่ 2 ประเด็นท้าทายในการพัฒนาผลลัพธ์การเรียนรู้ของผู้เรียน</span><b>6</b></li><li><span>การพัฒนาตนเองและหลักฐานประกอบ</span><b>7</b></li>' + (canScore ? '<li><span>สรุปผลการประเมินจากคณะกรรมการ</span><b>8</b></li>' : '') + '</ol>' });
+    [1, 2, 3].forEach(function (sd) {
+      pages.push({ t: 'ส่วนที่ 1 · ด้านที่ ' + sd + ' ' + SIDES[sd], b: '<div class="a4-scroll"><table class="tbl a4-tbl"><thead><tr><th style="width:40px">ข้อ</th><th>งาน (Tasks)</th><th>ผลลัพธ์ (Outcomes)</th><th>ตัวชี้วัด (Indicators)</th><th style="width:118px">หลักฐาน</th></tr></thead><tbody>' +
+        pa.ind.filter(function (x) { return indSide(x.code) === sd; }).map(function (x) {
+          var e = evidenceOf(x.code, fy);
+          return '<tr><td><b>' + x.code + '</b></td><td><b class="a4-ind">' + esc(indName(x.code)) + '</b>' + txt(x.task) + '</td><td>' + txt(x.out) + '</td><td>' + txt(x.kpi) + '</td><td class="small">' + (e.length ? e.slice(0, 4).map(function (y) { return '• ' + esc(y.title.length > 34 ? y.title.slice(0, 33) + '…' : y.title); }).join('<br>') + (e.length > 4 ? '<br>และอีก ' + (e.length - 4) + ' รายการ' : '') : '<span class="muted">–</span>') + (x.photos.length ? '<br><span class="muted">ภาพ ' + x.photos.length + ' ภาพ</span>' : '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>' });
+    });
+    var ch = pa.challenge;
+    pages.push({ t: 'ส่วนที่ 2 ประเด็นท้าทาย', b: '<h3 class="a4-sub">' + blank(ch.title) + '</h3><p><b>สภาพปัญหาของผู้เรียน</b> ' + txt(ch.problem) + '</p><p><b>วิธีการดำเนินการให้บรรลุผล</b></p>' + (ch.steps.length ? '<ol>' + ch.steps.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' : '<p class="muted">–</p>') +
+      '<table class="tbl"><tbody><tr><th style="width:34%">ผลลัพธ์เชิงปริมาณ (เป้าหมาย)</th><td>' + txt(ch.quant) + '</td></tr><tr><th>ผลลัพธ์เชิงคุณภาพ (เป้าหมาย)</th><td>' + txt(ch.qual) + '</td></tr><tr><th>ผลที่เกิดขึ้นจริง</th><td>' + txt(ch.result) + '</td></tr></tbody></table>' });
+    var fyW = c.works.filter(function (w) { return shown(w) && inFy(w.date, fy); });
+    var byCat = Object.keys(CATS).map(function (k) { return [CATS[k].label, fyW.filter(function (w) { return w.cat === k; }).length]; }).filter(function (x) { return x[1]; });
+    var svr = S.admin && S.sv ? S.sv.rounds.filter(function (x) { return x.fy === fy; })[0] : null, svs = svr && S.sv.sel === svr.id ? S.sv.stats : null;
+    if (S.admin && !S.sv) needSv();
+    pages.push({ t: 'การพัฒนาตนเองและหลักฐานประกอบ', b: '<h3 class="a4-sub">การอบรมและรางวัล (' + hrsList.length + ' รายการ · ' + hrs + ' ชั่วโมง)</h3>' +
+      (hrsList.length ? '<table class="tbl"><thead><tr><th style="width:92px">วันที่</th><th>รายการ</th><th>หน่วยงาน</th><th style="width:60px" class="r">ชม.</th></tr></thead><tbody>' + hrsList.slice(0, 14).map(function (a) { return '<tr><td class="small">' + fd(a.date) + '</td><td>' + esc(a.title) + '</td><td class="small">' + esc(a.org) + '</td><td class="r num">' + (a.hours || '') + '</td></tr>'; }).join('') + '</tbody></table>' + (hrsList.length > 14 ? '<p class="small muted">และอีก ' + (hrsList.length - 14) + ' รายการ</p>' : '') : '<p class="muted">–</p>') +
+      '<h3 class="a4-sub">ผลงานในปีงบประมาณ (' + fyW.length + ' ชิ้น)</h3><p>' + (byCat.length ? byCat.map(function (x) { return esc(x[0]) + ' ' + x[1] + ' ชิ้น'; }).join(' · ') : '–') + '</p>' +
+      (svs && svs.n ? '<h3 class="a4-sub">ความพึงพอใจต่อการจัดการเรียนรู้ (' + esc(svr.label) + ')</h3><p>ผู้ตอบ ' + svs.n + ' คน · ค่าเฉลี่ยรวม <b>' + fix(svs.all, 2) + '</b> จาก 5 (ระดับ' + svLevel(svs.all) + ')</p>' : '') });
+    if (canScore) {
+      var rr = ms ? setRes(ms) : null, list = ms || [];
+      pages.push({ t: 'สรุปผลการประเมินจากคณะกรรมการ', b: !ms ? '<div class="sk" style="height:200px"></div>' : !list.length ? '<p class="muted">ปีงบนี้ยังไม่ได้กำหนดคณะกรรมการ</p>' :
+        '<div class="a4-scroll">' + pa3Table(list) + '</div><p class="small" style="margin-top:6px">ภาระงาน ' + loadMark(list) + '</p><p style="margin:6px 0"><b>สรุปผลการประเมินทั้ง 2 ส่วน จากกรรมการ ' + list.length + ' คน</b> ' + resPill(rr) + '</p>' +
+        (rr && !rr.complete ? '<p class="small muted">* ยังส่งผลไม่ครบ ผลเป็นผลชั่วคราว</p>' : '') + '<p class="small muted">แบบ PA2 และ PA3 ฉบับทางการพิมพ์ได้จากหน้า “แบบ PA2 / PA3”</p>' +
+        '<div class="a4-sigs">' + list.map(function (m) { var ok = m.status === 'submitted'; return '<div>' + (ok && m.sigUrl ? '<img class="sig" src="' + esc(m.sigUrl) + '" alt="ลายมือชื่อ">' : '<div class="sig-none">' + (ok ? 'ส่งผลโดยไม่ลงลายมือชื่ออิเล็กทรอนิกส์' : 'ยังไม่ส่งผล') + '</div>') + '<span>(' + esc(m.name) + ')</span><span class="small">' + COM_ROLE[m.role] + '</span><span class="small muted">' + (ok ? 'ส่งผล ' + fdt(m.submittedAt) : '') + '</span></div>'; }).join('') + '</div>' });
+    }
+    var n = pages.length, foot = code || ('แฟ้ม PA ปีงบ ' + fy);
+    var html = pages.map(function (p, i) {
+      return '<section class="a4">' + (p.cover ? '' : '<div class="a4-h"><span>' + esc(s.school) + ' · แฟ้ม PA ปีงบ ' + fy + '</span><span>' + esc(s.name) + '</span></div><h2 class="a4-t">' + p.t + '</h2>') + p.b + '<div class="a4-f"><span>' + esc(foot) + '</span><span>หน้า ' + (i + 1) + ' / ' + n + '</span></div></section>';
+    }).join('');
+    var mid = '<span class="small muted">A4 · ' + n + ' หน้า</span>' + (S.admin ? (vc ? '<span class="chip mono">' + ic('shield', 13) + ' ' + esc(vc.code) + '</span>' : (S.vfl ? '<button class="btn sm" data-act="vf-issue">' + ic('shield', 14) + ' ออกรหัสตรวจสอบ</button>' : '')) : '');
+    return bar(mid) + (S.admin && !vc && S.vfl ? '<div class="rep-note no-print">' + ic('shield', 15) + ' ยังไม่มีรหัสตรวจสอบของปีงบ ' + fy + ' ปกจึงแสดง QR ไปที่แฟ้ม PA แทน กด “ออกรหัสตรวจสอบ” ก่อนพิมพ์ฉบับส่งจริง</div>' : '') + '<div class="rep-wrap">' + html + '</div>';
+  }
+
+  /* ---------- โหมดนำเสนอ ---------- */
+  function presSlides(d) {
+    var list = [{ k: 'cover' }];
+    d.pa.ind.forEach(function (x) { list.push({ k: 'ind', x: x }); });
+    list.push({ k: 'ch' }); list.push({ k: 'end' });
+    return list;
+  }
+  function presTitle(s) { return s.k === 'cover' ? 'ปก' : (s.k === 'ind' ? s.x.code + ' ' + indName(s.x.code) : (s.k === 'ch' ? 'ส่วนที่ 2 ประเด็นท้าทาย' : 'ขอบคุณ')); }
+  function pPresent() {
+    var fy = reportFy(), d = docsOf(fy), exit = S.admin ? 'admin-pa' : 'pa';
+    if (!d) { needDocs(fy); return '<div class="pres"><div class="pres-stage"><div class="slide"><div class="sl-in"><div class="sk" style="height:60%"></div></div></div></div></div>'; }
+    if (d.pa.hidden || d.pa.locked) return pub('present', '<div class="card empty">' + ic('lock', 18) + ' แฟ้ม PA ปีงบ ' + fy + ' ยังไม่เปิดให้ดู</div>');
+    var sl = presSlides(d), i = Math.max(0, Math.min(S.slide || 0, sl.length - 1)), sd = sl[i], s = st(), g = fyRange(fy), body;
+    S.slide = i;
+    var period = 'ปีงบประมาณ ' + fy + ' · ' + fd(g[0]) + ' – ' + fd(g[1]);
+    function trim(t, n) { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; }
+    if (sd.k === 'cover') {
+      var ev = 0; d.pa.ind.forEach(function (x) { ev += evidenceOf(x.code, fy).length; });
+      var vids = C().videos.filter(function (v) { return shown(v) && (v.pa || v.type === 'pa') && (v.fy ? v.fy === fy : inFy(v.date, fy)); }).length;
+      body = '<div class="sl-cover"><div class="row" style="gap:1.4cqw">' + seal('sl-seal') + '<div><div class="sl-eb">' + esc(s.school) + ' ' + esc(s.area) + '</div><div class="sl-small">' + period + '</div></div></div>' +
+        '<div><div class="sl-eb">นำเสนอผลการปฏิบัติงานตามข้อตกลงในการพัฒนางาน (PA)</div><h1>' + esc(s.name) + '</h1><p class="sl-txt">ตำแหน่ง ' + esc(s.position || 'ครู') + (s.subject ? ' · ' + esc(s.subject) : '') + '</p>' + (s.tagline ? '<p class="sl-txt muted">' + esc(s.tagline) + '</p>' : '') + '</div>' +
+        '<div class="sl-stats"><div><b>' + d.pa.ind.length + '</b><span>ตัวชี้วัด</span></div><div><b>' + ev + '</b><span>หลักฐาน</span></div><div><b>' + vids + '</b><span>วิดีโอการสอน</span></div></div></div>';
+    } else if (sd.k === 'ind') {
+      var x = sd.x, e = evidenceOf(x.code, fy), photos = (x.photos || []).slice(0, 6), cells = '';
+      for (var p = 0; p < 6; p++) cells += photos[p] ? ph(hueOf(x.code + p), 'image', photos[p].cap, '', photos[p].url) : '<div class="sl-empty">ภาพที่ ' + (p + 1) + '</div>';
+      body = '<div class="sl-head"><span class="sl-code">' + x.code + '</span><div><div class="sl-eb">ด้านที่ ' + indSide(x.code) + ' ' + SIDES[indSide(x.code)] + '</div><h2>' + esc(indName(x.code)) + '</h2></div></div>' +
+        '<div class="sl-grid"><div class="sl-tri"><div><b>งาน</b><p>' + esc(trim(x.task, 260)) + '</p></div><div><b>ผลลัพธ์</b><p>' + esc(trim(x.out, 220)) + '</p></div><div><b>ตัวชี้วัด</b><p>' + esc(trim(x.kpi, 220)) + '</p></div></div><div class="sl-photos">' + cells + '</div></div>' +
+        '<div class="sl-ev"><span class="sl-small"><b>หลักฐาน ' + e.length + ' รายการ</b></span>' + e.slice(0, 3).map(function (w) { return '<span class="chip">' + ic(w.icon, 13) + ' ' + esc(trim(w.title, 38)) + '</span>'; }).join('') + (e.length > 3 ? '<span class="sl-small muted">และอีก ' + (e.length - 3) + ' รายการ</span>' : '') + '</div>';
+    } else if (sd.k === 'ch') {
+      var c = d.pa.challenge;
+      body = '<div class="sl-head"><span class="sl-code">2</span><div><div class="sl-eb">ส่วนที่ 2 ประเด็นท้าทาย</div><h2>' + esc(c.title || 'ยังไม่ได้กรอกประเด็นท้าทาย') + '</h2></div></div>' +
+        '<div class="sl-grid"><div class="sl-tri"><div><b>สภาพปัญหา</b><p>' + esc(trim(c.problem, 300)) + '</p></div><div><b>วิธีดำเนินการ</b><ol>' + c.steps.slice(0, 6).map(function (t) { return '<li>' + esc(trim(t, 90)) + '</li>'; }).join('') + '</ol></div></div>' +
+        '<div class="sl-tri"><div><b>เป้าหมายเชิงปริมาณ</b><p>' + esc(trim(c.quant, 220)) + '</p></div><div><b>เป้าหมายเชิงคุณภาพ</b><p>' + esc(trim(c.qual, 220)) + '</p></div><div class="sl-result"><b>ผลที่เกิดขึ้น</b><p>' + esc(trim(c.result, 260)) + '</p></div></div></div>';
+    } else {
+      var vc = S.admin ? reportCode(fy) : null, target = vc ? vfUrl(vc.code) : siteUrl() + '#pa';
+      body = '<div class="sl-end"><div><div class="sl-eb">ขอบคุณคณะกรรมการ</div><h1>ขอบคุณครับ</h1><p class="sl-txt">ดูหลักฐานทั้งหมด วิดีโอ และรายงานฉบับเต็มได้ที่เว็บแฟ้มผลงาน หรือสแกน QR</p>' + (vc ? '<p class="sl-small muted">รหัสตรวจสอบเอกสาร <span class="mono">' + esc(vc.code) + '</span></p>' : '<p class="sl-small muted mono">' + esc(siteUrl()) + '</p>') + '</div><div class="sl-qr">' + qrSvg(target, 260, 'QR แฟ้มผลงาน') + '</div></div>';
+    }
+    var jump = '<select class="inp pres-jump" id="pres-jump" aria-label="ไปที่สไลด์">' + sl.map(function (x, j) { var t = presTitle(x); return '<option value="' + j + '"' + (j === i ? ' selected' : '') + '>' + (j + 1) + '. ' + esc(trim(t, 40)) + '</option>'; }).join('') + '</select>';
+    var dots = sl.map(function (x, j) { return '<button class="pdot' + (j === i ? ' on' : '') + '" data-act="pres-go" data-i="' + j + '" aria-label="สไลด์ ' + (j + 1) + '"></button>'; }).join('');
+    return '<div class="pres"><div class="pres-top"><b>' + ic('slides', 18) + ' โหมดนำเสนอ</b><span class="small" style="opacity:.8">' + period + '</span><span class="sp"></span>' + jump +
+      '<button class="btn on-dark" data-act="pres-fs">' + ic('ext', 16) + ' เต็มจอ</button><a class="btn on-dark" href="#' + exit + '">' + ic('x', 16) + ' ออก</a></div>' +
+      '<div class="pres-stage"><section class="slide" aria-roledescription="สไลด์" aria-label="' + esc((i + 1) + ' จาก ' + sl.length + ': ' + presTitle(sd)) + '"><div class="sl-in">' + body + '</div><span class="sl-no">' + (i + 1) + ' / ' + sl.length + '</span></section></div>' +
+      '<div class="pres-bot"><button class="btn on-dark" data-act="pres-go" data-i="' + (i - 1) + '"' + (i === 0 ? ' disabled' : '') + '>' + ic('left', 16) + ' ก่อนหน้า</button><div class="pdots">' + dots + '</div><button class="btn light" data-act="pres-go" data-i="' + (i + 1) + '"' + (i === sl.length - 1 ? ' disabled' : '') + '>ถัดไป ' + ic('chev', 16) + '</button></div>' +
+      '<p class="pres-hint">ใช้ปุ่มลูกศร ← → หรือ Space เพื่อเปลี่ยนสไลด์ · Esc เพื่อออก</p></div>';
+  }
+  function presGo(i) { var d = docsOf(reportFy()); if (!d) return; var n = presSlides(d).length; S.slide = Math.max(0, Math.min(n - 1, i)); render(); }
+
+  /* ---------- เหตุการณ์ ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!el) return;
+    var act = el.getAttribute('data-act'), k = el.getAttribute('data-k');
+    if ((act === 'open-work' || act === 'open-video') && !S.admin) beacon('hit', { k: act === 'open-work' ? 'w' : 'v', id: el.getAttribute('data-id') });
+    switch (act) {
+      case 'stat-range': S.statRange = +k; render(); break;
+      case 'stat-mode': S.statMode = k; render(); break;
+      case 'stat-reload': S.statsErr = ''; needStats(true); break;
+      case 'stat-csv': statCsv(); break;
+      case 'vf-reload': S.vflErr = ''; needVfl(true); break;
+      case 'vf-issue':
+        confirmBox('ออกรหัสตรวจสอบสำหรับรายงาน PA ปีงบ ' + S.fy + '?' + (reportCode(S.fy) ? ' รหัสเดิมของปีนี้จะถูกยกเลิก' : '') + ' ระบบจะบันทึกสรุปข้อมูลแฟ้ม ณ วันนี้ไว้ใช้เทียบ', 'ออกรหัส', function () {
+          var old = reportCode(S.fy);
+          vfCall('issueReport', { fy: S.fy }, 'ออกรหัสแล้ว พิมพ์รายงานได้เลย', function (res) { if (old) vfCall('revokeReport', { code: old.code, revoked: true }, ''); });
+        });
+        break;
+      case 'vf-qr': if (k) qrModal(k, el.getAttribute('data-t') || 'รายงาน PA'); break;
+      case 'qr-dl': if (S.qrCode) qrDownload(S.qrCode); break;
+      case 'copy-vf': if (S.qrCode) copyText(vfUrl(S.qrCode), 'คัดลอกลิงก์ตรวจสอบแล้ว'); break;
+      case 'vf-revoke': var on = el.getAttribute('data-on') === '1'; confirmBox(on ? 'ยกเลิกรหัส ' + esc(k) + '? ผู้ที่สแกนจะเห็นว่ารหัสนี้ถูกยกเลิก' : 'ใช้งานรหัส ' + esc(k) + ' อีกครั้ง?', on ? 'ยกเลิกรหัส' : 'ใช้งาน', function () { vfCall('revokeReport', { code: k, revoked: on }, on ? 'ยกเลิกรหัสแล้ว' : 'ใช้งานรหัสแล้ว'); }, on); break;
+      case 'pres-go': if (!el.disabled) presGo(+el.getAttribute('data-i')); break;
+      case 'pres-fs':
+        var de = document.documentElement;
+        if (document.fullscreenElement) { if (document.exitFullscreen) document.exitFullscreen(); }
+        else if (de.requestFullscreen) de.requestFullscreen().catch(function () { toast('เบราว์เซอร์นี้เปิดเต็มจอไม่ได้ กด F11 แทน'); });
+        else toast('เบราว์เซอร์นี้เปิดเต็มจอไม่ได้ กด F11 แทน');
+        break;
+    }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target; if (!t.getAttribute) return;
+    if (t.id === 'pres-jump') presGo(+t.value);
+    if (t.id === 'vf-file' && t.files && t.files[0]) {
+      var f = t.files[0], code = route().slice(7).toUpperCase();
+      sha256File(f, function (err, h) { S.vfCmp = { code: code, name: f.name, hash: h, err: err }; render(); });
+    }
+    var vc = t.getAttribute('data-vfhash');
+    if (vc && t.files && t.files[0]) {
+      var file = t.files[0];
+      sha256File(file, function (err, h) { if (err) { toast(err); return; } vfCall('setVerifyHash', { code: vc, hash: h, name: file.name }, 'บันทึกลายนิ้วมือของไฟล์ “' + file.name + '” แล้ว'); });
+    }
+  });
+  document.addEventListener('submit', function (e) {
+    if (e.target.id !== 'vf-form') return;
+    e.preventDefault();
+    var c = String($('vf-code').value || '').toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9-]/g, '');
+    if (!c) { toast('กรุณากรอกรหัสตรวจสอบ'); return; }
+    delete S.vfRes[c]; S.vfCmp = null; location.hash = 'verify-' + c;
+  });
+  document.addEventListener('keydown', function (e) {
+    if (route() !== 'present' || $('modal-root') && $('modal-root').innerHTML) return;
+    if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); presGo(S.slide + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); presGo(S.slide - 1); }
+    else if (e.key === 'Home') presGo(0);
+    else if (e.key === 'Escape' && !document.fullscreenElement) location.hash = S.admin ? 'admin-pa' : 'pa';
+  });
+
 
   /* =====================================================================
      เส้นทางหน้าและการวาดหน้า
      ===================================================================== */
   var ADMIN_PAGES = { 'admin': aDash, 'admin-profile': aProfile, 'admin-years': aYears, 'admin-settings': aSettings, 'admin-logs': aLogs,
-    'admin-pa': aPA, 'admin-agreement': aAgreement, 'admin-idplan': aIdplan, 'admin-works': aWorks, 'admin-gallery': aGallery, 'admin-videos': aVideos, 'admin-awards': aAwards, 'admin-systems': aSystems, 'admin-themes': aThemes, 'admin-committee': aCommittee };
-  var PUB_PAGES = { 'pa': pPA, 'agreement': pAgreement, 'idplan': pIdplan, 'profile': pProfile, 'works': pWorks, 'gallery': pGallery, 'videos': pVideos, 'awards': pAwards, 'systems': pSystems, 'login': pLogin, 'committee': pCommittee, 'pa-forms': pForms };
+    'admin-pa': aPA, 'admin-agreement': aAgreement, 'admin-idplan': aIdplan, 'admin-works': aWorks, 'admin-gallery': aGallery, 'admin-videos': aVideos, 'admin-awards': aAwards, 'admin-systems': aSystems, 'admin-themes': aThemes, 'admin-committee': aCommittee, 'admin-salary': aSalary, 'admin-survey': aSurvey, 'admin-stats': aStats, 'admin-verify': aVerify };
+  var PUB_PAGES = { 'pa': pPA, 'agreement': pAgreement, 'idplan': pIdplan, 'profile': pProfile, 'works': pWorks, 'gallery': pGallery, 'videos': pVideos, 'awards': pAwards, 'systems': pSystems, 'login': pLogin, 'committee': pCommittee, 'pa-forms': pForms, 'survey': pSurvey, 'salary-print': salaryPrint, 'survey-poster': svPoster, 'survey-report': svReport, 'verify': function () { return pVerify(''); }, 'report': pReport, 'present': pPresent };
   function route() { var h = (location.hash || '').replace('#', ''); return h || 'home'; }
   function render() {
     var r = route(), html;
@@ -2457,6 +3292,7 @@
     else if (r.indexOf('admin-album-') === 0) html = aAlbum(r.slice(12));
     else if (PUB_PAGES[r]) html = PUB_PAGES[r]();
     else if (r.indexOf('album-') === 0) html = pAlbum(r.slice(6));
+    else if (r.indexOf('verify-') === 0) html = pVerify(r.slice(7));
     else html = pHome();
     $('app').innerHTML = html + (S.skinPreview ? skinBar() : '');
     var s = st();
@@ -2469,6 +3305,7 @@
     var isNew = r !== S.lastRoute;
     if (isNew) { window.scrollTo(0, 0); S.lastRoute = r; }
     revealInit(isNew);
+    trackPage(r);
   }
   /** ออกจากระบบแล้วกลับไปใช้ข้อมูลหน้าสาธารณะ (ไม่ให้รายการส่วนตัวค้างบนจอ) */
   function backToPublic() {
