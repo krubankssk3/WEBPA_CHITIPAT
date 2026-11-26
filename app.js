@@ -1,4 +1,4 @@
-/* แฟ้มผลงานและการประเมินครู — app.js (เฟส 2) · ES5 เท่านั้น */
+/* แฟ้มผลงานและการประเมินครู — app.js (เฟส 4) · ES5 เท่านั้น */
 (function () {
   'use strict';
   var ICON = {
@@ -165,10 +165,11 @@
     var done = false, timer = setTimeout(function () { finish('เชื่อมต่อนานเกินไป ลองใหม่อีกครั้ง'); }, opt.timeout || 60000);
     function finish(err, res) {
       if (done) return; done = true; clearTimeout(timer); if (msg) hideLoader();
+      if (err === 'AUTH' && opt.com) { if (!opt.silent) comLost(); cb('หมดเวลาการเข้าระบบกรรมการ กรุณาใส่รหัสอีกครั้ง'); return; }
       if (err === 'AUTH') { authLost(); cb('หมดเวลาการเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่'); return; }
       cb(err, res);
     }
-    fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, token: S.token, data: data || {} }), redirect: 'follow' })
+    fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, token: opt.token || S.token, data: data || {} }), redirect: 'follow' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (j) { if (j.ok) finish(null, j.data); else finish(j.error || 'เกิดข้อผิดพลาด'); })
       .catch(function (e) { finish('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (' + (e && e.message ? e.message : e) + ')'); });
@@ -179,14 +180,14 @@
   }
   function loadToken() { try { return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
   function authLost() {
-    saveToken(''); S.admin = false; D.admin = null; D.docs = {}; S.draft = null; S.dirty = {}; S.form = null; backToPublic();
+    saveToken(''); S.admin = false; D.admin = null; D.docs = {}; S.comList = {}; S.draft = null; S.dirty = {}; S.form = null; backToPublic();
     S.loginErr = 'หมดเวลาการเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่';
     if (route().indexOf('admin') === 0) location.hash = 'login'; else render();
   }
   function setContent(c) { var o = {}; for (var k in EMPTY_CONTENT) o[k] = (c && c[k]) || []; D.content = o; }
   function setPublic(data, fromCache) {
     D.settings = data.settings; D.education = data.education || []; D.career = data.career || []; D.years = data.years || []; D.version = data.version || '';
-    if (!S.admin || !D.admin) setContent(data.content);
+    if ((!S.admin || !D.admin) && !S.com) setContent(data.content);
     if (!S.fy || !yearOf(S.fy)) S.fy = +D.settings.defaultFy || (D.years[0] && D.years[0].fy) || fyNow(new Date());
     if (!fromCache) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) { } }
   }
@@ -230,7 +231,7 @@
       var old = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null') || {}, s = clone(D.settings);
       ['coverId', 'coverStillId', 'avatarId', 'logoId'].forEach(function (k) { delete s[k]; });
       s.coverSlides = (s.coverSlides || []).map(function (x) { return { url: x.url, type: x.type, still: x.still, cap: x.cap }; });
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ settings: s, education: D.education.map(function (e) { var x = clone(e); delete x.logoId; return x; }), career: D.career, years: D.years, content: S.admin ? old.content : D.content, version: D.version }));
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ settings: s, education: D.education.map(function (e) { var x = clone(e); delete x.logoId; return x; }), career: D.career, years: D.years, content: S.admin || S.com ? old.content : D.content, version: D.version }));
     } catch (e) { }
   }
 
@@ -401,14 +402,14 @@
   function siteHead(r) {
     var s = D.settings;
     var nav = NAV.map(function (it) { var on = r === it[0] || (it[0] === 'gallery' && r.indexOf('album-') === 0) || (it[0] === 'pa' && (r === 'agreement' || r === 'idplan')); return '<a href="#' + it[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + it[1] + '</a>'; }).join('');
-    var right = fySelect('fy-sel') + (S.admin ? '<a class="btn primary login-ic" href="#admin" aria-label="หลังบ้าน" title="หลังบ้าน">' + ic('grid', 18) + '</a>' : '<a class="btn login-ic" href="#login" aria-label="เข้าสู่ระบบ" title="เข้าสู่ระบบ">' + ic('lock', 18) + '</a>');
+    var right = (S.com ? '' : fySelect('fy-sel')) + (S.com ? '<a class="btn primary login-ic" href="#committee" aria-label="หน้าให้คะแนน (กรรมการ)" title="หน้าให้คะแนน (กรรมการ)">' + ic('pen', 18) + '</a>' : '') + (S.com ? '' : S.admin ? '<a class="btn primary login-ic" href="#admin" aria-label="หลังบ้าน" title="หลังบ้าน">' + ic('grid', 18) + '</a>' : '<a class="btn login-ic" href="#login" aria-label="เข้าสู่ระบบ" title="เข้าสู่ระบบ">' + ic('lock', 18) + '</a>');
     return '<div class="info-strip"><div class="wrap">' + clock() + '<span>ปีงบประมาณปัจจุบัน <b class="js-fy"></b> · <span class="js-sem"></span></span><button class="strip-btn" data-act="a11y" aria-label="การแสดงผล ขนาดตัวอักษร และโหมดสี">' + ic('sun', 15) + ' การแสดงผล</button></div></div>' +
       '<header class="site-head"><div class="wrap"><a class="brand" href="#home" aria-label="แฟ้มผลงานครู หน้าหลัก">' + seal() + '<span class="brand-t"><b>แฟ้มผลงานครู</b><span>' + esc(s.school) + ' ' + esc(s.area) + '</span></span></a><nav class="nav" aria-label="เมนูหลัก">' + nav + '</nav>' + right + '</div></header>';
   }
   function siteFoot() {
     return '<footer class="foot"><div class="wrap"><span>' + FOOTER + '</span><span>Google Apps Script + Google Sheets</span></div></footer>';
   }
-  function pub(r, inner, top) { return siteHead(r) + (top || '') + '<main class="pub"><div class="wrap">' + inner + '</div></main>' + siteFoot(); }
+  function pub(r, inner, top) { return siteHead(r) + comBanner(r) + (top || '') + '<main class="pub"><div class="wrap">' + inner + '</div></main>' + siteFoot(); }
   function slideArt(x, paused) { var src = x.type === 'image/gif' && paused && x.still ? x.still : x.url; return '<img src="' + esc(src) + '" alt="">'; }
   function coverSlides(s) { return (s.cover ? [{ url: s.cover, type: s.coverType, still: s.coverStill, cap: s.coverCaption }] : []).concat(s.coverSlides || []); }
 
@@ -490,7 +491,7 @@
       '<div class="field"><label for="lg-user">ชื่อผู้ใช้</label><input id="lg-user" class="inp" autocomplete="username" autocapitalize="off" spellcheck="false"></div>' +
       '<div class="field"><label for="lg-pass">รหัสผ่าน</label><div style="position:relative"><input id="lg-pass" type="password" class="inp" autocomplete="current-password"><button type="button" class="btn icon sm" data-act="toggle-pass" style="position:absolute;right:4px;top:4px;border:0" aria-label="แสดงรหัสผ่าน">' + ic('eye', 16) + '</button></div></div>' +
       chk('lg-remember', false, 'จำการเข้าสู่ระบบในเครื่องนี้ 7 วัน (เฉพาะเครื่องส่วนตัว)') +
-      '<button class="btn primary" type="submit" id="lg-btn" style="justify-content:center">' + ic('lock', 16) + ' เข้าสู่ระบบ</button></form></div></div></div>';
+      '<button class="btn primary" type="submit" id="lg-btn" style="justify-content:center">' + ic('lock', 16) + ' เข้าสู่ระบบ</button></form><a class="card com-link" href="#committee">' + ic('shield', 20) + '<span><b>สำหรับคณะกรรมการประเมิน PA</b><span class="small muted">เข้าระบบด้วยรหัสกรรมการ</span></span>' + ic('chev', 16) + '</a></div></div></div>';
   }
 
   /* หน้าแจ้งเมื่อยังไม่ได้ตั้งค่า หรือโหลดข้อมูลไม่ได้ */
@@ -513,7 +514,7 @@
     return '<div class="admin"><nav class="aside" aria-label="เมนูหลังบ้าน"><a class="brand" href="#admin">' + seal() + '<span class="brand-t"><b>หลังบ้าน</b><span>แฟ้มผลงานและการประเมิน</span></span></a>' +
       '<div class="grp">ภาพรวม</div>' + L('admin', 'grid', 'แดชบอร์ด') +
       '<div class="grp">ข้อมูลครู</div>' + L('admin-profile', 'user', 'หน้าปกและประวัติ') +
-      '<div class="grp">แฟ้ม PA ปีงบ ' + S.fy + '</div>' + L('admin-agreement', 'pen', 'ข้อตกลง PA') + L('admin-pa', 'file', 'แฟ้ม PA') + L('admin-idplan', 'target', 'ID Plan') +
+      '<div class="grp">แฟ้ม PA ปีงบ ' + S.fy + '</div>' + L('admin-agreement', 'pen', 'ข้อตกลง PA') + L('admin-pa', 'file', 'แฟ้ม PA') + L('admin-idplan', 'target', 'ID Plan') + L('admin-committee', 'users', 'กรรมการและผลประเมิน') +
       '<div class="grp">ผลงาน</div>' + L('admin-works', 'folder', 'คลังผลงาน', D.content.works.length) + L('admin-gallery', 'image', 'ภาพกิจกรรม', D.content.albums.length) + L('admin-videos', 'video', 'วิดีโอ', D.content.videos.length) + L('admin-awards', 'award', 'รางวัล/อบรม', D.content.awards.length) + L('admin-systems', 'code', 'ระบบที่จัดทำ', D.content.systems.length) +
       '<div class="grp">ระบบ</div>' + L('admin-years', 'cal', 'ปีงบประมาณและสีธีม') + L('admin-themes', 'spark', 'ชุดธีมและฟอนต์') + L('admin-settings', 'gear', 'ตั้งค่า', must ? '!' : 0) + L('admin-logs', 'list', 'บันทึกการใช้งาน') +
       '<a href="#home">' + ic('eye', 18) + ' ดูหน้าสาธารณะ</a><button class="lnk" data-act="logout">' + ic('logout', 18) + ' ออกจากระบบ</button></nav>' +
@@ -532,7 +533,8 @@
     var noFile = c.works.filter(function (w) { return !w.fileUrl && !w.link; }).length, noLink = c.videos.filter(function (v) { return !v.url; }).length;
     if (noFile) todo += '<a class="todo" href="#admin-works"><span class="dot warn"></span><span style="flex:1">ผลงานที่ยังไม่มีไฟล์หรือลิงก์ ' + noFile + ' รายการ</span>' + ic('chev', 14) + '</a>';
     if (noLink) todo += '<a class="todo" href="#admin-videos"><span class="dot warn"></span><span style="flex:1">วิดีโอที่ยังไม่ใส่ลิงก์ ' + noLink + ' รายการ</span>' + ic('chev', 14) + '</a>';
-    var next = [ ['4', 'รอบประเมิน กรรมการ ลายเซ็น เลื่อนเงินเดือน แบบประเมินครู'], ['5', 'รายงาน PDF สถิติ โหมดนำเสนอ QR ตรวจสอบ'], ['6', 'LINE OA ปฏิทิน ผู้ช่วย AI สำรองข้อมูล ความปลอดภัย']];
+    todo += comTodo();
+    var next = [['5', 'เลื่อนเงินเดือน แบบประเมินครู รายงาน PDF สถิติ โหมดนำเสนอ QR ตรวจสอบ'], ['6', 'LINE OA ปฏิทิน ผู้ช่วย AI สำรองข้อมูล ความปลอดภัย']];
     return adminShell('admin', 'สวัสดีครับ ' + esc(s.nick || s.name), 'ภาพรวมของแฟ้มผลงาน · ปีงบประมาณที่แสดงในหน้าหลัก ' + (s.defaultFy || '-'), '<a class="btn" href="#home">' + ic('eye', 16) + ' ดูหน้าสาธารณะ</a>',
       '<div class="grid4"><div class="kpi"><span class="l">ความครบของหน้าประวัติ</span><span class="v">' + sc.pct + '%</span><div class="prog"><i style="width:' + sc.pct + '%"></i></div></div>' +
       '<a class="kpi" href="#admin-works"><span class="l">ผลงานทั้งหมด</span><span class="v">' + c.works.length + '</span><span class="small muted">ปีงบ ' + S.fy + ' · ' + fyW + ' รายการ</span></a>' +
@@ -544,7 +546,7 @@
       '<div class="stat-grid" style="margin-top:16px"><div class="card"><h3 style="margin-bottom:6px">สิ่งที่ควรทำต่อ</h3>' + (todo || '<p class="small muted">ข้อมูลหน้าประวัติครบแล้ว</p>') + '</div>' +
       '<div class="card"><div class="sec-h"><h3>การใช้งานล่าสุด</h3><a class="small" href="#admin-logs">ดูทั้งหมด</a></div>' + (logs.map(function (l) { return '<div class="todo"><span class="small muted num" style="white-space:nowrap">' + fdt(l.at) + '</span><span style="flex:1">' + esc(l.action) + '<span class="small muted"> ' + esc(l.detail) + '</span></span></div>'; }).join('') || '<p class="small muted">ยังไม่มี</p>') + '</div>' +
       '<div class="card"><h3 style="margin-bottom:6px">ไฟล์ข้อมูลของระบบ</h3>' + (D.admin && D.admin.sheetUrl ? '<a class="todo" href="' + esc(D.admin.sheetUrl) + '" target="_blank" rel="noopener">' + ic('list', 16) + '<span style="flex:1">Google Sheet ฐานข้อมูล</span>' + ic('ext', 14) + '</a>' : '') + (D.admin && D.admin.folderUrl ? '<a class="todo" href="' + esc(D.admin.folderUrl) + '" target="_blank" rel="noopener">' + ic('folder', 16) + '<span style="flex:1">โฟลเดอร์ไฟล์ใน Google Drive</span>' + ic('ext', 14) + '</a>' : '') + '<p class="small muted" style="margin-top:8px">เวอร์ชันระบบ ' + esc(D.version) + '</p></div>' +
-      '<div class="card"><h3 style="margin-bottom:6px">ทางลัด</h3><div class="row" style="gap:6px"><a class="btn sm" href="#admin-pa">' + ic('file', 14) + ' แฟ้ม PA</a><a class="btn sm" href="#admin-agreement">' + ic('pen', 14) + ' ข้อตกลง</a><a class="btn sm" href="#admin-idplan">' + ic('target', 14) + ' ID Plan</a><button class="btn sm" data-act="c-new" data-k="works">' + ic('plus', 14) + ' ผลงาน</button><button class="btn sm" data-act="c-new" data-k="albums">' + ic('plus', 14) + ' อัลบั้ม</button><button class="btn sm" data-act="c-new" data-k="videos">' + ic('plus', 14) + ' วิดีโอ</button><button class="btn sm" data-act="c-new" data-k="awards">' + ic('plus', 14) + ' รางวัล/อบรม</button><button class="btn sm" data-act="c-new" data-k="systems">' + ic('plus', 14) + ' ระบบ</button></div></div>' +
+      '<div class="card"><h3 style="margin-bottom:6px">ทางลัด</h3><div class="row" style="gap:6px"><a class="btn sm" href="#admin-pa">' + ic('file', 14) + ' แฟ้ม PA</a><a class="btn sm" href="#admin-agreement">' + ic('pen', 14) + ' ข้อตกลง</a><a class="btn sm" href="#admin-idplan">' + ic('target', 14) + ' ID Plan</a><a class="btn sm" href="#admin-committee">' + ic('users', 14) + ' กรรมการ</a><button class="btn sm" data-act="c-new" data-k="works">' + ic('plus', 14) + ' ผลงาน</button><button class="btn sm" data-act="c-new" data-k="albums">' + ic('plus', 14) + ' อัลบั้ม</button><button class="btn sm" data-act="c-new" data-k="videos">' + ic('plus', 14) + ' วิดีโอ</button><button class="btn sm" data-act="c-new" data-k="awards">' + ic('plus', 14) + ' รางวัล/อบรม</button><button class="btn sm" data-act="c-new" data-k="systems">' + ic('plus', 14) + ' ระบบ</button></div></div>' +
       '<div class="card"><h3 style="margin-bottom:6px">เฟสถัดไป</h3>' + next.map(function (n) { return '<div class="todo"><span class="chip">เฟส ' + n[0] + '</span><span class="small" style="flex:1">' + n[1] + '</span></div>'; }).join('') + '</div></div>');
   }
 
@@ -922,7 +924,7 @@
   function hueOf(id) { return hashStr(id) % 360; }
   function fyRange(fy) { return [(fy - 544) + '-10-01', (fy - 543) + '-09-30']; }
   function inFy(date, fy) { var g = fyRange(fy); return date >= g[0] && date <= g[1]; }
-  function canOpen(x) { return S.admin || x.vis === 'public'; }
+  function canOpen(x) { return S.admin || x.vis === 'public' || (!!S.com && x.vis === 'committee'); }
   function shown(x) { return S.admin || x.vis !== 'private'; }
   function indChips(arr) { return (arr || []).map(function (c) { return '<span class="chip ind" title="' + esc(indName(c)) + '">' + c + '</span>'; }).join(''); }
   function visChip(v) {
@@ -972,7 +974,7 @@
     if (/^script\.google\.com\/macros\/s\//.test(t)) return 'script.google.com/macros/s/…/exec';
     return t.length > 46 ? t.slice(0, 44) + '…' : t;
   }
-  function canSeeLink(l, sy) { return S.admin || (l.vis === 'public' && sy.vis === 'public' && l.url); }
+  function canSeeLink(l, sy) { if (S.com) return !!l.url && l.vis !== 'private' && sy.vis !== 'private'; return S.admin || (l.vis === 'public' && sy.vis === 'public' && l.url); }
   function primaryLink(sy) {
     var webs = ['vercel', 'netlify', 'pages', 'web'];
     for (var i = 0; i < sy.links.length; i++) { var l = sy.links[i]; if (l.url && webs.indexOf(l.type) > -1 && canSeeLink(l, sy)) return l; }
@@ -998,13 +1000,13 @@
     return sy.links.filter(function (l) { return S.admin ? l.url : true; }).map(function (l) {
       var T = LTYPE[l.type] || LTYPE.other;
       if (!canSeeLink(l, sy)) return '<span class="lk locked">' + ic('lock', 15) + ' <b>' + T.t + '</b><span class="host">เฉพาะกรรมการ</span></span>';
-      return '<a class="lk" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + ic(T.i, 15) + ' <b>' + T.t + '</b><span class="host">' + esc(showUrl(l.url)) + '</span>' + (S.admin && l.vis !== 'public' ? ' ' + visChip(l.vis) : '') + ic('ext', 14) + '</a>';
+      return '<a class="lk" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + ic(T.i, 15) + ' <b>' + T.t + '</b><span class="host">' + esc(showUrl(l.url)) + '</span>' + ((S.admin || S.com) && l.vis !== 'public' ? ' ' + visChip(l.vis) : '') + ic('ext', 14) + '</a>';
     }).join('');
   }
   function sysCard(sy) {
     var pl = primaryLink(sy), stt = SSTATUS[sy.status] || SSTATUS.live;
     return '<article class="sys-card">' + shot(sy) +
-      '<div class="row" style="gap:6px"><span class="pill ' + stt.c + '">' + stt.t + '</span><span class="chip">' + (SCAT[sy.cat] || '') + '</span>' + (sy.year ? '<span class="chip">ปี ' + sy.year + '</span>' : '') + (S.admin && sy.vis !== 'public' ? visChip(sy.vis) : '') + '</div>' +
+      '<div class="row" style="gap:6px"><span class="pill ' + stt.c + '">' + stt.t + '</span><span class="chip">' + (SCAT[sy.cat] || '') + '</span>' + (sy.year ? '<span class="chip">ปี ' + sy.year + '</span>' : '') + ((S.admin || S.com) && sy.vis !== 'public' ? visChip(sy.vis) : '') + '</div>' +
       '<h3>' + esc(sy.name) + '</h3>' + (sy.desc ? '<p class="small muted">' + esc(sy.desc) + '</p>' : '') +
       (sy.tech.length ? '<div class="row" style="gap:4px">' + sy.tech.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
       (sy.ind.length ? '<div class="row" style="gap:4px"><span class="small muted">ตัวชี้วัด PA</span>' + indChips(sy.ind) + '</div>' : '') +
@@ -1023,7 +1025,7 @@
     return '<div class="cert' + (a.type === 'award' ? ' award' : '') + '"><span class="cert-in"><span class="cert-k">' + (a.type === 'training' ? 'วุฒิบัตร' : (a.type === 'award' ? 'รางวัล' : 'เกียรติบัตร')) + '</span><span class="cert-l"></span><span class="cert-s">' + esc(a.level) + ' · ' + fd(a.date) + '</span>' + (a.locked ? '<span class="cert-s">' + ic('lock', 12) + ' เฉพาะกรรมการ</span>' : '') + '</span></div>';
   }
   function awardCard(a) {
-    return '<button class="wcard" data-act="open-award" data-id="' + a.id + '">' + certThumb(a) + '<div class="m"><span class="chip ' + (a.type === 'award' ? 'gold' : 'ind') + '">' + ATYPE[a.type] + '</span><span class="chip">' + esc(a.level) + '</span>' + (a.hours ? '<span class="chip">' + a.hours + ' ชม.</span>' : '') + (S.admin && a.vis !== 'public' ? visChip(a.vis) : '') + '</div><div class="t">' + esc(a.title) + '</div><div class="small muted">' + fd(a.date) + (a.org ? ' · ' + blank(a.org) : '') + '</div></button>';
+    return '<button class="wcard" data-act="open-award" data-id="' + a.id + '">' + certThumb(a) + '<div class="m"><span class="chip ' + (a.type === 'award' ? 'gold' : 'ind') + '">' + ATYPE[a.type] + '</span><span class="chip">' + esc(a.level) + '</span>' + (a.hours ? '<span class="chip">' + a.hours + ' ชม.</span>' : '') + ((S.admin || S.com) && a.vis !== 'public' ? visChip(a.vis) : '') + '</div><div class="t">' + esc(a.title) + '</div><div class="small muted">' + fd(a.date) + (a.org ? ' · ' + blank(a.org) : '') + '</div></button>';
   }
   function fyHours(fy) {
     return C().awards.reduce(function (t, x) { return t + ((x.type === 'training' || x.hours) && inFy(x.date, fy) ? (+x.hours || 0) : 0); }, 0) +
@@ -1042,7 +1044,7 @@
   function workCard(w) {
     var c = CATS[w.cat] || CATS.media, img = canOpen(w) && isImg(w.fileMime) ? w.fileUrl : '';
     return '<button class="wcard" data-act="open-work" data-id="' + w.id + '">' + ph(hueOf(w.id), c.icon, c.label, '', img) +
-      '<div class="t">' + esc(w.title) + '</div><div class="m"><span class="small muted">' + fd(w.date) + '</span>' + indChips(w.ind) + (S.admin && w.vis !== 'public' ? visChip(w.vis) : '') + '</div>' +
+      '<div class="t">' + esc(w.title) + '</div><div class="m"><span class="small muted">' + fd(w.date) + '</span>' + indChips(w.ind) + ((S.admin || S.com) && w.vis !== 'public' ? visChip(w.vis) : '') + '</div>' +
       (w.locked ? '<span class="lockline">' + ic('lock', 13) + ' เปิดไฟล์ได้เฉพาะกรรมการ</span>' : '') + '</button>';
   }
   function openWork(id) {
@@ -1101,7 +1103,7 @@
     var sl = cov ? [cov].concat(ps.filter(function (p) { return p !== cov; })).slice(0, 5) : [];
     var media = sl.length > 1 ? '<div class="alb-media"><div class="rot rot-thumb">' + sl.map(function (p, i) { return '<div class="rot-i' + (i === 0 ? ' on' : '') + '">' + ph(hueOf(a.id), 'image', '', '', p.url) + '</div>'; }).join('') + '</div><span class="alb-n">' + ic('image', 13) + ' ' + n + ' ภาพ</span></div>'
       : ph(hueOf(a.id), a.locked ? 'lock' : 'image', a.locked ? 'เฉพาะกรรมการ · ' + n + ' ภาพ' : n + ' ภาพ', '', cov && cov.url);
-    return '<a class="album" href="#album-' + a.id + '">' + media + '<span class="t">' + esc(a.title) + '</span><span class="small muted">' + fd(a.date) + (a.desc ? ' · ' + esc(a.desc) : '') + '</span>' + (S.admin && a.vis !== 'public' ? '<span>' + visChip(a.vis) + '</span>' : '') + '</a>';
+    return '<a class="album" href="#album-' + a.id + '">' + media + '<span class="t">' + esc(a.title) + '</span><span class="small muted">' + fd(a.date) + (a.desc ? ' · ' + esc(a.desc) : '') + '</span>' + ((S.admin || S.com) && a.vis !== 'public' ? '<span>' + visChip(a.vis) + '</span>' : '') + '</a>';
   }
   function pGallery() {
     var list = C().albums.filter(shown).sort(byDate);
@@ -1141,7 +1143,7 @@
     }).join('') || '<div class="card empty" style="margin-top:20px">ยังไม่มีวิดีโอในปีงบประมาณ ' + S.fy + '</div>';
     var locked = VIDS().some(function (v) { return v.vis === 'committee'; });
     return pub('videos', '<span class="eyebrow">วิดีโอ</span><h1>วิดีโอการจัดการเรียนรู้และผลงาน</h1><p class="muted" style="max-width:720px">คลิปการจัดการเรียนรู้ คลิปแนะนำตัว และคลิปกิจกรรม เก็บบน YouTube หรือ Google Drive แล้วฝังมาแสดงในหน้านี้ · แสดงเฉพาะปีงบประมาณ ' + S.fy + ' และคลิปที่ใช้ได้ทุกปี</p>' +
-      (locked && !S.admin ? '<div class="note" style="margin-top:14px">' + ic('lock', 15) + ' คลิปที่มีป้าย "เฉพาะกรรมการ" เปิดได้เฉพาะคณะกรรมการประเมิน</div>' : '') + groups);
+      (locked && !S.admin && !S.com ? '<div class="note" style="margin-top:14px">' + ic('lock', 15) + ' คลิปที่มีป้าย "เฉพาะกรรมการ" เปิดได้เฉพาะคณะกรรมการประเมิน</div>' : '') + groups);
   }
   function pAwards() {
     var f = S.awFilter, vis = C().awards.filter(shown);
@@ -1577,10 +1579,12 @@
   function setPath(o, path, v) { var p = path.split('.'), last = p.pop(), t = getPath(o, p.join('.') || ''); if (!p.length) t = o; t[isNaN(+last) ? last : +last] = v; }
 
   /* ---------- โหลดเอกสารของปีงบ (แยกฉบับแอดมิน/สาธารณะ) ---------- */
-  function docsOf(fy) { var d = D.docs[fy]; return d && d.mode === (S.admin ? 'admin' : 'pub') ? d : null; }
+  function docMode() { return S.admin ? 'admin' : (S.com ? 'com' : 'pub'); }
+  function docsOf(fy) { var d = D.docs[fy]; return d && d.mode === docMode() ? d : null; }
   function needDocs(fy) {
-    var key = fy + (S.admin ? 'a' : 'p');
+    var key = fy + docMode();
     if (docsOf(fy) || S.docsLoading[key]) return;
+    if (S.com && fy === S.com.committee.fy) { comRefresh(); return; }
     S.docsLoading[key] = 1;
     api(S.admin ? 'adminYearDocs' : 'getYearDocs', { fy: fy }, { loader: false }, function (err, res) {
       S.docsLoading[key] = 0;
@@ -1588,7 +1592,7 @@
       S.docsErr = ''; setDocs(res); if (S.fy === fy) render();
     });
   }
-  function setDocs(res) { res.mode = S.admin ? 'admin' : 'pub'; D.docs[res.fy] = res; S.agDraft = null; S.idpDraft = null; }
+  function setDocs(res) { res.mode = docMode(); D.docs[res.fy] = res; S.agDraft = null; S.idpDraft = null; }
   function docsWait(r, title) {
     needDocs(S.fy);
     var body = '<div class="card" style="margin-top:16px;display:flex;flex-direction:column;gap:12px" aria-busy="true"><div class="sk" style="height:26px;width:40%"></div><div class="sk" style="height:14px;width:70%"></div><div class="sk" style="height:120px"></div>' +
@@ -1915,13 +1919,530 @@
       api('copyPrevDocs', { fy: S.fy, kind: kind }, { loader: 'กำลังคัดลอก' }, function (err, res) { if (err) { toast(err); return; } setDocs(res); render(); toast('คัดลอกจากปีงบ ' + (S.fy - 1) + ' แล้ว'); });
     });
   }
+  /* =====================================================================
+     เฟส 4: คณะกรรมการประเมิน PA (ปีงบละ 3 คน) · เข้าระบบด้วยรหัส
+     ให้คะแนนแบบ PA2 · ลงลายมือชื่อ · สรุปผล PA3 · ฉบับพิมพ์
+     ===================================================================== */
+  var COM_KEY = 'tp-com';
+  var LV_LABEL = ['', 'ปฏิบัติได้ต่ำกว่าระดับที่คาดหวังมาก', 'ปฏิบัติได้ต่ำกว่าระดับที่คาดหวัง', 'ปฏิบัติได้ตามระดับที่คาดหวัง', 'ปฏิบัติได้สูงกว่าระดับที่คาดหวัง'];
+  var EXP_LV = { '': 'ปรับประยุกต์ (Apply & Adapt)', 'ชำนาญการ': 'แก้ปัญหา', 'ชำนาญการพิเศษ': 'ริเริ่ม พัฒนา', 'เชี่ยวชาญ': 'คิดค้น ปรับเปลี่ยน', 'เชี่ยวชาญพิเศษ': 'สร้างการเปลี่ยนแปลง' };
+  var P2_ITEMS = [
+    { k: 'm', code: '1', name: 'วิธีดำเนินการ', max: 20, d: 'พิจารณาจากการดำเนินการที่ถูกต้อง ครบถ้วน เป็นไปตามระยะเวลาที่กำหนดไว้ในข้อตกลง และสะท้อนให้เห็นถึงระดับการปฏิบัติที่คาดหวังตามตำแหน่งและวิทยฐานะ' },
+    { k: 'q', code: '2.1', name: 'เชิงปริมาณ', max: 10, d: 'พิจารณาจากการบรรลุเป้าหมายเชิงปริมาณได้ครบถ้วนตามข้อตกลง และมีความถูกต้อง เชื่อถือได้' },
+    { k: 'l', code: '2.2', name: 'เชิงคุณภาพ', max: 10, d: 'พิจารณาจากการบรรลุเป้าหมายเชิงคุณภาพได้ครบถ้วน ถูกต้อง เชื่อถือได้ และปรากฏผลต่อคุณภาพผู้เรียนได้ตามข้อตกลง' }
+  ];
+  var COM_ROLE = { chair: 'ประธานกรรมการ', member: 'กรรมการ' };
+  var COM_ST = { pending: ['ยังไม่เข้าระบบ', 'off'], draft: ['กำลังประเมิน', 'warn'], submitted: ['ส่งผลแล้ว', 'good'] };
+  S.com = null; S.comDraft = null; S.comDirty = false; S.comRev = 0; S.comErr = ''; S.comPending = false;
+  S.comList = {}; S.comLoading = {}; S.comListErr = ''; S.formSel = 'all';
+
+  /* ---------- การคำนวณคะแนน ---------- */
+  function scoring() {
+    if (S.com && S.com.scoring) return S.com.scoring;
+    var s = D.settings || {};
+    return { p1Max: +s.p1Max || 60, p2Max: +s.p2Max || 40, passPct: +s.passPct || 70, acad: s.acad || '', rank: s.rank || '', salary: s.salary || '' };
+  }
+  function expLevel() { return EXP_LV[scoring().acad || ''] || EXP_LV['']; }
+  function p2Max(it) { return it.max * scoring().p2Max / 40; }
+  function emptyScore() { return { load: '', p1: {}, p2: { m: 0, q: 0, l: 0 }, notes: {}, strong: '', improve: '', comment: '' }; }
+  function paCalc(d) {
+    d = d || emptyScore();
+    var sg = scoring(), p1s = d.p1 || {}, p2s = d.p2 || {}, s1 = 0, filled = 0, n = IND_BASE.length, p2 = 0, p2f = 0;
+    IND_BASE.forEach(function (x) { var v = +p1s[x.code] || 0; s1 += v; if (v) filled++; });
+    var p1 = s1 / (n * 4) * sg.p1Max;
+    P2_ITEMS.forEach(function (it) { var v = +p2s[it.k] || 0; p2 += v / 4 * p2Max(it); if (v) p2f++; });
+    var full = sg.p1Max + sg.p2Max, total = p1 + p2, pct = full ? total / full * 100 : 0;
+    return { p1: p1, p2: p2, total: total, pct: pct, pass: pct >= sg.passPct, filled: filled, p2filled: p2f, p1sum: s1 };
+  }
+  function scoreMiss(d) {
+    var c = paCalc(d), miss = [];
+    if (!d.load) miss.push('ภาระงาน');
+    if (c.filled < IND_BASE.length) miss.push('ส่วนที่ 1 อีก ' + (IND_BASE.length - c.filled) + ' ข้อ');
+    if (c.p2filled < P2_ITEMS.length) miss.push('ส่วนที่ 2 อีก ' + (P2_ITEMS.length - c.p2filled) + ' ข้อ');
+    return miss;
+  }
+  /** สรุปผลจากกรรมการที่ส่งแล้ว: ผ่านเมื่อกรรมการทุกคนให้ไม่ต่ำกว่าเกณฑ์ */
+  function setRes(members) {
+    var done = members.filter(function (m) { return m.status === 'submitted' && m.data; });
+    if (!done.length) return null;
+    var t = 0, ok = true, minPct = 101, loadBad = false;
+    done.forEach(function (m) { var c = paCalc(m.data); t += c.total; if (!c.pass) ok = false; if (c.pct < minPct) minPct = c.pct; if (m.data.load === 'no') loadBad = true; });
+    return { avg: t / done.length, n: done.length, of: members.length, pass: ok, complete: done.length === members.length && members.length >= 3, minPct: minPct, loadBad: loadBad };
+  }
+  function resPill(r) {
+    if (!r) return '<span class="pill off">ยังไม่มีผล</span>';
+    return '<span class="pill ' + (r.pass ? 'good">ผ่านเกณฑ์' : 'bad">ไม่ผ่านเกณฑ์') + (r.complete ? '' : ' (ผลชั่วคราว)') + '</span>';
+  }
+  function comPill(m) { var x = COM_ST[m.status] || COM_ST.pending; return '<span class="pill ' + x[1] + '">' + x[0] + (m.status === 'submitted' && m.submittedAt ? ' ' + fd(m.submittedAt.slice(0, 10)) : '') + '</span>'; }
+  function daysLeft(due) { var p = String(due).split('-'), end = new Date(+p[0], +p[1] - 1, +p[2], 23, 59, 59).getTime(); return Math.floor((end - Date.now()) / 864e5); }
+  function dueChip(due) {
+    if (!due) return '';
+    var d = daysLeft(due), t = d < 0 ? 'เลยกำหนดส่ง ' + (-d) + ' วัน' : (d === 0 ? 'ครบกำหนดส่งวันนี้' : 'เหลือ ' + d + ' วัน · ส่งภายใน ' + fd(due));
+    return '<span class="due' + (d < 0 ? ' late' : '') + '">' + ic('cal', 13) + ' ' + t + '</span>';
+  }
+  function siteUrl() { return String(location.href).split('#')[0]; }
+  /** รายชื่อกรรมการของปีงบที่ใช้พิมพ์และสรุปผล (แอดมินเห็นทุกคน · กรรมการเห็นคะแนนคนอื่นเมื่อส่งครบ) */
+  function comMembers() {
+    if (S.com) return S.com.members.map(function (m) { if (m.id !== S.com.committee.id) return m; var x = clone(m); x.status = S.com.score.status; x.data = S.com.score.data; x.sigUrl = S.com.score.sigUrl; x.submittedAt = S.com.score.submittedAt; return x; });
+    var L = S.comList[S.fy];
+    return L ? L.list.map(function (c) { return { id: c.id, name: c.name, pos: c.pos, role: c.role, due: c.due, code: c.code, lastLogin: c.lastLogin, status: c.score.status, data: c.score.data, sigUrl: c.score.sigUrl, submittedAt: c.score.submittedAt }; }) : null;
+  }
+
+  /* ---------- เซสชันกรรมการ (เก็บใน sessionStorage ปิดแท็บแล้วหาย) ---------- */
+  function comToken() { try { return sessionStorage.getItem(COM_KEY) || ''; } catch (e) { return ''; } }
+  function comSaveTok(t) { try { if (t) sessionStorage.setItem(COM_KEY, t); else sessionStorage.removeItem(COM_KEY); } catch (e) { } }
+  function comApi(action, data, opt, cb) { opt = opt || {}; opt.token = S.com ? S.com.token : ''; opt.com = true; api(action, data, opt, cb); }
+  function comApply(data, token) {
+    var keep = S.com && S.comDirty && data.score.status !== 'submitted' && S.com.committee.id === data.committee.id;
+    S.com = { token: token || S.com.token, committee: data.committee, score: data.score, members: data.members, allDone: !!data.allDone, scoring: data.scoring };
+    if (!keep) { S.comDraft = clone(data.score.data); S.comDirty = false; }
+    setPublic({ settings: data.settings, education: data.education, career: data.career, years: data.years, version: data.version }, true);
+    setContent(data.content);
+    S.fy = data.committee.fy;
+    var dd = data.docs || {}; dd.fy = data.committee.fy; dd.mode = 'com';
+    D.docs = {}; D.docs[dd.fy] = dd; S.agDraft = null; S.idpDraft = null;
+  }
+  function comClear() { S.com = null; S.comDraft = null; S.comDirty = false; comSaveTok(''); D.docs = {}; clearTimeout(S.comTimer); }
+  function comLost() {
+    closeModal(); comClear(); backToPublic();
+    S.comErr = 'หมดเวลาการเข้าระบบกรรมการ กรุณาใส่รหัสอีกครั้ง';
+    if (route() !== 'committee') location.hash = 'committee'; else render();
+  }
+  function comResume(cb) {
+    var t = comToken();
+    if (!t || S.admin) { if (cb) cb(); return; }
+    S.comPending = true;
+    api('comBoot', {}, { loader: false, token: t, com: true, silent: true }, function (err, res) {
+      S.comPending = false;
+      if (err) { comSaveTok(''); if (/หมดเวลา/.test(err)) S.comErr = 'หมดเวลาการเข้าระบบกรรมการ กรุณาใส่รหัสอีกครั้ง'; }
+      else comApply(res, t);
+      render(); if (cb) cb();
+    });
+  }
+  function comRefresh() {
+    if (S.comRefreshing) return; S.comRefreshing = true;
+    comApi('comBoot', {}, { loader: false }, function (err, res) { S.comRefreshing = false; if (err) { toast(err); return; } comApply(res); render(); });
+  }
+  function doComLogin() {
+    var inp = $('com-code'), code = inp ? inp.value.trim() : '', btn = $('com-btn');
+    if (S.admin) { toast('ออกจากระบบผู้ดูแลก่อน แล้วจึงเข้าในฐานะกรรมการ'); return; }
+    if (code.replace(/[^0-9a-z]/gi, '').length < 10) { S.comErr = 'กรอกรหัสกรรมการให้ครบ เช่น PA70-ABCD-EF23'; render(); return; }
+    if (btn) btn.disabled = true;
+    api('comLogin', { code: code, device: deviceName() }, { loader: 'กำลังตรวจสอบรหัสกรรมการ', com: true }, function (err, res) {
+      if (btn) btn.disabled = false;
+      if (err) { S.comErr = err; render(); var f = $('com-code'); if (f) { f.value = code; f.focus(); } return; }
+      comSaveTok(res.token); S.comErr = ''; S.comDirty = false; comApply(res, res.token); render();
+      toast('ยินดีต้อนรับ ' + res.committee.name);
+    });
+  }
+  function comLogout() {
+    confirmBox('ออกจากระบบกรรมการ?' + (S.comDirty ? ' <b>คะแนนที่ยังไม่บันทึกจะหายไป</b>' : ''), 'ออกจากระบบ', function () {
+      comApi('comLogout', {}, { loader: 'กำลังออกจากระบบ' }, function () { comClear(); backToPublic(); location.hash = 'committee'; render(); toast('ออกจากระบบกรรมการแล้ว'); });
+    });
+  }
+
+  /* ---------- บันทึกร่าง / ส่งผล ---------- */
+  function comTouch() {
+    S.comDirty = true; S.comRev++; renderComSum();
+    clearTimeout(S.comTimer); S.comTimer = setTimeout(function () { comSave(true); }, 20000);
+  }
+  function comSave(quiet, cb) {
+    if (!S.com || S.com.score.status === 'submitted' || (!S.comDirty && quiet)) { if (cb) cb(); return; }
+    var rev = S.comRev; clearTimeout(S.comTimer);
+    comApi('comSaveScore', { data: S.comDraft }, { loader: quiet ? false : 'กำลังบันทึกร่าง' }, function (err, res) {
+      if (err) { if (!quiet) toast(err); return; }
+      S.com.score = res.score; S.comSavedAt = res.savedAt;
+      if (S.comRev === rev) S.comDirty = false;
+      var me = find(S.com.members, 'id', S.com.committee.id); if (me) { me.status = res.score.status; me.data = res.score.data; }
+      renderComSum(); if (!quiet) toast('บันทึกร่างแล้ว'); if (cb) cb();
+    });
+  }
+  function openSubmit() {
+    var miss = scoreMiss(S.comDraft);
+    if (miss.length) { toast('ยังให้คะแนนไม่ครบ: ' + miss.join(', ')); return; }
+    var c = paCalc(S.comDraft), sg = scoring();
+    openModal('ส่งผลการประเมิน',
+      '<div class="sub-sum"><div><span class="small muted">คะแนนรวม</span><b class="num">' + fix(c.total, 2) + '</b><span class="small muted">/ ' + (sg.p1Max + sg.p2Max) + ' · ร้อยละ ' + fix(c.pct, 2) + '</span></div>' + (c.pass ? '<span class="pill good">ผ่านเกณฑ์ (≥ ร้อยละ ' + sg.passPct + ')</span>' : '<span class="pill bad">ไม่ผ่านเกณฑ์ (ต่ำกว่าร้อยละ ' + sg.passPct + ')</span>') + '</div>' +
+      '<p class="small muted">ลงลายมือชื่อในกรอบด้วยนิ้วหรือเมาส์ ลายมือชื่อจะแสดงในแบบ PA2 และ PA3 ฉบับพิมพ์ · ถ้าไม่ลงที่นี่ ให้ลงนามด้วยปากกาบนแบบที่พิมพ์ออกมา</p><canvas id="sig-pad" class="sig-pad" aria-label="พื้นที่ลงลายมือชื่อ"></canvas>' +
+      chk('com-ok', false, 'ข้าพเจ้าเป็นผู้ประเมินและยืนยันผลการประเมินนี้ ทราบว่าส่งแล้วจะแก้ไขเองไม่ได้') + '<div id="sub-err"></div>',
+      '<button class="btn" data-act="sig-clear">' + ic('refresh', 16) + ' ล้างลายเซ็น</button><button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="com-send">' + ic('upload', 16) + ' ยืนยันส่งผล</button>');
+    setTimeout(initSignPad, 40);
+  }
+  function initSignPad() {
+    var c = $('sig-pad'); if (!c) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1), b = c.getBoundingClientRect(), ctx = c.getContext('2d'), drawing = false;
+    c.width = Math.round(b.width * dpr); c.height = Math.round(b.height * dpr);
+    ctx.scale(dpr, dpr); ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1b2a6b';
+    S.sigDirty = false;
+    function pt(e) { var bb = c.getBoundingClientRect(); return [(e.clientX - bb.left) * (b.width / bb.width), (e.clientY - bb.top) * (b.height / bb.height)]; }
+    c.addEventListener('pointerdown', function (e) { drawing = true; var p = pt(e); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0] + 0.1, p[1] + 0.1); ctx.stroke(); if (c.setPointerCapture) c.setPointerCapture(e.pointerId); S.sigDirty = true; e.preventDefault(); });
+    c.addEventListener('pointermove', function (e) { if (!drawing) return; var p = pt(e); ctx.lineTo(p[0], p[1]); ctx.stroke(); });
+    c.addEventListener('pointerup', function () { drawing = false; });
+    c.addEventListener('pointercancel', function () { drawing = false; });
+  }
+  /** ตัดขอบว่างของลายเซ็นแล้วส่งเป็น PNG พื้นโปร่งใส */
+  function sigPng() {
+    var c = $('sig-pad'); if (!c || !S.sigDirty) return '';
+    var w = c.width, h = c.height, px = c.getContext('2d').getImageData(0, 0, w, h).data, x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (var y = 0; y < h; y += 2) for (var x = 0; x < w; x += 2) if (px[(y * w + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return '';
+    x0 = Math.max(0, x0 - 8); y0 = Math.max(0, y0 - 8); x1 = Math.min(w, x1 + 8); y1 = Math.min(h, y1 + 8);
+    var k = Math.min(1, 600 / (x1 - x0), 200 / (y1 - y0)), o = document.createElement('canvas');
+    o.width = Math.max(1, Math.round((x1 - x0) * k)); o.height = Math.max(1, Math.round((y1 - y0) * k));
+    o.getContext('2d').drawImage(c, x0, y0, x1 - x0, y1 - y0, 0, 0, o.width, o.height);
+    return b64Of(o.toDataURL('image/png'));
+  }
+  function comSend() {
+    var ok = $('com-ok'), er = $('sub-err');
+    if (!ok || !ok.checked) { if (er) er.innerHTML = '<div class="err">กรุณาติ๊กยืนยันผลการประเมินก่อนส่ง</div>'; return; }
+    var sig = sigPng();
+    if (sig && sig.length * 0.75 > 380000) { if (er) er.innerHTML = '<div class="err">ลายเซ็นมีขนาดใหญ่เกินไป กดล้างแล้วเซ็นใหม่</div>'; return; }
+    comApi('comSubmit', { data: S.comDraft, confirm: true, sigB64: sig }, { loader: 'กำลังส่งผลการประเมิน', timeout: 90000 }, function (err, res) {
+      if (err) { if (er) er.innerHTML = '<div class="err">' + esc(err) + '</div>'; else toast(err); return; }
+      closeModal(); S.comDirty = false; comApply(res); render(); window.scrollTo(0, 0);
+      toast('ส่งผลการประเมินเรียบร้อย ขอบคุณครับ');
+    });
+  }
+
+  /* ---------- แถบโหมดกรรมการ (แสดงทุกหน้าสาธารณะ) ---------- */
+  function comBanner(r) {
+    if (!S.com) return '';
+    var k = S.com.committee, done = S.com.score.status === 'submitted';
+    return '<div class="com-banner" role="status"><div class="wrap"><span class="cb-t">' + ic('shield', 16) + ' โหมดกรรมการ · <b>' + esc(k.name) + '</b> · ประเมิน PA ปีงบ ' + k.fy + '</span>' + (done ? '<span class="pill good">ส่งผลแล้ว</span>' : dueChip(k.due)) +
+      '<span class="sp"></span>' + (r !== 'committee' ? '<a class="btn sm primary" href="#committee">' + ic('pen', 14) + ' หน้าให้คะแนน</a>' : '') + '<a class="btn sm" href="#pa-forms">' + ic('print', 14) + ' แบบ PA2/PA3</a><button class="btn sm" data-act="com-logout">' + ic('logout', 14) + ' ออก</button></div></div>';
+  }
+
+  /* ---------- หน้า #committee ---------- */
+  function pComLogin() {
+    if (S.admin) return pub('committee', '<div class="card raised com-login">' + ic('shield', 22) + '<h1>ระบบคณะกรรมการประเมิน PA</h1><p class="muted">ตอนนี้เข้าสู่ระบบในฐานะผู้ดูแลอยู่ จัดการรายชื่อ รหัส และดูผลการประเมินได้ที่หลังบ้าน</p><div class="row"><a class="btn primary" href="#admin-committee">' + ic('users', 16) + ' คณะกรรมการและผลประเมิน</a><a class="btn" href="#pa-forms">' + ic('print', 16) + ' แบบ PA2 / PA3</a></div><p class="small muted">ถ้าต้องการทดลองเข้าในฐานะกรรมการ ให้ออกจากระบบผู้ดูแลก่อน หรือเปิดหน้าต่างไม่ระบุตัวตน</p></div>');
+    if (S.comPending) return pub('committee', '<div class="card raised com-login" aria-busy="true"><div class="sk" style="height:26px;width:60%"></div><div class="sk" style="height:14px;width:80%"></div><span class="small muted">กำลังเปิดหน้าให้คะแนน</span></div>');
+    var s = st();
+    return pub('committee', '<form id="com-login-form" class="card raised com-login" autocomplete="off"><span class="eyebrow">สำหรับคณะกรรมการประเมิน</span><h1>เข้าสู่ระบบกรรมการ</h1>' +
+      '<p class="muted">ประเมินผลการพัฒนางานตามข้อตกลง (PA) ของ ' + esc(s.name) + ' ' + esc(s.school) + ' · ใช้รหัสกรรมการที่ได้รับจากเจ้าของแฟ้ม</p>' +
+      (S.comErr ? '<div class="err">' + esc(S.comErr) + '</div>' : '') +
+      '<div class="field"><label for="com-code">รหัสกรรมการ</label><input id="com-code" class="inp mono com-code" placeholder="PA70-XXXX-XXXX" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="24"></div>' +
+      '<button class="btn primary" type="submit" id="com-btn" style="justify-content:center">' + ic('lock', 16) + ' เข้าสู่ระบบ</button>' +
+      '<ul class="small muted com-tips"><li>รหัสใช้ได้เฉพาะปีงบประมาณที่ได้รับเชิญ และเปิดดูหลักฐาน “เฉพาะกรรมการ” ได้</li><li>การเข้าระบบจะหมดอายุเมื่อปิดแท็บ หรือครบ 12 ชั่วโมง คะแนนที่บันทึกร่างไว้ไม่หาย</li><li>ระบบบันทึกร่างให้อัตโนมัติระหว่างให้คะแนน</li></ul></form>');
+  }
+  function pCommittee() {
+    if (!S.com) return pComLogin();
+    var k = S.com.committee, sc = S.com.score, done = sc.status === 'submitted', d = done ? sc.data : S.comDraft, dis = done ? ' disabled' : '', fy = k.fy, sg = scoring();
+    d.notes = d.notes || {};
+    var docs = docsOf(fy); if (!docs) needDocs(fy);
+    var pa = docs && docs.pa && !docs.pa.hidden ? docs.pa : null, ag = docs && docs.agree && docs.agree.teach ? docs.agree : null;
+    function lvRadios(name, kind, key, cur, label) {
+      var o = '';
+      for (var v = 1; v <= 4; v++) o += '<label title="' + v + ' = ' + LV_LABEL[v] + '"><input type="radio" name="' + name + '" value="' + v + '" data-sc="' + kind + '" data-k="' + key + '"' + (+cur === v ? ' checked' : '') + dis + ' aria-label="' + label + ' ระดับ ' + v + ' ' + LV_LABEL[v] + '"><span>' + v + '</span></label>';
+      return '<div class="lv" role="radiogroup" aria-label="' + label + '">' + o + '</div>';
+    }
+    function noteIn(key, label) { return '<input class="inp note-in" data-note="' + key + '" placeholder="หมายเหตุ (ถ้ามี)" value="' + esc(d.notes[key] || '') + '"' + dis + ' maxlength="300" aria-label="หมายเหตุ ' + label + '">'; }
+    var vids = C().videos.filter(function (v) { return shown(v) && (v.pa || v.type === 'pa') && (v.fy ? v.fy === fy : inFy(v.date, fy)); });
+    var vcard = vids.length ? '<div class="card"><span class="eyebrow">ดูประกอบการให้คะแนน</span><h3 style="margin:2px 0 10px">วิดีโอการจัดการเรียนรู้</h3><div class="vside">' + vids.map(function (v) { return videoRow(v, (v.dur ? esc(v.dur) + ' · ' : '') + (v.ind && v.ind.length ? 'ตัวชี้วัด ' + v.ind.join(', ') : 'วิดีโอการสอน')); }).join('') + '</div></div>' : '';
+    var guide = '<div class="card lv-guide"><div class="row" style="justify-content:space-between;align-items:baseline"><div><span class="eyebrow">ระดับการปฏิบัติที่คาดหวัง</span><h3 style="margin:2px 0 0">' + esc(expLevel()) + '</h3></div><span class="small muted">แบบ PA2/ส · ตำแหน่ง' + esc(st().position || 'ครู') + (sg.acad ? ' วิทยฐานะ' + esc(sg.acad) : ' (ยังไม่มีวิทยฐานะ)') + '</span></div>' +
+      '<ol class="lv-key">' + [1, 2, 3, 4].map(function (v) { return '<li><b>' + v + '</b><span>' + LV_LABEL[v] + '</span></li>'; }).join('') + '</ol></div>';
+    var loadTxt = ag ? ag.teach.map(function (tm, i) { return 'ภาคเรียนที่ ' + esc(tm.term) + ' รวม ' + loadTotal(ag, i) + ' ชม./สัปดาห์'; }).join(' · ') : '';
+    var load = '<div class="card"><span class="eyebrow">ส่วนที่ 1 · ข้อ 1)</span><h3 style="margin:2px 0 8px">ภาระงาน</h3><div class="load-opt" role="radiogroup" aria-label="ภาระงาน">' +
+      [['ok', 'เป็นไปตามที่ ก.ค.ศ. กำหนด'], ['no', 'ไม่เป็นไปตามที่ ก.ค.ศ. กำหนด']].map(function (o) { return '<label class="chk-pill"><input type="radio" name="load" value="' + o[0] + '" data-sc="load"' + (d.load === o[0] ? ' checked' : '') + dis + '> ' + o[1] + '</label>'; }).join('') +
+      '</div><p class="small muted" style="margin-top:8px">' + (loadTxt ? 'ภาระงานตามข้อตกลง: ' + loadTxt + ' · ' : '') + '<a href="#agreement">ดูแบบข้อตกลง</a></p></div>';
+    var rows = [1, 2, 3].map(function (sd) {
+      return '<div class="card"><div class="eyebrow">ส่วนที่ 1 · ข้อ 2) ด้านที่ ' + sd + '</div><h3 style="margin:2px 0 6px">' + SIDES[sd] + '</h3>' +
+        IND_BASE.filter(function (x) { return indSide(x.code) === sd; }).map(function (x) {
+          var ev = evidenceOf(x.code, fy).length, pi = pa ? find(pa.ind, 'code', x.code) : null, nph = pi ? pi.photos.length : 0;
+          return '<div class="srow" id="sc-' + x.code.replace('.', '-') + '"><span class="code">' + x.code + '</span><div><div>' + esc(x.name) + '</div><div class="row" style="gap:6px;margin-top:4px"><button class="btn sm" style="padding:2px 8px" data-act="ev-list" data-k="' + x.code + '">' + ic('folder', 14) + ' งาน/หลักฐาน ' + ev + ' ชิ้น' + (nph ? ' · ภาพ ' + nph : '') + '</button></div></div>' + lvRadios('p1-' + x.code, 'p1', x.code, (d.p1 || {})[x.code], 'ตัวชี้วัด ' + x.code) + noteIn(x.code, 'ตัวชี้วัด ' + x.code) + '</div>';
+        }).join('') + '</div>';
+    }).join('');
+    var p2 = '<div class="card"><div class="eyebrow">ส่วนที่ 2 (' + sg.p2Max + ' คะแนน)</div><h3 style="margin:2px 0 4px">ข้อตกลงที่เสนอเป็นประเด็นท้าทายในการพัฒนาผลลัพธ์การเรียนรู้ของผู้เรียน</h3><p class="small muted">' + (pa && pa.challenge.title ? esc(pa.challenge.title) + ' · ' : '') + '<a href="#pa" data-act="pa-tab-go" data-k="p2">ดูวิธีดำเนินการและผลลัพธ์</a></p>' +
+      P2_ITEMS.map(function (it, i) {
+        return (i === 1 ? '<div class="p2-grp">2. ผลลัพธ์การเรียนรู้ของผู้เรียนที่คาดหวัง (' + fix(p2Max(P2_ITEMS[1]) + p2Max(P2_ITEMS[2]), 0) + ' คะแนน)</div>' : '') +
+          '<div class="srow"><span class="code">' + it.code + '</span><div><div><b>' + it.name + '</b> <span class="small muted">(' + fix(p2Max(it), 0) + ' คะแนน)</span></div><div class="small muted">' + it.d + '</div></div>' + lvRadios('p2-' + it.k, 'p2', it.k, (d.p2 || {})[it.k], it.name) + noteIn('p2-' + it.k, it.name) + '</div>';
+      }).join('') + '</div>';
+    var notes = '<div class="card"><span class="eyebrow">สรุปข้อสังเกต</span><h3 style="margin:2px 0 10px">จุดเด่น จุดที่ควรพัฒนา และข้อคิดเห็น</h3><div style="display:flex;flex-direction:column;gap:12px">' +
+      [['strong', '1. จุดเด่น'], ['improve', '2. จุดที่ควรพัฒนา'], ['comment', '3. ข้อคิดเห็น']].map(function (f) { return '<div class="field"><label for="com-' + f[0] + '">' + f[1] + '</label><textarea id="com-' + f[0] + '" class="inp" rows="3" maxlength="2000" data-ctext="' + f[0] + '"' + dis + '>' + esc(d[f[0]] || '') + '</textarea></div>'; }).join('') + '</div></div>';
+    var paNote = docs && docs.pa && docs.pa.hidden ? '<div class="note warn-note">' + ic('lock', 15) + ' เจ้าของแฟ้มยังไม่ได้เปิดแฟ้ม PA ให้กรรมการดู ให้คะแนนจากหลักฐานที่มีได้ หรือติดต่อเจ้าของแฟ้ม</div>' : (pa && pa.status !== 'ready' ? '<div class="note">' + ic('file', 15) + ' แฟ้ม PA ปีนี้ยังมีสถานะ “' + esc((DOC_ST[pa.status] || DOC_ST.draft)[0]) + '” เจ้าของแฟ้มอาจยังเพิ่มหลักฐานอยู่</div>' : '');
+    return pub('committee',
+      '<div class="card raised row com-head" style="justify-content:space-between"><div><span class="eyebrow">' + esc(COM_ROLE[k.role]) + (k.pos ? ' · ' + esc(k.pos) : '') + '</span><h2>' + esc(k.name) + '</h2><p class="small muted">ประเมิน ' + esc(st().name) + ' · ปีงบประมาณ ' + fy + ' (' + fd(fyRange(fy)[0]) + ' – ' + fd(fyRange(fy)[1]) + ')' + (k.due ? ' · ครบกำหนดส่ง ' + fd(k.due) : '') + '</p></div>' +
+        '<div class="row">' + (done ? '<span class="pill good">ส่งผลแล้ว ' + fdt(sc.submittedAt) + '</span>' : dueChip(k.due) || '<span class="pill warn">ยังไม่ส่งผล</span>') + '<a class="btn" href="#pa">' + ic('file', 16) + ' เปิดแฟ้ม PA</a></div></div>' + paNote +
+      '<div class="score-layout" style="margin-top:18px"><div style="display:flex;flex-direction:column;gap:14px">' + guide + vcard + load + rows + p2 + notes + '</div>' +
+        '<aside class="card raised sticky" id="com-sum">' + comSumHtml() + '</aside></div>');
+  }
+  function comSumHtml() {
+    if (!S.com) return '';
+    var sg = scoring(), sc = S.com.score, done = sc.status === 'submitted', d = done ? sc.data : S.comDraft, c = paCalc(d), n = IND_BASE.length, miss = scoreMiss(d), complete = !miss.length;
+    return '<span class="eyebrow">สรุปคะแนน (แบบ PA2)</span><div class="row" style="align-items:baseline;gap:6px;margin:6px 0 10px"><span class="sum-big">' + fix(c.total, 2) + '</span><span class="muted">/ ' + (sg.p1Max + sg.p2Max) + '</span></div>' +
+      '<div class="sum-line"><span>ภาระงาน</span><b>' + (d.load === 'ok' ? 'เป็นไปตามที่กำหนด' : d.load === 'no' ? '<span style="color:var(--bad)">ไม่เป็นไปตาม</span>' : '–') + '</b></div>' +
+      '<div class="sum-line"><span>ส่วนที่ 1 (' + c.filled + '/' + n + ' ข้อ)</span><b class="num">' + fix(c.p1, 2) + ' / ' + sg.p1Max + '</b></div>' +
+      P2_ITEMS.map(function (it) { var v = +(d.p2 || {})[it.k] || 0; return '<div class="sum-line sub"><span>' + it.code + ' ' + it.name + (v ? ' · ระดับ ' + v : '') + '</span><b class="num">' + fix(v / 4 * p2Max(it), 2) + ' / ' + fix(p2Max(it), 0) + '</b></div>'; }).join('') +
+      '<div class="sum-line"><span>ส่วนที่ 2 (' + c.p2filled + '/' + P2_ITEMS.length + ' ข้อ)</span><b class="num">' + fix(c.p2, 2) + ' / ' + sg.p2Max + '</b></div>' +
+      '<div class="sum-line"><span>คิดเป็นร้อยละ</span><b class="num">' + fix(c.pct, 2) + '</b></div>' +
+      '<div class="sum-line"><span>เกณฑ์ผ่าน (กรรมการแต่ละคน)</span><b class="num">≥ ร้อยละ ' + sg.passPct + '</b></div>' +
+      '<div style="margin:12px 0">' + (complete ? (c.pass ? '<span class="pill good">ผลของท่าน: ผ่านเกณฑ์</span>' : '<span class="pill bad">ผลของท่าน: ไม่ผ่านเกณฑ์</span>') : '<span class="pill off" style="white-space:normal">ยังไม่ครบ: ' + miss.join(', ') + '</span>') + '</div>' +
+      (done ? (sc.sigUrl ? '<div class="sig-box"><img class="sig" src="' + esc(sc.sigUrl) + '" alt="ลายมือชื่อ ' + esc(S.com.committee.name) + '"><span class="small muted">ลงนามอิเล็กทรอนิกส์ ' + fdt(sc.submittedAt) + '</span></div>' : '<div class="note small">ส่งผลโดยไม่ได้ลงลายมือชื่ออิเล็กทรอนิกส์ ให้ลงนามบนแบบที่พิมพ์</div>') +
+        '<p class="small muted">ส่งผลแล้ว แก้ไขเองไม่ได้ ถ้าต้องการแก้ให้ติดต่อเจ้าของแฟ้มเพื่อเปิดสิทธิ์</p><a class="btn" style="justify-content:center" href="#pa-forms">' + ic('print', 16) + ' พิมพ์แบบ PA2 ของฉัน</a>' :
+        '<div style="display:flex;flex-direction:column;gap:8px"><span class="small ' + (S.comDirty ? 'warn-t' : 'muted') + '" id="com-saved">' + (S.comDirty ? 'มีการแก้ไขที่ยังไม่บันทึก' : (S.comSavedAt ? 'บันทึกร่างแล้ว ' + fdt(S.comSavedAt) : (sc.status === 'draft' ? 'บันทึกร่างไว้แล้ว' : 'ยังไม่ได้บันทึก'))) + '</span>' +
+        '<button class="btn" data-act="com-save">' + ic('check', 16) + ' บันทึกร่าง</button><button class="btn primary" data-act="com-submit"' + (complete ? '' : ' disabled') + '>' + ic('upload', 16) + ' ส่งผลการประเมิน</button>' + (complete ? '' : '<span class="small muted">ให้คะแนนครบทุกข้อและเลือกภาระงานก่อนส่ง</span>') + '</div>') +
+      '<p class="small muted" style="margin-top:12px">วิธีคิด: ส่วนที่ 1 = ผลรวมระดับ ' + n + ' ข้อ ÷ ' + (n * 4) + ' × ' + sg.p1Max + ' · ส่วนที่ 2 = ระดับ ÷ 4 × คะแนนเต็มของข้อ (' + P2_ITEMS.map(function (it) { return fix(p2Max(it), 0); }).join(' / ') + ') · ผลของกรรมการ 3 คนสรุปในแบบ PA3</p>';
+  }
+  function renderComSum() { var el = $('com-sum'); if (el && S.com) el.innerHTML = comSumHtml(); }
+  function evList(code) {
+    var fy = S.com ? S.com.committee.fy : S.fy, docs = docsOf(fy), pa = docs && docs.pa && !docs.pa.hidden ? docs.pa : null, x = pa ? find(pa.ind, 'code', code) : null, list = evidenceOf(code, fy);
+    openModal('ตัวชี้วัด ' + code, '<p class="muted">' + esc(indName(code)) + '</p>' +
+      (x ? '<div class="ev-tri"><div><b>งาน (Tasks)</b><span>' + txt(x.task) + '</span></div><div><b>ผลลัพธ์ (Outcomes)</b><span>' + txt(x.out) + '</span></div><div><b>ตัวชี้วัด (Indicators)</b><span>' + txt(x.kpi) + '</span></div></div>' : '<div class="note small">' + ic('lock', 14) + ' ไม่มีข้อความในแฟ้ม PA ให้ดู</div>') +
+      '<div><b class="small">หลักฐานที่ผูกกับตัวชี้วัดนี้ (' + list.length + ')</b><div class="ev-btns" style="margin-top:6px">' + (list.length ? evButtons(list) : '<span class="small muted">ยังไม่มีหลักฐาน</span>') + '</div></div>' + (x && x.photos.length ? indPhotos(x) : ''), '', true);
+  }
+
+  /* ---------- แบบ PA2 / PA3 ฉบับพิมพ์ ---------- */
+  function thDateFull(s) {
+    if (!s) return 'วันที่ .......... เดือน .................... พ.ศ. ..........';
+    var p = String(s).slice(0, 10).split('-');
+    return 'วันที่ ' + parseInt(p[2], 10) + ' เดือน ' + TH_MF[parseInt(p[1], 10) - 1] + ' พ.ศ. ' + (parseInt(p[0], 10) + 543);
+  }
+  function pafCb(on) { return '<span class="paf-cb' + (on ? ' on' : '') + '" aria-hidden="true">' + (on ? '✓' : '') + '</span>'; }
+  function pafPeriod(fy) { return 'ระหว่างวันที่ 1 เดือน ตุลาคม พ.ศ. ' + (fy - 1) + ' ถึงวันที่ 30 เดือน กันยายน พ.ศ. ' + fy; }
+  function loadMark(ms) {
+    var done = ms.filter(function (m) { return m.status === 'submitted' && m.data; }), no = done.some(function (m) { return m.data.load === 'no'; }), ok = done.length && !no;
+    return pafCb(ok) + 'เป็นไปตามที่ ก.ค.ศ. กำหนด &nbsp; ' + pafCb(no) + 'ไม่เป็นไปตามที่ ก.ค.ศ. กำหนด';
+  }
+  function pafInfo() {
+    var s = st(), sg = scoring();
+    return '<div class="paf-info"><b>ข้อมูลผู้รับการประเมิน</b><div><span>ชื่อ–สกุล</span> ' + esc(s.name) + '</div><div><span>ตำแหน่ง</span> ' + esc(s.position || 'ครู') + '</div>' +
+      '<div><span>สถานศึกษา</span> ' + esc(s.school) + '</div><div><span>สังกัด</span> ' + esc(s.area) + '</div>' +
+      '<div><span>รับเงินเดือนในอันดับ</span> ' + (sg.rank ? esc(sg.rank) : '..................') + '</div><div><span>อัตราเงินเดือน</span> ' + (sg.salary ? esc(sg.salary) : '..................') + ' บาท</div></div>';
+  }
+  function pafSig(m, role, withPos) {
+    var signed = m && m.status === 'submitted';
+    return '<div class="paf-sig"><div class="paf-sl"><span>(ลงชื่อ)</span><span class="ln">' + (signed && m.sigUrl ? '<img src="' + esc(m.sigUrl) + '" alt="ลายมือชื่อ">' : '') + '</span><span>' + (role || 'กรรมการผู้ประเมิน') + '</span></div>' +
+      '<div>(' + (m ? esc(m.name) : '..................................................') + ')</div>' + (withPos ? '<div>ตำแหน่ง ' + (m && m.pos ? esc(m.pos) : '..................................') + '</div>' : '') +
+      '<div>' + thDateFull(signed ? m.submittedAt : '') + '</div></div>';
+  }
+  function pa3Table(ms) {
+    var sg = scoring(), cs = ms.map(function (m) { return m.status === 'submitted' && m.data ? paCalc(m.data) : null; });
+    while (cs.length < 3) cs.push(null);
+    function cells(key, b) { return cs.map(function (c) { return '<td class="r num">' + (c ? (b ? '<b>' + fix(c[key], 2) + '</b>' : fix(c[key], 2)) : '') + '</td>'; }).join(''); }
+    return '<table class="tbl paf-t"><thead><tr><th>การประเมินข้อตกลงในการพัฒนางาน</th><th style="width:62px">คะแนนเต็ม</th>' + cs.map(function (c, i) { return '<th style="width:58px">คนที่ ' + (i + 1) + '</th>'; }).join('') + '<th style="width:130px">หมายเหตุ</th></tr></thead><tbody>' +
+      '<tr><td><u>ส่วนที่ 1</u> ข้อตกลงในการพัฒนางานตามมาตรฐานตำแหน่ง</td><td class="r num">' + sg.p1Max + '</td>' + cells('p1') + '<td rowspan="3" class="small">เกณฑ์ผ่านต้องได้คะแนนจากกรรมการแต่ละคนไม่ต่ำกว่าร้อยละ ' + sg.passPct + '</td></tr>' +
+      '<tr><td><u>ส่วนที่ 2</u> ข้อตกลงในการพัฒนางานที่เสนอเป็นประเด็นท้าทายในการพัฒนาผลลัพธ์การเรียนรู้ของผู้เรียน</td><td class="r num">' + sg.p2Max + '</td>' + cells('p2') + '</tr>' +
+      '<tr class="paf-sumrow"><td class="c">รวม</td><td class="r num">' + (sg.p1Max + sg.p2Max) + '</td>' + cells('total', true) + '</tr></tbody></table>';
+  }
+  function pa3Page(ms, fy) {
+    var s = st(), rr = setRes(ms), chair = ms.filter(function (m) { return m.role === 'chair'; })[0] || ms[0], others = ms.filter(function (m) { return m !== chair; });
+    while (others.length < 2) others.push(null);
+    var fin = rr && rr.complete;
+    return '<section class="a4 paf"><div class="paf-top"><span class="paf-box">สำหรับกรรมการประเมิน PA</span><span>PA3/ส</span></div>' +
+      '<div class="paf-title"><b>แบบสรุปผลการประเมินการพัฒนางานตามข้อตกลง (PA)</b><b>สำหรับข้าราชการครูและบุคลากรทางการศึกษา ตำแหน่ง ' + esc(s.position || 'ครู') + '</b><b>' + esc(s.school) + ' ' + esc(s.area) + '</b><b>ประจำปีงบประมาณ พ.ศ. ' + fy + '</b><span>' + pafPeriod(fy) + '</span></div>' +
+      pafInfo() + '<p><b>ภาระงาน</b> &nbsp; ' + loadMark(ms) + '</p><p><b>ผลการประเมิน</b></p><div class="a4-scroll">' + pa3Table(chair ? [chair].concat(others.filter(Boolean)) : []) + '</div>' +
+      '<p class="paf-c">สรุปผลการประเมินทั้ง 2 ส่วน จากกรรมการ 3 คน &nbsp; ' + pafCb(fin && rr.pass) + 'ผ่านเกณฑ์ &nbsp; ' + pafCb(fin && !rr.pass) + 'ไม่ผ่านเกณฑ์</p>' +
+      (!fin ? '<p class="paf-draft">ฉบับร่าง: กรรมการส่งผลแล้ว ' + (rr ? rr.n : 0) + ' จาก ' + Math.max(3, ms.length) + ' คน ยังไม่สรุปผล</p>' : '') +
+      pafSig(chair, 'ประธานกรรมการผู้ประเมิน') +
+      '<div class="paf-sigs2">' + others.slice(0, 2).map(function (m) { return pafSig(m); }).join('') + '</div></section>';
+  }
+  function pa2Pages(m, fy) {
+    var s = st(), sg = scoring(), d = m.data || emptyScore(), notes = d.notes || {}, p1v = d.p1 || {}, p2v = d.p2 || {}, c = paCalc(d), done = m.status === 'submitted';
+    var draft = done ? '' : '<p class="paf-draft">ฉบับร่าง: กรรมการยังไม่ส่งผลการประเมิน</p>';
+    var head = '<div class="paf-top"><span></span><span>PA2/ส</span></div><div class="paf-title"><b>แบบประเมินผลการพัฒนางานตามข้อตกลง (PA)</b><b>สำหรับข้าราชการครูและบุคลากรทางการศึกษา ตำแหน่ง ' + esc(s.position || 'ครู') + ' (' + (sg.acad ? 'วิทยฐานะ' + esc(sg.acad) : 'ยังไม่มีวิทยฐานะ') + ')</b><b>ประจำปีงบประมาณ พ.ศ. ' + fy + '</b><span>รอบการประเมิน ' + pafPeriod(fy) + '</span></div>';
+    var thead = '<thead><tr><th rowspan="2">ลักษณะงานที่ปฏิบัติตามมาตรฐานตำแหน่ง<br>ระดับการปฏิบัติที่คาดหวัง<br>' + esc(expLevel()) + '</th><th colspan="4">ผลการประเมิน</th><th rowspan="2" style="width:92px">หมายเหตุ</th></tr><tr>' +
+      [1, 2, 3, 4].map(function (v) { return '<th class="lvh"><b>' + v + '</b>' + LV_LABEL[v] + '</th>'; }).join('') + '</tr></thead>';
+    function lvCells(v) { var o = ''; for (var i = 1; i <= 4; i++) o += '<td class="lvc">' + (+v === i ? '✓' : '') + '</td>'; return o; }
+    function side(sd) { return '<tr class="grp"><td colspan="6">' + sd + '. ' + SIDES[sd] + '</td></tr>' + IND_BASE.filter(function (x) { return indSide(x.code) === sd; }).map(function (x) { return '<tr><td>' + x.code + ' ' + esc(x.name) + '</td>' + lvCells(p1v[x.code]) + '<td class="small">' + esc(notes[x.code] || '') + '</td></tr>'; }).join(''); }
+    var pg1 = '<section class="a4 paf">' + head + draft + pafInfo() + '<p class="small">ให้ทำเครื่องหมาย ✓ ในช่องที่ตรงกับผลการประเมิน หรือให้คะแนนตามระดับคุณภาพ</p>' +
+      '<p><b>ส่วนที่ 1 ข้อตกลงในการพัฒนางานตามมาตรฐานตำแหน่ง (' + sg.p1Max + ' คะแนน)</b></p><p>1) ภาระงาน &nbsp; ' + pafCb(d.load === 'ok') + 'เป็นไปตามที่ ก.ค.ศ. กำหนด &nbsp; ' + pafCb(d.load === 'no') + 'ไม่เป็นไปตามที่ ก.ค.ศ. กำหนด</p><p>2) การปฏิบัติงานและผลการปฏิบัติงานตามมาตรฐานตำแหน่ง' + esc(s.position || 'ครู') + '</p>' +
+      '<div class="a4-scroll"><table class="tbl paf-t">' + thead + '<tbody>' + side(1) + '</tbody></table></div></section>';
+    var pg2 = '<section class="a4 paf"><div class="a4-scroll"><table class="tbl paf-t">' + thead + '<tbody>' + side(2) + side(3) +
+      '<tr class="paf-sumrow"><td colspan="6">รวมคะแนนส่วนที่ 1 (ผลรวมระดับ ' + c.p1sum + ' จาก ' + (IND_BASE.length * 4) + ') = ' + fix(c.p1, 2) + ' คะแนน</td></tr></tbody></table></div></section>';
+    var p2rows = P2_ITEMS.map(function (it, i) {
+      var g = i === 1 ? '<tr class="grp"><td colspan="6">2. ผลลัพธ์การเรียนรู้ของผู้เรียนที่คาดหวัง (' + fix(p2Max(P2_ITEMS[1]) + p2Max(P2_ITEMS[2]), 0) + ' คะแนน)</td></tr>' : '';
+      var label = i === 0 ? '<b>1. วิธีดำเนินการ (' + fix(p2Max(it), 0) + ' คะแนน)</b>' : it.code + ' ' + it.name + ' (' + fix(p2Max(it), 0) + ' คะแนน)';
+      return g + '<tr' + (i === 0 ? ' class="grp-l"' : '') + '><td>' + label + '<span class="desc">' + it.d + '</span></td>' + lvCells(p2v[it.k]) + '<td class="small">' + esc(notes['p2-' + it.k] || '') + '</td></tr>';
+    }).join('');
+    var pg3 = '<section class="a4 paf"><p><b>ส่วนที่ 2 ข้อตกลงในการพัฒนางานที่เสนอเป็นประเด็นท้าทายในการพัฒนาผลลัพธ์การเรียนรู้ของผู้เรียน (' + sg.p2Max + ' คะแนน)</b></p><div class="a4-scroll"><table class="tbl paf-t">' + thead + '<tbody>' + p2rows +
+      '<tr class="paf-sumrow"><td colspan="6">รวมผลการประเมินทั้ง 2 ส่วน = ' + fix(c.total, 2) + ' คะแนน <span class="small">(ส่วนที่ 1 = ' + fix(c.p1, 2) + ' · ส่วนที่ 2 = ' + fix(c.p2, 2) + ' · ร้อยละ ' + fix(c.pct, 2) + ')</span></td></tr></tbody></table></div>' +
+      pafSig(m, 'กรรมการผู้ประเมิน', true) + '</section>';
+    function lines(t) { return '<div class="paf-lines">' + (t ? esc(t) : '') + '</div>'; }
+    var pg4 = '<section class="a4 paf"><div class="paf-title"><b>สรุปข้อสังเกตเกี่ยวกับ จุดเด่น จุดที่ควรพัฒนา และข้อคิดเห็น</b><span>ผู้รับการประเมิน : ' + esc(s.name) + '</span></div>' +
+      '<h4>1. จุดเด่น</h4>' + lines(d.strong) + '<h4>2. จุดที่ควรพัฒนา</h4>' + lines(d.improve) + '<h4>3. ข้อคิดเห็น</h4>' + lines(d.comment) + pafSig(m, 'กรรมการผู้ประเมิน', true) + '</section>';
+    return pg1 + pg2 + pg3 + pg4;
+  }
+  function pForms() {
+    var back = S.admin ? 'admin-committee' : (S.com ? 'committee' : 'pa');
+    function bar(mid) {
+      return '<div class="rep-bar"><a class="btn" href="#' + back + '">' + ic('left', 16) + ' กลับ</a><b>แบบ PA2 / PA3</b>' + (mid || '') + '<span class="sp"></span>' + (S.admin ? fySelect('fy-sel-f') : '') +
+        '<button class="btn primary" data-act="print">' + ic('print', 16) + ' พิมพ์ / บันทึก PDF</button></div>';
+    }
+    if (!S.admin && !S.com) return bar() + '<div class="rep-wrap"><div class="card empty" style="max-width:560px">' + ic('lock', 20) + ' แบบประเมิน PA2 และแบบสรุป PA3 เปิดได้เฉพาะเจ้าของแฟ้มและคณะกรรมการ · <a href="#committee">เข้าสู่ระบบกรรมการ</a></div></div>';
+    var fy = S.com ? S.com.committee.fy : S.fy, ms = comMembers();
+    if (!ms) { needComList(fy); return bar() + '<div class="rep-wrap"><div class="card" style="max-width:560px;width:100%;display:flex;flex-direction:column;gap:10px" aria-busy="true"><div class="sk" style="height:24px;width:50%"></div><div class="sk" style="height:160px"></div>' + (S.comListErr ? '<div class="err">' + esc(S.comListErr) + ' <button class="btn sm" data-act="com-reload">ลองใหม่</button></div>' : '<span class="small muted">กำลังโหลดผลการประเมิน</span>') + '</div></div>'; }
+    var mine = S.com ? ms.filter(function (m) { return m.id === S.com.committee.id; }) : ms;
+    var opts = [['all', 'ทั้งชุด'], ['pa3', 'PA3 สรุป 3 คน']].concat(mine.map(function (m) { return [m.id, 'PA2 · ' + (S.admin ? 'คนที่ ' + (ms.indexOf(m) + 1) + ' ' : 'ของฉัน ') + m.name.split(' ')[0]]; }));
+    var sel = S.formSel || 'all';
+    if (!opts.some(function (o) { return o[0] === sel; })) sel = 'all';
+    var seg = '<div class="seg" role="group" aria-label="เลือกแบบที่จะแสดง">' + opts.map(function (o) { return '<button type="button" data-act="form-sel" data-k="' + o[0] + '" class="' + (sel === o[0] ? 'on' : '') + '">' + esc(o[1]) + '</button>'; }).join('') + '</div>';
+    var html = '';
+    if (!ms.length) html = '<div class="card empty" style="max-width:560px">ปีงบ ' + fy + ' ยังไม่ได้กำหนดคณะกรรมการ เพิ่มได้ที่หน้า “คณะกรรมการและผลประเมิน”</div>';
+    else {
+      if (S.com && S.comDirty && sel !== 'pa3') html += '<div class="note warn-note" style="max-width:210mm;width:100%">' + ic('pen', 15) + ' มีคะแนนที่ยังไม่บันทึก แบบที่พิมพ์ใช้คะแนนที่บันทึกแล้วเท่านั้น <button class="btn sm" data-act="com-save">บันทึกร่างตอนนี้</button></div>';
+      if (S.com && !S.com.allDone && (sel === 'all' || sel === 'pa3')) html += '<div class="note" style="max-width:210mm;width:100%">' + ic('lock', 15) + ' คะแนนของกรรมการท่านอื่นจะแสดงในแบบ PA3 เมื่อกรรมการส่งผลครบทุกคน</div>';
+      mine.forEach(function (m) { if (sel === 'all' || sel === m.id) html += pa2Pages(m, fy); });
+      if (sel === 'all' || sel === 'pa3') html += pa3Page(ms, fy);
+    }
+    return bar(seg) + '<div class="rep-wrap">' + html + '</div>';
+  }
+
+  /* ---------- หลังบ้าน: คณะกรรมการและผลประเมิน ---------- */
+  function needComList(fy, force) {
+    if (!S.admin || ((S.comList[fy] || S.comLoading[fy]) && !force)) return;
+    S.comLoading[fy] = 1;
+    api('listCommittee', { fy: fy }, { loader: false }, function (err, res) {
+      S.comLoading[fy] = 0;
+      if (err) { S.comListErr = err; toast('โหลดรายชื่อกรรมการไม่สำเร็จ: ' + err); return; }
+      S.comListErr = ''; S.comList[res.fy] = res;
+      var r = route(); if (S.fy === fy && (r === 'admin-committee' || r === 'pa-forms' || r === 'admin')) render();
+    });
+  }
+  function comAdminCall(action, data, msg, cb) {
+    api(action, data, { loader: 'กำลังบันทึก' }, function (err, res) {
+      if (err) { var fe = $('f-err'); if (fe) fe.innerHTML = '<div class="err">' + esc(err) + '</div>'; else toast(err); return; }
+      S.comList[res.fy] = res; closeModal(); render(); if (msg) toast(msg); if (cb) cb(res);
+    });
+  }
+  function comText(m) {
+    var s = st();
+    return 'เรียน ' + m.name + '\nขอเชิญประเมินผลการพัฒนางานตามข้อตกลง (PA) ของ ' + s.name + ' ' + s.school + ' ปีงบประมาณ ' + S.fy +
+      '\nเข้าระบบที่ ' + siteUrl() + '#committee\nรหัสกรรมการ: ' + m.code + (m.due ? '\nกรุณาส่งผลภายใน ' + thDateFull(m.due).replace('วันที่ ', '') : '') + '\n(รหัสนี้ใช้เฉพาะท่าน กรุณาอย่าส่งต่อ)';
+  }
+  function copyText(t, msg) {
+    function fb() {
+      var ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { }
+      document.body.removeChild(ta); toast(ok ? msg : 'คัดลอกไม่ได้ กรุณาเลือกข้อความแล้วคัดลอกเอง');
+    }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(function () { toast(msg); }, fb); else fb();
+  }
+  function comForm(m) {
+    m = m || { id: '', name: '', pos: '', role: '', due: '' };
+    var ms = comMembers() || [], hasChair = ms.some(function (x) { return x.role === 'chair' && x.id !== m.id; }), role = m.role || (hasChair ? 'member' : 'chair');
+    S.comEdit = m.id;
+    openModal(m.id ? 'แก้ไขกรรมการ' : 'เพิ่มกรรมการ ปีงบ ' + S.fy,
+      '<div class="field"><label for="cf-name">ชื่อ–สกุล</label><input id="cf-name" class="inp" maxlength="120" value="' + esc(m.name) + '" placeholder="นายสมชาย ใจดี"></div>' +
+      '<div class="field"><label for="cf-pos">ตำแหน่ง</label><input id="cf-pos" class="inp" maxlength="120" value="' + esc(m.pos) + '" placeholder="ผู้อำนวยการโรงเรียนบ้านละลม"></div>' +
+      '<div class="grid2"><div class="field"><label for="cf-role">บทบาท</label><select id="cf-role" class="inp"><option value="chair"' + (role === 'chair' ? ' selected' : '') + (hasChair ? ' disabled' : '') + '>ประธานกรรมการ' + (hasChair ? ' (มีแล้ว)' : '') + '</option><option value="member"' + (role === 'member' ? ' selected' : '') + '>กรรมการ</option></select></div>' +
+      '<div class="field"><label for="cf-due">ครบกำหนดส่งผล</label><input id="cf-due" type="date" class="inp" value="' + esc(m.due) + '"></div></div>' +
+      (m.id ? '' : '<p class="small muted">บันทึกแล้วระบบจะออกรหัสกรรมการให้อัตโนมัติ ส่งรหัสให้กรรมการได้จากปุ่มคัดลอกหรือแชร์</p>') + '<div id="f-err"></div>',
+      '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="com-form-save">' + ic('check', 16) + ' บันทึก</button>');
+  }
+  function aCommittee() {
+    var fy = S.fy, L = S.comList[fy];
+    if (!L) {
+      needComList(fy);
+      return adminShell('admin-committee', 'คณะกรรมการและผลประเมิน ปีงบ ' + fy, 'กำลังโหลดข้อมูลจาก Google Sheets', '', '<div class="card" style="display:flex;flex-direction:column;gap:12px" aria-busy="true"><div class="sk" style="height:26px;width:40%"></div><div class="sk" style="height:120px"></div>' + (S.comListErr ? '<div class="err">' + esc(S.comListErr) + ' <button class="btn sm" data-act="com-reload">ลองใหม่</button></div>' : '') + '</div>');
+    }
+    var ms = comMembers(), rr = setRes(ms), sg = scoring(), nDone = ms.filter(function (m) { return m.status === 'submitted'; }).length, s = ensureDraft().s;
+    var docs = docsOf(fy); if (!docs) needDocs(fy);
+    var warn = '';
+    if (docs && docs.pa && docs.pa.status !== 'ready') warn += '<div class="note warn-note">' + ic('file', 15) + ' แฟ้ม PA ปีงบ ' + fy + ' ยังไม่ได้ตั้งเป็น “พร้อมให้กรรมการประเมิน” <a href="#admin-pa">ไปที่แฟ้ม PA</a></div>';
+    if (((D.settings || {}).docVis || {}).pa === 'private') warn += '<div class="note warn-note">' + ic('lock', 15) + ' ตั้งค่าให้แฟ้ม PA เป็น “ส่วนตัว” อยู่ กรรมการจะเปิดแฟ้มไม่ได้ <a href="#admin-settings">เปลี่ยนที่หน้าตั้งค่า</a></div>';
+    if (ms.length && ms.length < 3) warn += '<div class="note">' + ic('users', 15) + ' แบบ PA3 ใช้กรรมการ 3 คน ตอนนี้มี ' + ms.length + ' คน</div>';
+    var kpi = '<div class="grid4"><div class="kpi"><span class="l">กรรมการ</span><span class="v">' + ms.length + ' / 3</span><span class="small muted">' + (ms.some(function (m) { return m.role === 'chair'; }) ? 'มีประธานแล้ว' : 'ยังไม่มีประธาน') + '</span></div>' +
+      '<div class="kpi' + (nDone < ms.length ? ' warn' : '') + '"><span class="l">ส่งผลแล้ว</span><span class="v">' + nDone + ' / ' + ms.length + '</span>' + prog(ms.length ? nDone / ms.length * 100 : 0, nDone === ms.length && ms.length ? 'good' : '') + '</div>' +
+      '<div class="kpi"><span class="l">คะแนนเฉลี่ย</span><span class="v">' + (rr ? fix(rr.avg, 2) : '–') + '</span><span class="small muted">เต็ม ' + (sg.p1Max + sg.p2Max) + (rr ? ' · ต่ำสุดร้อยละ ' + fix(rr.minPct, 2) : '') + '</span></div>' +
+      '<div class="kpi"><span class="l">ผลการประเมิน</span><span class="v" style="font-size:18px;margin-top:4px">' + resPill(rr) + '</span><span class="small muted">ทุกคนต้องให้ ≥ ร้อยละ ' + sg.passPct + '</span></div></div>';
+    var cards = ms.map(function (m, i) {
+      var c = m.data && m.status !== 'pending' ? paCalc(m.data) : null;
+      return '<div class="card com-card"><div class="com-card-h"><span class="com-no">' + (i + 1) + '</span><div style="flex:1;min-width:0"><div class="row" style="gap:8px;justify-content:space-between"><span class="eyebrow">' + COM_ROLE[m.role] + '</span>' + comPill(m) + '</div><h3>' + esc(m.name) + '</h3><span class="small muted">' + esc(m.pos || '-') + '</span></div></div>' +
+        '<div class="com-code-box"><span class="small muted">รหัสกรรมการ</span><b class="mono">' + esc(m.code) + '</b><span class="row" style="gap:4px"><button class="btn sm" data-act="com-copy" data-id="' + m.id + '">' + ic('copy', 14) + ' คัดลอกรหัส</button><button class="btn sm" data-act="com-share" data-id="' + m.id + '">' + ic('chat', 14) + ' ข้อความเชิญ</button></span></div>' +
+        '<div class="com-meta small"><span>' + ic('cal', 13) + ' ' + (m.due ? 'ส่งภายใน ' + fd(m.due) + (m.status !== 'submitted' && daysLeft(m.due) < 0 ? ' <b style="color:var(--bad)">(เลยกำหนด)</b>' : '') : 'ไม่ได้กำหนดวันส่ง') + '</span><span>' + ic('user', 13) + ' ' + (m.lastLogin ? 'เข้าระบบล่าสุด ' + fdt(m.lastLogin) : 'ยังไม่เคยเข้าระบบ') + '</span>' + (c ? '<span>' + ic('chart', 13) + ' ' + (m.status === 'submitted' ? 'คะแนน ' : 'ร่าง ') + fix(c.total, 2) + ' (ร้อยละ ' + fix(c.pct, 1) + ')</span>' : '') + '</div>' +
+        '<div class="row" style="gap:6px"><button class="btn sm" data-act="com-edit" data-id="' + m.id + '">' + ic('edit', 14) + ' แก้ไข</button><button class="btn sm" data-act="com-regen" data-id="' + m.id + '">' + ic('refresh', 14) + ' ออกรหัสใหม่</button>' + (m.status === 'submitted' ? '<button class="btn sm" data-act="com-unlock" data-id="' + m.id + '">' + ic('lock', 14) + ' เปิดให้แก้ไข</button>' : '') + '<button class="btn sm danger" data-act="com-del" data-id="' + m.id + '">' + ic('trash', 14) + ' ลบ</button></div></div>';
+    }).join('');
+    var addBtn = ms.length < 3 ? '<button class="btn primary" data-act="com-new">' + ic('plus', 16) + ' เพิ่มกรรมการ</button>' : '';
+    var res = ms.length ? '<div class="card"><div class="sec-h"><h3>ผลการประเมินรายกรรมการ</h3><a class="btn sm" href="#pa-forms">' + ic('print', 14) + ' พิมพ์ PA2 / PA3</a></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>กรรมการ</th><th>สถานะ</th><th>ภาระงาน</th><th class="r">ส่วนที่ 1 (' + sg.p1Max + ')</th><th class="r">ส่วนที่ 2 (' + sg.p2Max + ')</th><th class="r">รวม</th><th class="r">ร้อยละ</th><th>ผล</th></tr></thead><tbody>' +
+      ms.map(function (m) {
+        var ok = m.status === 'submitted', c = ok ? paCalc(m.data) : null;
+        return '<tr><td><b>' + esc(m.name) + '</b><br><span class="small muted">' + COM_ROLE[m.role] + '</span></td><td>' + comPill(m) + '</td><td>' + (ok ? (m.data.load === 'ok' ? 'ตามที่กำหนด' : '<span style="color:var(--bad)">ไม่ตามที่กำหนด</span>') : '–') + '</td>' +
+          '<td class="r num">' + (c ? fix(c.p1, 2) : '–') + '</td><td class="r num">' + (c ? fix(c.p2, 2) : '–') + '</td><td class="r num"><b>' + (c ? fix(c.total, 2) : '–') + '</b></td><td class="r num">' + (c ? fix(c.pct, 2) : '–') + '</td><td>' + (c ? (c.pass ? '<span class="pill good">ผ่าน</span>' : '<span class="pill bad">ไม่ผ่าน</span>') : '') + '</td></tr>';
+      }).join('') + (rr ? '<tr class="sum"><td colspan="5">เฉลี่ยจากกรรมการที่ส่งแล้ว ' + rr.n + ' คน</td><td class="r num"><b>' + fix(rr.avg, 2) + '</b></td><td></td><td>' + resPill(rr) + '</td></tr>' : '') + '</tbody></table></div>' +
+      (rr && rr.loadBad ? '<p class="small" style="color:var(--bad);margin-top:8px">มีกรรมการเห็นว่าภาระงานไม่เป็นไปตามที่ ก.ค.ศ. กำหนด</p>' : '') +
+      '<p class="small muted" style="margin-top:8px">เกณฑ์ PA3: ผ่านเมื่อคะแนนจากกรรมการ<b>แต่ละคน</b>ไม่ต่ำกว่าร้อยละ ' + sg.passPct + ' · ผลชั่วคราวจนกว่ากรรมการจะส่งครบ 3 คน · ลายมือชื่อที่ลงไว้จะแสดงในแบบที่พิมพ์</p></div>' : '';
+    function nIn(k, label, min, max) { return '<div class="field"><label for="b-' + k + '">' + label + '</label><input id="b-' + k + '" type="number" min="' + min + '" max="' + max + '" class="inp" data-b="s.' + k + '" value="' + esc(s[k] === undefined || s[k] === '' ? ({ p1Max: 60, p2Max: 40, passPct: 70 })[k] : s[k]) + '"></div>'; }
+    var setCard = '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>ค่าที่ใช้ในแบบ PA2 / PA3</h3><div class="grid3">' + nIn('p1Max', 'คะแนนเต็มส่วนที่ 1', 1, 100) + nIn('p2Max', 'คะแนนเต็มส่วนที่ 2', 1, 100) + nIn('passPct', 'เกณฑ์ผ่าน (ร้อยละ)', 1, 100) + '</div>' +
+      '<div class="grid3"><div class="field"><label for="b-acad">วิทยฐานะ (กำหนดระดับที่คาดหวัง)</label><select id="b-acad" class="inp" data-b="s.acad">' + RANKS.map(function (o) { return '<option value="' + esc(o[0]) + '"' + ((s.acad || '') === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="b-rank">รับเงินเดือนในอันดับ</label><input id="b-rank" class="inp" data-b="s.rank" maxlength="40" value="' + esc(s.rank || '') + '" placeholder="คศ.1"></div>' +
+      '<div class="field"><label for="b-salary">อัตราเงินเดือน (บาท)</label><input id="b-salary" class="inp" data-b="s.salary" inputmode="numeric" maxlength="12" value="' + esc(s.salary || '') + '" placeholder="25,140"></div></div>' +
+      '<span class="hint">ระดับที่คาดหวังตอนนี้: <b>' + esc(EXP_LV[s.acad || ''] || EXP_LV['']) + '</b> · อันดับและเงินเดือนแสดงเฉพาะในแบบที่พิมพ์ ไม่แสดงในหน้าสาธารณะ · กดบันทึกที่แถบด้านบน</span></div>';
+    return adminShell('admin-committee', 'คณะกรรมการและผลประเมิน ปีงบ ' + fy, 'กรรมการ 3 คนต่อปีงบ เข้าระบบด้วยรหัส ให้คะแนนแบบ PA2 ลงลายมือชื่อ แล้วสรุปเป็นแบบ PA3',
+      '<button class="btn" data-act="com-reload">' + ic('refresh', 16) + ' โหลดใหม่</button><a class="btn" href="#pa-forms">' + ic('print', 16) + ' แบบ PA2 / PA3</a>' + addBtn,
+      warn + kpi + '<div class="note" style="margin-top:14px">' + ic('link', 15) + ' กรรมการเข้าระบบที่ <span class="mono">' + esc(siteUrl()) + '#committee</span> แล้วใส่รหัสของตนเอง · ออกรหัสใหม่แล้วรหัสเดิมและการเข้าระบบที่ค้างอยู่จะใช้ไม่ได้ทันที</div>' +
+      '<div class="com-grid">' + (cards || '<div class="card empty">ยังไม่มีกรรมการของปีงบ ' + fy + ' กด “เพิ่มกรรมการ” เพื่อเริ่ม</div>') + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:16px;margin-top:16px">' + res + setCard + '</div>');
+  }
+  /** รายการที่ควรทำในแดชบอร์ด */
+  function comTodo() {
+    var L = S.comList[S.fy];
+    if (!L) { needComList(S.fy); return ''; }
+    var ms = comMembers(), n = ms.filter(function (m) { return m.status === 'submitted'; }).length;
+    function t(dot, msg) { return '<a class="todo" href="#admin-committee"><span class="dot ' + dot + '"></span><span style="flex:1">' + msg + '</span>' + ic('chev', 14) + '</a>'; }
+    if (!ms.length) return t('warn', 'ตั้งคณะกรรมการประเมิน PA ปีงบ ' + S.fy);
+    var o = ms.length < 3 ? t('warn', 'กรรมการปีงบ ' + S.fy + ' ยังไม่ครบ 3 คน (มี ' + ms.length + ' คน)') : '';
+    if (n < ms.length) o += t('warn', 'กรรมการส่งผลแล้ว ' + n + ' จาก ' + ms.length + ' คน');
+    return o;
+  }
+
+  /* ---------- เหตุการณ์ ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!el) return;
+    var act = el.getAttribute('data-act'), k = el.getAttribute('data-k'), id = el.getAttribute('data-id'), m = id ? find(comMembers() || [], 'id', id) : null;
+    switch (act) {
+      case 'print': window.print(); break;
+      case 'form-sel': S.formSel = k; render(); break;
+      case 'pa-tab-go': S.paTab = k; location.hash = 'pa'; break;
+      case 'com-logout': comLogout(); break;
+      case 'com-save': comSave(false); break;
+      case 'com-submit': if (S.comDirty) comSave(true); openSubmit(); break;
+      case 'com-send': comSend(); break;
+      case 'sig-clear': initSignPad(); break;
+      case 'ev-list': evList(k); break;
+      case 'com-reload': S.comListErr = ''; needComList(S.fy, true); break;
+      case 'com-new': comForm(); break;
+      case 'com-edit': if (m) comForm(m); break;
+      case 'com-form-save':
+        var nm = $('cf-name').value.trim();
+        if (!nm) { $('f-err').innerHTML = '<div class="err">กรุณาใส่ชื่อกรรมการ</div>'; break; }
+        comAdminCall('saveCommittee', { fy: S.fy, item: { id: S.comEdit || '', name: nm, pos: $('cf-pos').value.trim(), role: $('cf-role').value, due: $('cf-due').value } }, S.comEdit ? 'บันทึกแล้ว' : 'เพิ่มกรรมการแล้ว ส่งรหัสให้กรรมการได้จากปุ่มคัดลอก');
+        break;
+      case 'com-copy': if (m) copyText(m.code, 'คัดลอกรหัสของ ' + m.name + ' แล้ว'); break;
+      case 'com-share':
+        if (!m) break;
+        var txt2 = comText(m);
+        if (navigator.share) navigator.share({ title: 'เชิญประเมิน PA', text: txt2 }).catch(function () { });
+        else copyText(txt2, 'คัดลอกข้อความเชิญแล้ว วางในแชตได้เลย');
+        break;
+      case 'com-regen': if (m) confirmBox('ออกรหัสใหม่ให้ ' + esc(m.name) + '? รหัสเดิมและการเข้าระบบที่ค้างอยู่จะใช้ไม่ได้ทันที (คะแนนที่บันทึกไว้ไม่หาย)', 'ออกรหัสใหม่', function () { comAdminCall('regenCode', { id: m.id }, 'ออกรหัสใหม่แล้ว อย่าลืมส่งรหัสใหม่ให้กรรมการ'); }); break;
+      case 'com-unlock': if (m) confirmBox('เปิดให้ ' + esc(m.name) + ' แก้ไขผลการประเมิน? สถานะจะกลับเป็นร่าง ลายมือชื่อเดิมจะถูกลบ และกรรมการต้องกดส่งใหม่', 'เปิดให้แก้ไข', function () { comAdminCall('unlockScore', { id: m.id }, 'เปิดให้แก้ไขแล้ว'); }); break;
+      case 'com-del': if (m) confirmBox('ลบ ' + esc(m.name) + ' ออกจากคณะกรรมการ?' + (m.status === 'submitted' ? ' <b>กรรมการคนนี้ส่งผลแล้ว คะแนนและลายมือชื่อจะถูกลบด้วย</b>' : ''), 'ลบกรรมการ', function () { comAdminCall('deleteCommittee', { id: m.id, force: true }, 'ลบแล้ว'); }, true); break;
+    }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target, kind = t.getAttribute && t.getAttribute('data-sc');
+    if (!kind || !S.comDraft || (S.com && S.com.score.status === 'submitted')) return;
+    if (kind === 'load') S.comDraft.load = t.value;
+    else { S.comDraft[kind] = S.comDraft[kind] || {}; S.comDraft[kind][t.getAttribute('data-k')] = +t.value; }
+    comTouch();
+  });
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (!t.getAttribute || !S.comDraft) return;
+    var nk = t.getAttribute('data-note'), ck = t.getAttribute('data-ctext');
+    if (nk) { S.comDraft.notes = S.comDraft.notes || {}; S.comDraft.notes[nk] = t.value; comTouch(); }
+    if (ck) { S.comDraft[ck] = t.value; comTouch(); }
+  });
+  document.addEventListener('submit', function (e) { if (e.target.id === 'com-login-form') { e.preventDefault(); doComLogin(); } });
+  window.addEventListener('beforeunload', function (e) { if (S.comDirty) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('pagehide', function () { if (S.comDirty) comSave(true); });
+
 
   /* =====================================================================
      เส้นทางหน้าและการวาดหน้า
      ===================================================================== */
   var ADMIN_PAGES = { 'admin': aDash, 'admin-profile': aProfile, 'admin-years': aYears, 'admin-settings': aSettings, 'admin-logs': aLogs,
-    'admin-pa': aPA, 'admin-agreement': aAgreement, 'admin-idplan': aIdplan, 'admin-works': aWorks, 'admin-gallery': aGallery, 'admin-videos': aVideos, 'admin-awards': aAwards, 'admin-systems': aSystems, 'admin-themes': aThemes };
-  var PUB_PAGES = { 'pa': pPA, 'agreement': pAgreement, 'idplan': pIdplan, 'profile': pProfile, 'works': pWorks, 'gallery': pGallery, 'videos': pVideos, 'awards': pAwards, 'systems': pSystems, 'login': pLogin };
+    'admin-pa': aPA, 'admin-agreement': aAgreement, 'admin-idplan': aIdplan, 'admin-works': aWorks, 'admin-gallery': aGallery, 'admin-videos': aVideos, 'admin-awards': aAwards, 'admin-systems': aSystems, 'admin-themes': aThemes, 'admin-committee': aCommittee };
+  var PUB_PAGES = { 'pa': pPA, 'agreement': pAgreement, 'idplan': pIdplan, 'profile': pProfile, 'works': pWorks, 'gallery': pGallery, 'videos': pVideos, 'awards': pAwards, 'systems': pSystems, 'login': pLogin, 'committee': pCommittee, 'pa-forms': pForms };
   function route() { var h = (location.hash || '').replace('#', ''); return h || 'home'; }
   function render() {
     var r = route(), html;
@@ -1943,7 +2464,7 @@
     if (r === 'works') { restoreWorkFilters(); renderWorksGrid(); }
     document.body.classList.toggle('fx-glow', !!s.fxGlow);
     ['zoom', 'pop', 'spot', 'off'].forEach(function (k) { document.body.classList.toggle('phfx-' + k, s.phFx === k); });
-    document.title = (r.indexOf('admin') === 0 ? 'หลังบ้าน · ' : '') + 'แฟ้มผลงานครู · ' + (D.settings.name || '');
+    document.title = (r.indexOf('admin') === 0 ? 'หลังบ้าน · ' : (S.com ? 'กรรมการ · ' : '')) + 'แฟ้มผลงานครู · ' + (D.settings.name || '');
     setFavicon(); tick();
     var isNew = r !== S.lastRoute;
     if (isNew) { window.scrollTo(0, 0); S.lastRoute = r; }
@@ -1959,7 +2480,7 @@
   function bindInput(el) {
     var b = el.getAttribute('data-b'); if (!b) return;
     var d = ensureDraft(), p = b.split('.'), v = el.type === 'checkbox' ? el.checked : el.value;
-    if (p[0] === 's') { var k = p[1]; d.s[k] = (k === 'perPublic' || k === 'perAdmin' || k === 'hoursGoal') ? +v : v; markDirty('s.' + k); if (k === 'fxGlow') document.body.classList.toggle('fx-glow', !!v); return; }
+    if (p[0] === 's') { var k = p[1]; d.s[k] = /^(perPublic|perAdmin|hoursGoal|p1Max|p2Max|passPct)$/.test(k) ? +v : v; markDirty('s.' + k); if (k === 'fxGlow') document.body.classList.toggle('fx-glow', !!v); return; }
     if (b.indexOf('docVis.') === 0) { d.s.docVis = clone(d.s.docVis || {}); d.s.docVis[b.slice(7)] = v; markDirty('s.docVis'); return; }
     if (b === 'taglines') { d.s.taglines = String(v).split('\n').map(function (x) { return x.trim(); }).filter(String); d.s.tagline = d.s.taglines[0] || ''; markDirty('s.taglines'); markDirty('s.tagline'); return; }
     if (b === 'skills') { d.s.skills = String(v).split(/[,،]/).map(function (x) { return x.trim(); }).filter(String); markDirty('s.skills'); return; }
@@ -1988,7 +2509,7 @@
       case 'cover-pause': S.coverPaused = !S.coverPaused; render(); break;
       case 'logout':
         confirmBox('ออกจากระบบหลังบ้าน?' + (dirtyCount() ? ' <b>การแก้ไขที่ยังไม่บันทึกจะหายไป</b>' : ''), 'ออกจากระบบ', function () {
-          api('logout', {}, { loader: 'กำลังออกจากระบบ' }, function () { saveToken(''); S.admin = false; D.admin = null; D.docs = {}; discardDraft(); backToPublic(); location.hash = 'home'; render(); toast('ออกจากระบบแล้ว'); });
+          api('logout', {}, { loader: 'กำลังออกจากระบบ' }, function () { saveToken(''); S.admin = false; D.admin = null; D.docs = {}; S.comList = {}; discardDraft(); backToPublic(); location.hash = 'home'; render(); toast('ออกจากระบบแล้ว'); });
         });
         break;
       case 'draft-save': saveDraft(); break;
@@ -2229,7 +2750,7 @@
     api('login', { user: u, pass: p, remember: rem, device: deviceName() }, {}, function (err, res) {
       btn.disabled = false;
       if (err) { S.loginErr = err; render(); var f = $('lg-user'); if (f) f.value = u; return; }
-      saveToken(res.token, rem); S.loginErr = '';
+      saveToken(res.token, rem); S.loginErr = ''; if (S.com) comClear();
       api('adminBoot', {}, {}, function (e2, data) {
         if (e2) { toast(e2); return; }
         setAdmin(data); S.admin = true;
@@ -2251,7 +2772,7 @@
     api('getPublic', {}, { loader: cached ? false : 'กำลังโหลดข้อมูล' }, function (err, data) {
       if (err) { if (!cached) { S.loadErr = err; render(); } else toast('ใช้ข้อมูลที่บันทึกไว้ในเครื่อง: ' + err); }
       else { setPublic(data); if (!S.admin) render(); }
-      if (!tok) return;
+      if (!tok) { comResume(); return; }
       api('adminBoot', {}, { loader: false }, function (e2, ad) {
         S.authPending = false; hideLoader(true);
         if (e2) { if (route().indexOf('admin') === 0) { S.loginErr = e2; location.hash = 'login'; } render(); return; }
