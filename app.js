@@ -3399,7 +3399,7 @@
   }
   /* ผู้ให้บริการ AI ที่รองรับ (key เก็บที่ฝั่ง GAS ไม่ส่งกลับมาที่หน้าเว็บ) */
   var AIP = {
-    gemini: { c: '#1a73e8', ph: 'AIza… จาก Google AI Studio', url: 'https://aistudio.google.com/apikey', site: 'Google AI Studio', note: 'มีโควตาใช้ฟรีรายวัน เหมาะเป็นเจ้าหลัก' },
+    gemini: { c: '#1a73e8', ph: 'AQ.… (หรือ AIza…) จาก Google AI Studio', url: 'https://aistudio.google.com/apikey', site: 'Google AI Studio', note: 'มีโควตาใช้ฟรีรายวัน เหมาะเป็นเจ้าหลัก' },
     claude: { c: '#d97757', ph: 'sk-ant-… จาก Claude Console', url: 'https://console.anthropic.com/settings/keys', site: 'Claude Console (Anthropic)', note: 'เขียนภาษาไทยเป็นธรรมชาติ ต้องเติมเครดิตก่อนใช้' },
     grok: { c: '#111111', ph: 'xai-… จาก xAI Console', url: 'https://console.x.ai', site: 'xAI Console', note: 'ต้องเติมเครดิตก่อนใช้' },
     openai: { c: '#10a37f', ph: 'sk-… จาก OpenAI Platform', url: 'https://platform.openai.com/api-keys', site: 'OpenAI Platform', note: 'ต้องเติมเครดิตก่อนใช้' }
