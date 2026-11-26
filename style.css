@@ -1322,3 +1322,5 @@ a.chip:hover{color:var(--accent)}
 .rq-form .chk-pill{padding:5px 12px;font-size:13px}
 .round-item:hover .t{color:var(--accent)}
 .tl-track{cursor:default}
+.erow.c4{grid-template-columns:46px 150px 1fr 1.4fr auto}
+@media (max-width:760px){.erow.c4{grid-template-columns:minmax(0,1fr) auto;border-top:1px solid var(--line);padding-top:10px}.erow.c4>input{grid-column:1 / -1}.erow.c4.h{display:none}}
