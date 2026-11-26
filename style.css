@@ -1148,3 +1148,13 @@ a.card.stat:hover,a.kpi:hover{border-color:var(--accent)}
 .pm-cap{padding:6px 8px;font-size:13px}
 .lockline{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
 @media (max-width:620px){.lkrow{grid-template-columns:minmax(0,1fr) auto}.lkrow>input{grid-column:1 / -1}.pm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ===== เฟส 3: แฟ้ม PA ข้อตกลง ID Plan ===== */
+.sk{border-radius:8px;background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:skw 1.4s linear infinite}
+@keyframes skw{to{background-position:-200% 0}}
+.sc-show{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,38%);gap:10px;align-items:center}
+.sig-line{height:44px;border-bottom:1px dotted var(--muted);margin:6px 0 4px;min-width:200px}
+.pa-card .slot .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ds-step b{line-height:1.3}
+@media (max-width:620px){.sc-show{grid-template-columns:1fr}}
+@media print{.dirty-bar,.skin-bar,.tabs{display:none!important}.sig-line{border-bottom-color:#555}}
+.pa-card .slots{max-width:640px}
