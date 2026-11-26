@@ -3394,8 +3394,29 @@
   }
   function setOps(res) {
     S.ops = res; var o = opsSum();
-    o.line = !!(res.line.token && res.line.to); o.ai = !!res.ai.key; o.cron = !!res.cron.on;
+    o.line = !!(res.line.token && res.line.to); o.ai = !!(res.ai.any || res.ai.key); o.cron = !!res.cron.on;
     if (D.admin) D.admin.ops = o;
+  }
+  /* ผู้ให้บริการ AI ที่รองรับ (key เก็บที่ฝั่ง GAS ไม่ส่งกลับมาที่หน้าเว็บ) */
+  var AIP = {
+    gemini: { c: '#1a73e8', ph: 'AIza… จาก Google AI Studio', url: 'https://aistudio.google.com/apikey', site: 'Google AI Studio', note: 'มีโควตาใช้ฟรีรายวัน เหมาะเป็นเจ้าหลัก' },
+    claude: { c: '#d97757', ph: 'sk-ant-… จาก Claude Console', url: 'https://console.anthropic.com/settings/keys', site: 'Claude Console (Anthropic)', note: 'เขียนภาษาไทยเป็นธรรมชาติ ต้องเติมเครดิตก่อนใช้' },
+    grok: { c: '#111111', ph: 'xai-… จาก xAI Console', url: 'https://console.x.ai', site: 'xAI Console', note: 'ต้องเติมเครดิตก่อนใช้' },
+    openai: { c: '#10a37f', ph: 'sk-… จาก OpenAI Platform', url: 'https://platform.openai.com/api-keys', site: 'OpenAI Platform', note: 'ต้องเติมเครดิตก่อนใช้' }
+  };
+  function aiCard(o) {
+    var A = o.ai, cfg = o.cfg, provs = A.provs || [], v = S.aiView && find(provs, 'id', S.aiView) ? S.aiView : cfg.aiProvider || 'gemini', P = find(provs, 'id', v) || { id: v, name: v, key: '', model: '', models: [] }, I = AIP[v];
+    var any = provs.some(function (x) { return x.key; }), main = find(provs, 'id', cfg.aiProvider) || {};
+    var tabs = '<div class="seg ai-prov" role="tablist" aria-label="ผู้ให้บริการ AI">' + provs.map(function (x) { return '<button type="button" role="tab" aria-selected="' + (x.id === v) + '" data-act="op-ai-view" data-k="' + x.id + '" class="' + (x.id === v ? 'on' : '') + '"><i style="background:' + AIP[x.id].c + '"></i>' + esc(x.name) + (x.id === cfg.aiProvider ? ' ★' : '') + (x.key ? ' ✓' : '') + '</button>'; }).join('') + '</div>';
+    var avail = o.available && o.testProv === v ? o.available : [], opts = P.models.concat(avail.filter(function (m) { return P.models.indexOf(m) < 0; }));
+    var body = '<div class="grid2"><div class="field"><label for="op-akey">' + esc(P.name) + ' API key</label><input id="op-akey" type="password" class="inp mono" autocomplete="off" placeholder="' + (P.key ? 'บันทึกไว้แล้ว ' + esc(P.key) + ' · ใส่ใหม่เพื่อเปลี่ยน' : esc(I.ph)) + '"></div>' +
+      '<div class="field"><label for="op-amodel">รุ่น AI</label><input id="op-amodel" class="inp mono" list="op-amodels" value="' + esc(P.model) + '" maxlength="60" autocomplete="off"><datalist id="op-amodels">' + opts.map(function (m) { return '<option value="' + esc(m) + '">'; }).join('') + '</datalist><span class="hint">เลือกจากรายการ หรือพิมพ์ชื่อรุ่นใหม่ได้ · กด “ทดสอบ” เพื่อดูรุ่นที่ key นี้ใช้ได้</span></div></div>' +
+      (avail.length || (o.available && o.testProv === v) ? '<p class="small">' + (o.ok ? '<span class="pill good">รุ่นที่เลือกใช้ได้</span>' : '<span class="pill warn">รุ่นที่เลือกไม่อยู่ในรายการ</span>') + ' รุ่นที่บัญชีนี้ใช้ได้: ' + (avail.length ? avail.map(function (m) { return '<button class="chip" data-act="op-ai-pick" data-k="' + esc(m) + '">' + esc(m) + '</button>'; }).join(' ') : '-') + '</p>' : '') +
+      chk('op-amain', v === cfg.aiProvider, 'ใช้ ' + esc(P.name) + ' เป็นผู้ช่วยหลัก') + chk('op-afb', cfg.aiFallback !== false, 'สำรองอัตโนมัติ: ถ้าเจ้าหลักใช้ไม่ได้ (โควตาเต็ม ขัดข้อง) ให้ลองเจ้าอื่นที่ใส่ key ไว้') +
+      '<div class="row" style="gap:6px"><button class="btn primary" data-act="op-save-ai">' + ic('check', 16) + ' บันทึก</button><button class="btn" data-act="op-ai-test" data-k="' + v + '"' + (P.key ? '' : ' disabled') + '>' + ic('search', 16) + ' ทดสอบ</button>' + (P.key ? '<button class="btn danger" data-act="op-clear" data-k="ai-' + v + '">ลบ key</button>' : '') + '</div>' +
+      '<details class="howto"><summary>วิธีขอ ' + esc(P.name) + ' API key</summary><ol><li>เข้า <a href="' + I.url + '" target="_blank" rel="noopener">' + esc(I.site) + '</a> แล้วสร้าง API key (' + esc(I.note) + ')</li><li>คัดลอก key มาวาง กดบันทึก แล้วกดทดสอบ</li><li>ระบบส่งให้ AI เฉพาะข้อความในแฟ้มที่ครูเขียนและตัวเลขสรุป ไม่ส่งชื่อนักเรียน และสั่งให้เว้นตัวเลขที่ไม่รู้เป็น [ตัวเลข]</li></ol></details>';
+    return '<div class="card ops-card"><div class="ops-h"><span class="ops-ic" style="--c:var(--s1)">' + ic('spark', 20) + '</span><div style="flex:1"><h3>ผู้ช่วยเขียนด้วย AI</h3><span class="small muted">Gemini · Claude · Grok · ChatGPT · ผู้ช่วยหลักตอนนี้: <b>' + esc(main.name || '-') + '</b> ' + esc(main.model || '') + ' · ใช้วันนี้ ' + A.today + '/' + A.max + ' ครั้ง</span></div>' + (main.key ? '<span class="pill good">พร้อมใช้</span>' : (any ? '<span class="pill warn">เจ้าหลักยังไม่มี key</span>' : '<span class="pill off">ยังไม่ตั้งค่า</span>')) + '</div>' + tabs + body +
+      (any ? '<div class="field" style="margin-top:6px"><label for="op-polish">ลองเกลาข้อความ</label><textarea id="op-polish" class="inp" rows="3" maxlength="3000" placeholder="วางข้อความที่อยากให้เป็นภาษาราชการ"></textarea></div><div class="row"><button class="btn" data-act="op-polish">' + ic('spark', 16) + ' เกลาภาษา</button></div><div id="op-polish-out"></div>' : '') + '</div>';
   }
   function aOps() {
     if (!S.ops) { needOps(); return adminShell('admin-ops', 'การเชื่อมต่อ', 'กำลังโหลด', '', '<div class="card"><div class="sk" style="height:300px"></div></div>'); }
@@ -3414,13 +3435,7 @@
     var cron = '<div class="card ops-card"><div class="ops-h"><span class="ops-ic" style="--c:var(--accent)">' + ic('refresh', 20) + '</span><div style="flex:1"><h3>งานอัตโนมัติประจำวัน 07:00 น.</h3><span class="small muted">สำรองข้อมูลทุกสัปดาห์ · ส่งสรุปทาง LINE · ล้างการเข้าระบบที่หมดอายุ · เก็บบันทึกการใช้งานล่าสุด 5,000 แถว</span></div>' + (o.cron.on ? '<span class="pill good">เปิดอยู่</span>' : '<span class="pill warn">ยังไม่เปิด</span>') + '</div>' +
       (o.cron.last ? '<p class="small">ทำงานล่าสุด ' + fdt(o.cron.last) + ' · ' + esc(o.cron.msg) + '</p>' : '<p class="small muted">ยังไม่เคยทำงาน</p>') +
       '<div class="row"><button class="btn ' + (o.cron.on ? '' : 'primary') + '" data-act="op-cron" data-k="' + (o.cron.on ? '0' : '1') + '">' + (o.cron.on ? 'ปิดงานอัตโนมัติ' : ic('check', 16) + ' เปิดงานอัตโนมัติ') + '</button></div></div>';
-    var ai = '<div class="card ops-card"><div class="ops-h"><span class="ops-ic" style="--c:var(--s1)">' + ic('spark', 20) + '</span><div style="flex:1"><h3>ผู้ช่วยเขียนด้วย AI (Gemini)</h3><span class="small muted">ช่วยร่างข้อความแฟ้ม PA ประเด็นท้าทาย และสรุปแบบประเมิน · ใช้วันนี้ ' + A.today + '/' + A.max + ' ครั้ง</span></div>' + (A.key ? '<span class="pill good">พร้อมใช้</span>' : '<span class="pill off">ยังไม่ตั้งค่า</span>') + '</div>' +
-      '<div class="grid2"><div class="field"><label for="op-gkey">Gemini API key</label><input id="op-gkey" type="password" class="inp mono" autocomplete="off" placeholder="' + (A.key ? 'บันทึกไว้แล้ว ' + esc(A.key) + ' · ใส่ใหม่เพื่อเปลี่ยน' : 'AIza… จาก Google AI Studio') + '"></div>' +
-      '<div class="field"><label for="op-model">รุ่น AI</label><select id="op-model" class="inp">' + o.models.map(function (m) { return '<option' + (cfg.aiModel === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></div></div>' +
-      (o.available ? '<p class="small">' + (o.ok ? '<span class="pill good">รุ่นที่เลือกใช้ได้</span>' : '<span class="pill warn">รุ่นที่เลือกไม่อยู่ในรายการ</span>') + ' รุ่น Flash ที่บัญชีนี้ใช้ได้: ' + o.available.map(esc).join(', ') + '</p>' : '') +
-      '<div class="row" style="gap:6px"><button class="btn primary" data-act="op-save-ai">' + ic('check', 16) + ' บันทึก</button><button class="btn" data-act="op-ai-test"' + (A.key ? '' : ' disabled') + '>' + ic('search', 16) + ' ทดสอบ</button>' + (A.key ? '<button class="btn danger" data-act="op-clear" data-k="ai">ลบ key</button>' : '') + '</div>' +
-      '<details class="howto"><summary>วิธีขอ API key (ฟรี)</summary><ol><li>เข้า <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> ด้วยบัญชี Google</li><li>กด Create API key แล้วคัดลอกมาวาง กดบันทึก แล้วกดทดสอบ</li><li>ข้อความที่ส่งให้ AI คือข้อความในแฟ้มที่ครูเขียน ไม่ควรใส่ชื่อนักเรียน ระบบสั่งให้ AI เว้นตัวเลขเป็น [ตัวเลข] ให้ครูเติมเอง ไม่แต่งผลลัพธ์</li></ol></details>' +
-      (A.key ? '<div class="field" style="margin-top:6px"><label for="op-polish">ลองเกลาข้อความ</label><textarea id="op-polish" class="inp" rows="3" maxlength="3000" placeholder="วางข้อความที่อยากให้เป็นภาษาราชการ"></textarea></div><div class="row"><button class="btn" data-act="op-polish">' + ic('spark', 16) + ' เกลาภาษา</button></div><div id="op-polish-out"></div>' : '') + '</div>';
+    var ai = aiCard(o);
     return adminShell('admin-ops', 'การเชื่อมต่อ', 'LINE OA สำหรับแจ้งเตือน · ผู้ช่วย AI · งานอัตโนมัติ · token และ key เก็บใน Script Properties ไม่แสดงกลับมาที่หน้าเว็บ', '', '<div class="ops-grid">' + line + notify + cron + ai + '</div>');
   }
 
@@ -3444,7 +3459,7 @@
       var d = res.data || {};
       if (kind === 'ind') aiFill({ 'pe-task': d.task, 'pe-out': d.out, 'pe-kpi': d.kpi });
       else aiFill({ 'ch-title': d.title, 'ch-problem': d.problem, 'ch-steps': d.steps ? [].concat(d.steps).join('\n') : null, 'ch-quant': d.quant, 'ch-qual': d.qual });
-      if (msg) msg.textContent = 'ใส่ข้อความจาก AI แล้ว (' + res.model + ' · เหลือ ' + res.left + ' ครั้งวันนี้) ตรวจทานและเติม [ตัวเลข] ก่อนกดบันทึก';
+      if (msg) msg.textContent = 'ใส่ข้อความจาก AI แล้ว (' + (res.provName ? res.provName + ' ' : '') + res.model + (res.fallback ? ' · สำรอง' : '') + ' · เหลือ ' + res.left + ' ครั้งวันนี้) ตรวจทานและเติม [ตัวเลข] ก่อนกดบันทึก';
     });
   }
   function aiSurvey() {
@@ -3453,7 +3468,7 @@
     api('aiWrite', { task: 'survey', ctx: { label: r.label, items: r.items, per: t.per, n: t.n, comments: cm } }, { loader: 'AI กำลังสรุปผล', timeout: 90000 }, function (err, res) {
       if (err) { toast(err); return; }
       S.aiText = res.text;
-      openModal('สรุปผลแบบประเมินด้วย AI', '<div class="ai-out">' + esc(res.text) + '</div><p class="small muted">' + esc(res.model) + ' · ตรวจทานก่อนนำไปใช้ · เหลือ ' + res.left + ' ครั้งวันนี้</p>', '<button class="btn" data-act="close-modal">ปิด</button><button class="btn primary" data-act="ai-copy">' + ic('copy', 16) + ' คัดลอก</button>', true);
+      openModal('สรุปผลแบบประเมินด้วย AI', '<div class="ai-out">' + esc(res.text) + '</div><p class="small muted">' + esc((res.provName ? res.provName + ' ' : '') + res.model) + ' · ตรวจทานก่อนนำไปใช้ · เหลือ ' + res.left + ' ครั้งวันนี้</p>', '<button class="btn" data-act="close-modal">ปิด</button><button class="btn primary" data-act="ai-copy">' + ic('copy', 16) + ' คัดลอก</button>', true);
     });
   }
 
@@ -3576,9 +3591,16 @@
         }, 'กำลังสร้างรหัส');
         break;
       case 'op-bind-check': needOps(true); break;
-      case 'op-clear': confirmBox(k === 'line' ? 'ลบ token และผู้รับ LINE? การแจ้งเตือนจะหยุดส่ง' : 'ลบ Gemini API key? ผู้ช่วย AI จะใช้ไม่ได้', 'ลบ', function () { adminCall('opsSave', { clear: [k] }, 'ลบแล้ว', function (res) { setOps(res); render(); }); }, true); break;
-      case 'op-save-ai': adminCall('opsSave', { geminiKey: $('op-gkey').value.trim(), cfg: { aiModel: $('op-model').value } }, 'บันทึกการตั้งค่า AI แล้ว', function (res) { setOps(res); render(); }); break;
-      case 'op-ai-test': adminCall('aiTest', {}, '', function (res) { setOps(res); render(); toast(res.ok ? 'เชื่อม Gemini ได้ รุ่นที่เลือกใช้ได้' : 'เชื่อมได้ แต่รุ่นที่เลือกไม่อยู่ในรายการ ลองเลือกรุ่นอื่น'); }, 'กำลังทดสอบ'); break;
+      case 'op-clear': confirmBox(k === 'line' ? 'ลบ token และผู้รับ LINE? การแจ้งเตือนจะหยุดส่ง' : 'ลบ API key ของ ' + esc((find(S.ops.ai.provs || [], 'id', k.slice(3)) || { name: 'AI' }).name) + '?', 'ลบ', function () { adminCall('opsSave', { clear: [k] }, 'ลบแล้ว', function (res) { setOps(res); render(); }); }, true); break;
+      case 'op-save-ai':
+        var av = S.aiView && find(S.ops.ai.provs, 'id', S.aiView) ? S.aiView : S.ops.cfg.aiProvider, ak = {}, am = {}, ac = { aiFallback: $('op-afb').checked, aiModels: am };
+        ak[av] = $('op-akey').value.trim(); am[av] = $('op-amodel').value.trim();
+        if ($('op-amain').checked) ac.aiProvider = av; else if (av === S.ops.cfg.aiProvider) { toast('ต้องมีผู้ช่วยหลัก 1 เจ้า เลือกเจ้าอื่นเป็นหลักก่อน'); $('op-amain').checked = true; break; }
+        adminCall('opsSave', { aiKeys: ak, cfg: ac }, 'บันทึกการตั้งค่า AI แล้ว', function (res) { setOps(res); render(); });
+        break;
+      case 'op-ai-view': S.aiView = k; render(); break;
+      case 'op-ai-pick': var mi = $('op-amodel'); if (mi) { mi.value = k; mi.focus(); toast('เลือก ' + k + ' แล้ว กดบันทึกเพื่อใช้รุ่นนี้'); } break;
+      case 'op-ai-test': adminCall('aiTest', { prov: k }, '', function (res) { setOps(res); render(); toast(res.ok ? 'เชื่อมต่อได้ รุ่นที่เลือกใช้ได้' : 'เชื่อมต่อได้ แต่รุ่นที่เลือกไม่อยู่ในรายการ กดเลือกรุ่นจากรายการ'); }, 'กำลังทดสอบ'); break;
       case 'op-polish':
         var tx = $('op-polish').value.trim(); if (!tx) { toast('วางข้อความก่อน'); break; }
         api('aiWrite', { task: 'polish', ctx: { text: tx } }, { loader: 'AI กำลังเกลาข้อความ', timeout: 90000 }, function (err, res) { if (err) { toast(err); return; } S.aiText = res.text; $('op-polish-out').innerHTML = '<div class="ai-out">' + esc(res.text) + '</div><button class="btn sm" data-act="ai-copy">' + ic('copy', 14) + ' คัดลอก</button>'; });
@@ -4045,7 +4067,7 @@
     var form = '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>ต้องการให้ช่วยเขียนอะไร</h3><div class="ai-tasks">' + tasks + '</div>' + pick +
       '<div class="field"><label for="xa-note">ข้อมูลเพิ่มเติม (ไม่บังคับ · ไม่ใส่ชื่อนักเรียน)</label><textarea id="xa-note" class="inp" rows="3" maxlength="600" placeholder="' + esc(XA_TASK[a.task].hint) + '">' + esc(a.note || '') + '</textarea></div>' +
       (a.task === 'polish' ? '' : '<div class="grid2"><div class="field"><label>ภาษา</label>' + seg('tone', [['formal', 'ทางการ'], ['simple', 'กระชับ']]) + '</div><div class="field"><label>ความยาว</label>' + seg('len', [['short', 'สั้น'], ['mid', 'กลาง'], ['long', 'ยาว']]) + '</div></div>') +
-      (on ? '<button class="btn primary" data-act="xa-gen" style="justify-content:center">' + ic('spark', 16) + ' ให้ AI ช่วยร่าง</button>' : '<div class="note warn-note small">' + ic('spark', 14) + ' ยังไม่ได้ใส่ Gemini API key <a href="#admin-ops">ตั้งค่าที่หน้าการเชื่อมต่อ</a></div>') + '</div>';
+      (on ? '<button class="btn primary" data-act="xa-gen" style="justify-content:center">' + ic('spark', 16) + ' ให้ AI ช่วยร่าง</button>' : '<div class="note warn-note small">' + ic('spark', 14) + ' ยังไม่ได้ใส่ API key ของผู้ช่วย AI (Gemini · Claude · Grok · ChatGPT) <a href="#admin-ops">ตั้งค่าที่หน้าการเชื่อมต่อ</a></div>') + '</div>';
     var applyLbl = { reply: 'ใส่ลงช่องตอบกรรมการ', work: 'ใช้เป็นคำอธิบายผลงาน', result: 'ใส่ลงผลที่เกิดขึ้น (ส่วนที่ 2)' }[a.task];
     var outCard = '<div class="card ai-out-card"><div class="row" style="justify-content:space-between"><h3>' + ic('spark', 18) + ' ร่างจาก AI</h3><span class="small muted">ตรวจและแก้ก่อนนำไปใช้ทุกครั้ง</span></div>' +
       '<div id="xa-out" class="ai-out' + (a.out ? '' : ' empty') + '" contenteditable="' + (a.out ? 'true' : 'false') + '" aria-label="ข้อความที่ AI ร่าง แก้ไขได้">' + (a.out ? esc(a.out) : 'เลือกงานทางซ้าย แล้วกด “ให้ AI ช่วยร่าง” ข้อความจะขึ้นที่นี่ และแก้ไขในกรอบนี้ได้ทันที') + '</div>' +
@@ -4078,7 +4100,7 @@
     api('aiWrite', { task: task, ctx: ctx }, { loader: 'AI กำลังร่างข้อความ', timeout: 90000 }, function (err, res) {
       if (btn) btn.disabled = false;
       if (err) { toast(err); return; }
-      a.out = res.text; a.meta = res.model + ' · เหลือ ' + res.left + ' ครั้งวันนี้';
+      a.out = res.text; a.meta = (res.provName ? res.provName + ' ' : '') + res.model + (res.fallback ? ' (ใช้เจ้าสำรอง)' : '') + ' · เหลือ ' + res.left + ' ครั้งวันนี้';
       a.hist.unshift({ task: task, text: res.text, at: fdt(todayIso() + ' ' + ('0' + new Date().getHours()).slice(-2) + ':' + ('0' + new Date().getMinutes()).slice(-2)) }); a.hist = a.hist.slice(0, 6);
       render();
     });
