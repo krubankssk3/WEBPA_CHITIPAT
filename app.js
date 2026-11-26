@@ -1,4 +1,4 @@
-/* แฟ้มผลงานและการประเมินครู — app.js (เฟส 6) · ES5 เท่านั้น */
+/* แฟ้มผลงานและการประเมินครู — app.js (เฟส 7) · ES5 เท่านั้น */
 (function () {
   'use strict';
   var ICON = {
@@ -182,13 +182,13 @@
   }
   function loadToken() { try { return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
   function authLost() {
-    saveToken(''); S.admin = false; D.admin = null; D.docs = {}; S.comList = {}; S.draft = null; S.dirty = {}; S.form = null; backToPublic();
+    saveToken(''); S.admin = false; D.admin = null; D.docs = {}; S.comList = {}; S.ops = S.bk = S.sec = S.cal = null; S.draft = null; S.dirty = {}; S.form = null; backToPublic();
     S.loginErr = 'หมดเวลาการเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่';
     if (route().indexOf('admin') === 0) location.hash = 'login'; else render();
   }
   function setContent(c) { var o = {}; for (var k in EMPTY_CONTENT) o[k] = (c && c[k]) || []; D.content = o; }
   function setPublic(data, fromCache) {
-    D.settings = data.settings; D.education = data.education || []; D.career = data.career || []; D.years = data.years || []; D.version = data.version || ''; if ('survey' in data) D.survey = data.survey || null;
+    D.settings = data.settings; D.education = data.education || []; D.career = data.career || []; D.years = data.years || []; D.version = data.version || ''; if ('survey' in data) D.survey = data.survey || null; if ('events' in data) D.events = data.events || [];
     if ((!S.admin || !D.admin) && !S.com) setContent(data.content);
     if (!S.fy || !yearOf(S.fy)) S.fy = +D.settings.defaultFy || (D.years[0] && D.years[0].fy) || fyNow(new Date());
     if (!fromCache) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) { } }
@@ -403,7 +403,7 @@
 
   function siteHead(r) {
     var s = D.settings;
-    var nav = NAV.concat(D.survey ? [['survey', 'ประเมินครู']] : []).map(function (it) { var on = r === it[0] || (it[0] === 'gallery' && r.indexOf('album-') === 0) || (it[0] === 'pa' && (r === 'agreement' || r === 'idplan')); return '<a href="#' + it[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + it[1] + '</a>'; }).join('');
+    var nav = NAV.concat((D.events || []).length ? [['calendar', 'ปฏิทิน']] : []).concat(D.survey ? [['survey', 'ประเมินครู']] : []).map(function (it) { var on = r === it[0] || (it[0] === 'gallery' && r.indexOf('album-') === 0) || (it[0] === 'pa' && (r === 'agreement' || r === 'idplan')); return '<a href="#' + it[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + it[1] + '</a>'; }).join('');
     var right = (S.com ? '' : fySelect('fy-sel')) + (S.com ? '<a class="btn primary login-ic" href="#committee" aria-label="หน้าให้คะแนน (กรรมการ)" title="หน้าให้คะแนน (กรรมการ)">' + ic('pen', 18) + '</a>' : '') + (S.com ? '' : S.admin ? '<a class="btn primary login-ic" href="#admin" aria-label="หลังบ้าน" title="หลังบ้าน">' + ic('grid', 18) + '</a>' : '<a class="btn login-ic" href="#login" aria-label="เข้าสู่ระบบ" title="เข้าสู่ระบบ">' + ic('lock', 18) + '</a>');
     return '<div class="info-strip"><div class="wrap">' + clock() + '<span>ปีงบประมาณปัจจุบัน <b class="js-fy"></b> · <span class="js-sem"></span></span><button class="strip-btn" data-act="a11y" aria-label="การแสดงผล ขนาดตัวอักษร และโหมดสี">' + ic('sun', 15) + ' การแสดงผล</button></div></div>' +
       '<header class="site-head"><div class="wrap"><a class="brand" href="#home" aria-label="แฟ้มผลงานครู หน้าหลัก">' + seal() + '<span class="brand-t"><b>แฟ้มผลงานครู</b><span>' + esc(s.school) + ' ' + esc(s.area) + '</span></span></a><nav class="nav" aria-label="เมนูหลัก">' + nav + '</nav>' + right + '</div></header>';
@@ -519,8 +519,8 @@
       '<div class="grp">แฟ้ม PA ปีงบ ' + S.fy + '</div>' + L('admin-agreement', 'pen', 'ข้อตกลง PA') + L('admin-pa', 'file', 'แฟ้ม PA') + L('admin-idplan', 'target', 'ID Plan') + L('admin-committee', 'users', 'กรรมการและผลประเมิน') +
       '<div class="grp">การประเมินอื่น</div>' + L('admin-salary', 'coins', 'เลื่อนเงินเดือน') + L('admin-survey', 'chat', 'แบบประเมินความพึงพอใจ') +
       '<div class="grp">ผลงาน</div>' + L('admin-works', 'folder', 'คลังผลงาน', D.content.works.length) + L('admin-gallery', 'image', 'ภาพกิจกรรม', D.content.albums.length) + L('admin-videos', 'video', 'วิดีโอ', D.content.videos.length) + L('admin-awards', 'award', 'รางวัล/อบรม', D.content.awards.length) + L('admin-systems', 'code', 'ระบบที่จัดทำ', D.content.systems.length) +
-      '<div class="grp">เครื่องมือ</div>' + L('admin-stats', 'chart', 'สถิติและกราฟ') + L('admin-verify', 'shield', 'ตรวจสอบเอกสาร (QR)') + '<a href="#report">' + ic('print', 18) + ' รายงาน PDF</a><a href="#present">' + ic('slides', 18) + ' โหมดนำเสนอ</a>' +
-      '<div class="grp">ระบบ</div>' + L('admin-years', 'cal', 'ปีงบประมาณและสีธีม') + L('admin-themes', 'spark', 'ชุดธีมและฟอนต์') + L('admin-settings', 'gear', 'ตั้งค่า', must ? '!' : 0) + L('admin-logs', 'list', 'บันทึกการใช้งาน') +
+      '<div class="grp">เครื่องมือ</div>' + L('admin-calendar', 'cal', 'ปฏิทิน') + L('admin-stats', 'chart', 'สถิติและกราฟ') + L('admin-verify', 'shield', 'ตรวจสอบเอกสาร (QR)') + '<a href="#report">' + ic('print', 18) + ' รายงาน PDF</a><a href="#present">' + ic('slides', 18) + ' โหมดนำเสนอ</a>' +
+      '<div class="grp">ระบบ</div>' + L('admin-years', 'cal', 'ปีงบประมาณและสีธีม') + L('admin-themes', 'spark', 'ชุดธีมและฟอนต์') + L('admin-settings', 'gear', 'ตั้งค่า', must ? '!' : 0) + L('admin-ops', 'link', 'การเชื่อมต่อ (LINE · AI)') + L('admin-backup', 'cloud', 'สำรองข้อมูล') + L('admin-security', 'shield', 'ความปลอดภัย', opsSum().twofa ? 0 : '!') + L('admin-logs', 'list', 'บันทึกการใช้งาน') +
       '<a href="#home">' + ic('eye', 18) + ' ดูหน้าสาธารณะ</a><button class="lnk" data-act="logout">' + ic('logout', 18) + ' ออกจากระบบ</button></nav>' +
       '<main class="amain"><div class="ctx-bar"><b class="small">ปีงบที่ดูอยู่</b>' + fySelect('fy-sel-a') + '<span class="small muted">สีของหลังบ้านและหน้าสาธารณะเปลี่ยนตามปีงบที่เลือก</span><span class="ctx-clock">' + clock() + '</span></div>' +
       (must && r !== 'admin-settings' ? '<div class="note warn-note">' + ic('shield', 15) + ' ยังใช้รหัสผ่านชั่วคราวอยู่ <a href="#admin-settings">เปลี่ยนรหัสผ่านตอนนี้</a></div>' : '') +
@@ -537,8 +537,8 @@
     var noFile = c.works.filter(function (w) { return !w.fileUrl && !w.link; }).length, noLink = c.videos.filter(function (v) { return !v.url; }).length;
     if (noFile) todo += '<a class="todo" href="#admin-works"><span class="dot warn"></span><span style="flex:1">ผลงานที่ยังไม่มีไฟล์หรือลิงก์ ' + noFile + ' รายการ</span>' + ic('chev', 14) + '</a>';
     if (noLink) todo += '<a class="todo" href="#admin-videos"><span class="dot warn"></span><span style="flex:1">วิดีโอที่ยังไม่ใส่ลิงก์ ' + noLink + ' รายการ</span>' + ic('chev', 14) + '</a>';
-    todo += comTodo() + evalTodo();
-    var next = [['7', 'LINE OA ปฏิทิน ผู้ช่วย AI สำรองข้อมูล ความปลอดภัย']];
+    todo += comTodo() + evalTodo() + opsTodo();
+    var next = [['1–7', 'ระบบครบทุกเฟส: แฟ้มผลงาน PA กรรมการ การประเมิน รายงาน และการเชื่อมต่อ']];
     return adminShell('admin', 'สวัสดีครับ ' + esc(s.nick || s.name), 'ภาพรวมของแฟ้มผลงาน · ปีงบประมาณที่แสดงในหน้าหลัก ' + (s.defaultFy || '-'), '<a class="btn" href="#home">' + ic('eye', 16) + ' ดูหน้าสาธารณะ</a>',
       '<div class="grid4"><div class="kpi"><span class="l">ความครบของหน้าประวัติ</span><span class="v">' + sc.pct + '%</span><div class="prog"><i style="width:' + sc.pct + '%"></i></div></div>' +
       '<a class="kpi" href="#admin-works"><span class="l">ผลงานทั้งหมด</span><span class="v">' + c.works.length + '</span><span class="small muted">ปีงบ ' + S.fy + ' · ' + fyW + ' รายการ</span></a>' +
@@ -1780,7 +1780,7 @@
     var x = find(docsOf(S.fy).pa.ind, 'code', code); if (!x) return;
     var ev = evidenceOf(code, S.fy);
     openModal('ตัวชี้วัด ' + code + ' ' + esc(indName(code)),
-      '<div class="field"><label for="pe-task">งาน (Tasks) ที่จะปฏิบัติ</label><textarea id="pe-task" class="inp" rows="4">' + esc(x.task) + '</textarea></div>' +
+      aiStrip('ind', code) + '<div class="field"><label for="pe-task">งาน (Tasks) ที่จะปฏิบัติ</label><textarea id="pe-task" class="inp" rows="4">' + esc(x.task) + '</textarea></div>' +
       '<div class="field"><label for="pe-out">ผลลัพธ์ (Outcomes) ที่คาดหวัง</label><textarea id="pe-out" class="inp" rows="3">' + esc(x.out) + '</textarea></div>' +
       '<div class="field"><label for="pe-kpi">ตัวชี้วัด (Indicators)</label><textarea id="pe-kpi" class="inp" rows="3">' + esc(x.kpi) + '</textarea></div>' +
       '<div class="note small">' + ic('folder', 14) + ' หลักฐานที่ผูกตัวชี้วัดนี้ในปีงบ ' + S.fy + ': ' + (ev.length ? ev.map(function (e) { return esc(e.title); }).join(' · ') : 'ยังไม่มี เพิ่มได้จากคลังผลงาน วิดีโอ รางวัล โดยติ๊กตัวชี้วัด ' + code) + '</div><div id="f-err"></div>',
@@ -1789,7 +1789,7 @@
   function chForm() {
     var c = docsOf(S.fy).pa.challenge;
     openModal('ส่วนที่ 2 ประเด็นท้าทาย ปีงบ ' + S.fy,
-      '<div class="field"><label for="ch-title">ประเด็นท้าทาย</label><input id="ch-title" class="inp" value="' + esc(c.title) + '"></div>' +
+      aiStrip('ch') + '<div class="field"><label for="ch-title">ประเด็นท้าทาย</label><input id="ch-title" class="inp" value="' + esc(c.title) + '"></div>' +
       '<div class="field"><label for="ch-problem">1. สภาพปัญหาของผู้เรียนและการจัดการเรียนรู้</label><textarea id="ch-problem" class="inp" rows="4">' + esc(c.problem) + '</textarea></div>' +
       '<div class="field"><label for="ch-steps">2. วิธีการดำเนินการให้บรรลุผล (บรรทัดละ 1 ขั้น)</label><textarea id="ch-steps" class="inp" rows="6">' + esc(c.steps.join('\n')) + '</textarea></div>' +
       '<div class="grid2"><div class="field"><label for="ch-quant">3.1 ผลลัพธ์เชิงปริมาณ</label><textarea id="ch-quant" class="inp" rows="3">' + esc(c.quant) + '</textarea></div><div class="field"><label for="ch-qual">3.2 ผลลัพธ์เชิงคุณภาพ</label><textarea id="ch-qual" class="inp" rows="3">' + esc(c.qual) + '</textarea></div></div>' +
@@ -2702,7 +2702,7 @@
         (r.isOpen ? '<div class="sv-qr">' + qrSvg(svUrl(), 132, 'QR แบบประเมิน') + '<span class="small muted">สแกนเพื่อตอบ</span><button class="btn sm" data-act="sv-copy">' + ic('copy', 14) + ' คัดลอกลิงก์</button></div>' : '') + '</div></div>' +
         kpi + '<div class="grid2" style="align-items:start;margin-top:14px"><div class="card"><h3>ค่าเฉลี่ยรายข้อ</h3><p class="small muted">เต็ม 5 คะแนน</p>' + (stt.n ? svBars(r.items, stt.per) : '<p class="small muted" style="margin-top:8px">ยังไม่มีผู้ตอบ</p>') + '</div>' +
         '<div class="card"><h3>สัดส่วนระดับที่เลือก</h3><p class="small muted">จากทุกข้อรวมกัน ' + dist + ' คำตอบ</p>' + (dist ? distBars : '') + (cls ? '<h4 style="margin-top:14px">ระดับชั้น</h4><div class="row" style="gap:6px;margin-top:6px">' + cls + '</div>' : '') + '</div></div>' +
-        '<div class="card" style="margin-top:14px"><div class="sec-h"><h3>' + (S.svAll ? 'คำตอบทั้งหมด' : 'ข้อเสนอแนะ') + '</h3><label class="row small" style="gap:6px"><input type="checkbox" id="sv-all"' + (S.svAll ? ' checked' : '') + ' style="width:18px;height:18px;accent-color:var(--accent)"> แสดงคำตอบที่ไม่มีข้อเสนอแนะด้วย</label></div><p class="small muted">ซ่อนคำตอบที่ไม่เหมาะสมหรือก่อกวนได้ คำตอบที่ซ่อนจะไม่ถูกนับในผลสรุป</p>' +
+        '<div class="card" style="margin-top:14px"><div class="sec-h"><h3>' + (S.svAll ? 'คำตอบทั้งหมด' : 'ข้อเสนอแนะ') + '</h3>' + (opsSum().ai && stt.n ? '<button class="btn sm" data-act="ai-survey">' + ic('spark', 14) + ' สรุปด้วย AI</button>' : '') + '<label class="row small" style="gap:6px"><input type="checkbox" id="sv-all"' + (S.svAll ? ' checked' : '') + ' style="width:18px;height:18px;accent-color:var(--accent)"> แสดงคำตอบที่ไม่มีข้อเสนอแนะด้วย</label></div><p class="small muted">ซ่อนคำตอบที่ไม่เหมาะสมหรือก่อกวนได้ คำตอบที่ซ่อนจะไม่ถูกนับในผลสรุป</p>' +
         '<div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ประเมิน</th><th>เฉลี่ย</th><th>ข้อเสนอแนะ</th><th></th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="muted">ยังไม่มี</td></tr>') + '</tbody></table></div>' + pagerNav('a-svr') + '</div>';
     }
     return adminShell('admin-survey', 'แบบประเมินความพึงพอใจ', 'นักเรียน ผู้ปกครอง และครูตอบผ่านลิงก์หรือ QR โดยไม่ต้องระบุชื่อ · ใช้เป็นหลักฐานประกอบ PA และการเลื่อนเงินเดือน',
@@ -2810,7 +2810,7 @@
   /* =====================================================================
      เฟส 6: สถิติและกราฟ · รายงาน PDF · โหมดนำเสนอ · ตรวจสอบเอกสารด้วย QR
      ===================================================================== */
-  var PAGE_T = { home: 'หน้าหลัก', profile: 'ประวัติ', pa: 'แฟ้ม PA', agreement: 'ข้อตกลง PA', idplan: 'ID Plan', works: 'คลังผลงาน', gallery: 'ภาพกิจกรรม', videos: 'วิดีโอ', awards: 'รางวัล/อบรม', systems: 'ระบบที่จัดทำ', survey: 'แบบประเมิน', verify: 'ตรวจสอบเอกสาร', committee: 'หน้ากรรมการ', report: 'รายงาน PDF', present: 'โหมดนำเสนอ' };
+  var PAGE_T = { home: 'หน้าหลัก', profile: 'ประวัติ', pa: 'แฟ้ม PA', agreement: 'ข้อตกลง PA', idplan: 'ID Plan', works: 'คลังผลงาน', gallery: 'ภาพกิจกรรม', videos: 'วิดีโอ', awards: 'รางวัล/อบรม', systems: 'ระบบที่จัดทำ', survey: 'แบบประเมิน', verify: 'ตรวจสอบเอกสาร', committee: 'หน้ากรรมการ', report: 'รายงาน PDF', present: 'โหมดนำเสนอ', calendar: 'ปฏิทิน' };
   var VF_TYPE = { award: 'รางวัล', cert: 'เกียรติบัตร', training: 'การอบรม' };
   S.stats = null; S.statRange = 30; S.statMode = 'all'; S.vfl = null; S.vfRes = {}; S.slide = 0; S.lastTracked = '';
 
@@ -3271,13 +3271,364 @@
     else if (e.key === 'Escape' && !document.fullscreenElement) location.hash = S.admin ? 'admin-pa' : 'pa';
   });
 
+  /* =====================================================================
+     เฟส 7: ปฏิทิน · LINE OA · ผู้ช่วย AI · สำรองข้อมูล · ความปลอดภัย (2FA)
+     ===================================================================== */
+  var CAL_T = { deadline: ['กำหนดส่ง', 'var(--bad)'], meeting: ['ประชุม', 'var(--s2)'], training: ['อบรม/พัฒนา', 'var(--s3)'], teach: ['การสอน/กิจกรรม', 'var(--accent)'], personal: ['ส่วนตัว', 'var(--muted)'], sys: ['จากระบบ', 'var(--ink)'] };
+  var NOTIFY_T = { committee: ['กรรมการส่งผลประเมิน', 'ทันทีที่กรรมการแต่ละคนกดส่งผล'], digest: ['สรุปประจำวัน 07:00 น.', 'กิจกรรมวันนี้ กำหนดส่งใกล้ถึง ผู้ตอบแบบประเมินใหม่ (ส่งเฉพาะวันที่มีเรื่อง)'], security: ['ความปลอดภัย', 'ใส่รหัสผิดจนถูกล็อก เปิด/ปิด 2FA กู้คืนข้อมูล'], backup: ['สำรองข้อมูลไม่สำเร็จ', 'แจ้งเมื่อการสำรองอัตโนมัติมีปัญหา'] };
+  var TH_WD = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+  S.calMonth = ''; S.cal = null; S.ops = null; S.bk = null; S.sec = null; S.aiUndo = null;
+
+  function opsSum() { return (D.admin && D.admin.ops) || { ai: false, line: false, twofa: false, lastBackup: 0, cron: false }; }
+  function todayIso() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function isoPlus(iso, n) { var p = iso.split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]) + n * 864e5).toISOString().slice(0, 10); }
+  function daysTo(iso) { var p = iso.split('-'), t = todayIso().split('-'); return Math.round((Date.UTC(+p[0], +p[1] - 1, +p[2]) - Date.UTC(+t[0], +t[1] - 1, +t[2])) / 864e5); }
+  function adminCall(action, data, msg, cb, loader) {
+    api(action, data, { loader: loader === undefined ? 'กำลังบันทึก' : loader, timeout: 90000 }, function (err, res) {
+      if (err) { var fe = $('f-err'); if (fe) fe.innerHTML = '<div class="err">' + esc(err) + '</div>'; else toast(err); return; }
+      if (cb) cb(res); if (msg) toast(msg);
+    });
+  }
+  function dlBlob(text, name, type) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type })); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 500);
+  }
+
+  /* =====================================================================
+     1) ปฏิทิน
+     ===================================================================== */
+  function sysEvents() {
+    if (!S.admin) return [];
+    var out = [], fy = S.fy, L = S.comList[fy], ev = (D.admin || {}).evalSum || {};
+    (L ? L.list : []).forEach(function (c) { if (c.due && c.score.status !== 'submitted') out.push({ id: 'sys-c' + c.id, date: c.due, title: 'ครบกำหนดกรรมการส่งผล: ' + c.name, type: 'sys', href: 'admin-committee' }); });
+    (ev.survey || []).forEach(function (r) { if (r.isOpen && r.closeAt) out.push({ id: 'sys-s' + r.id, date: r.closeAt, title: 'ปิดรับแบบประเมิน ' + r.label, type: 'sys', href: 'admin-survey' }); });
+    out.push({ id: 'sys-r1', date: (fy - 543) + '-03-31', title: 'สิ้นรอบเลื่อนเงินเดือน รอบ 1', type: 'sys', href: 'admin-salary' });
+    out.push({ id: 'sys-r2', date: (fy - 543) + '-09-30', title: 'สิ้นปีงบ ' + fy + ' · สิ้นรอบ PA และเลื่อนเงินเดือน รอบ 2', type: 'sys', href: 'admin-pa' });
+    return out;
+  }
+  function calEvents() { return (S.admin ? (S.cal ? S.cal.list : []) : (D.events || [])).concat(sysEvents()); }
+  function onDay(e, iso) { return e.date <= iso && (e.end || e.date) >= iso; }
+  function evChip(e) {
+    var t = CAL_T[e.type] || CAL_T.teach;
+    return '<button class="pc-ev' + (e.done ? ' done' : '') + (e.type === 'sys' ? ' sys' : '') + '" style="--c:' + t[1] + '" data-act="cal-open" data-id="' + esc(e.id) + '" title="' + esc(e.title) + '">' + (e.time ? '<b>' + esc(e.time.split('-')[0]) + '</b> ' : '') + esc(e.title) + '</button>';
+  }
+  function monthGrid(evs) {
+    if (!S.calMonth) S.calMonth = todayIso().slice(0, 7);
+    var p = S.calMonth.split('-'), y = +p[0], m = +p[1] - 1, first = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate(), today = todayIso(), cells = '';
+    for (var i = 0; i < first; i++) cells += '<div class="pc-d out"></div>';
+    for (var d = 1; d <= n; d++) {
+      var iso = S.calMonth + '-' + ('0' + d).slice(-2), list = evs.filter(function (e) { return onDay(e, iso); });
+      cells += '<div class="pc-d' + (iso === today ? ' today' : '') + (list.length ? ' has' : '') + '"' + (S.admin ? ' data-act="cal-new" data-k="' + iso + '"' : '') + '><span class="pc-n">' + d + '</span>' + list.slice(0, 3).map(evChip).join('') + (list.length > 3 ? '<span class="pc-more">+' + (list.length - 3) + '</span>' : '') + '</div>';
+    }
+    while ((first + n) % 7) { cells += '<div class="pc-d out"></div>'; n++; }
+    return '<div class="pc-bar"><button class="btn icon" data-act="cal-mon" data-k="-1" aria-label="เดือนก่อน">' + ic('left', 16) + '</button><h3>' + TH_MF[m] + ' ' + (y + 543) + '</h3><button class="btn icon" data-act="cal-mon" data-k="1" aria-label="เดือนถัดไป">' + ic('chev', 16) + '</button><button class="btn sm" data-act="cal-mon" data-k="0">วันนี้</button><span class="sp"></span>' +
+      '<div class="pc-leg">' + Object.keys(CAL_T).filter(function (k) { return S.admin || k !== 'sys' && k !== 'personal'; }).map(function (k) { return '<span><i style="background:' + CAL_T[k][1] + '"></i>' + CAL_T[k][0] + '</span>'; }).join('') + '</div></div>' +
+      '<div class="pc-grid" role="grid">' + TH_WD.map(function (w) { return '<div class="pc-h">' + w + '</div>'; }).join('') + cells + '</div>';
+  }
+  function upcoming(evs, days) {
+    var t = todayIso(), lim = isoPlus(t, days), list = evs.filter(function (e) { return (e.end || e.date) >= t && e.date <= lim && !e.done; }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    if (!list.length) return '<p class="small muted">ไม่มีกิจกรรมใน ' + days + ' วันข้างหน้า</p>';
+    return '<div class="pc-up">' + list.map(function (e) {
+      var t2 = CAL_T[e.type] || CAL_T.teach, dd = daysTo(e.date), p = e.date.split('-');
+      return '<button class="pc-row" data-act="cal-open" data-id="' + esc(e.id) + '"><span class="pc-date" style="--c:' + t2[1] + '"><b>' + (+p[2]) + '</b>' + TH_M[+p[1] - 1] + '</span><span style="flex:1;min-width:0"><b>' + esc(e.title) + '</b><span class="small muted">' + t2[0] + (e.time ? ' · ' + esc(e.time) + ' น.' : '') + (e.end ? ' · ถึง ' + fd(e.end) : '') + '</span></span><span class="small ' + (dd <= 3 ? 'warn-t' : 'muted') + '">' + (dd <= 0 ? 'วันนี้' : dd === 1 ? 'พรุ่งนี้' : 'อีก ' + dd + ' วัน') + '</span></button>';
+    }).join('') + '</div>';
+  }
+  function pCalendar() {
+    var evs = calEvents();
+    return pub('calendar', '<div class="sec-h"><div><span class="eyebrow">' + esc(st().name) + '</span><h1>ปฏิทินกิจกรรม</h1><p class="muted">การอบรม กิจกรรมการสอน และงานสำคัญที่เปิดเผยต่อสาธารณะ</p></div></div>' +
+      '<div class="pc-layout"><div class="card">' + monthGrid(evs) + '</div><aside class="card"><h3>กำลังจะมาถึง</h3>' + upcoming(evs, 60) + '</aside></div>');
+  }
+  function needCal(force) {
+    if ((S.cal && !force) || S.calLoading) return; S.calLoading = true;
+    api('calList', {}, { loader: false }, function (err, res) { S.calLoading = false; if (err) { toast(err); return; } S.cal = res; if (route() === 'admin-calendar') render(); });
+  }
+  function aCalendar() {
+    if (!S.cal) { needCal(); return adminShell('admin-calendar', 'ปฏิทิน', 'กำลังโหลด', '', '<div class="card"><div class="sk" style="height:320px"></div></div>'); }
+    if (!S.comList[S.fy]) needComList(S.fy);
+    var evs = calEvents();
+    return adminShell('admin-calendar', 'ปฏิทิน', 'กดวันในปฏิทินเพื่อเพิ่มกิจกรรม · ตั้งเตือนล่วงหน้าได้ ระบบสรุปส่งทาง LINE ทุกเช้า 07:00 น. · รายการ “จากระบบ” ดึงจากกรรมการ แบบประเมิน และรอบเลื่อนเงินเดือนให้อัตโนมัติ',
+      '<a class="btn" href="#calendar">' + ic('eye', 16) + ' ดูแบบสาธารณะ</a><button class="btn primary" data-act="cal-new" data-k="">' + ic('plus', 16) + ' เพิ่มกิจกรรม</button>',
+      (opsSum().line ? '' : '<div class="note">' + ic('bell', 15) + ' ยังไม่ได้เชื่อม LINE OA การเตือนล่วงหน้าจะยังไม่ส่ง <a href="#admin-ops">ตั้งค่าการเชื่อมต่อ</a></div>') +
+      '<div class="pc-layout" style="margin-top:12px"><div class="card">' + monthGrid(evs) + '</div><aside class="card"><h3>30 วันข้างหน้า</h3>' + upcoming(evs, 30) + '</aside></div>');
+  }
+  function calFind(id) { return find(calEvents(), 'id', id); }
+  function gcalLink(e) {
+    var s = e.date.replace(/-/g, ''), en = isoPlus(e.end || e.date, 1).replace(/-/g, '');
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(e.title) + '&dates=' + s + '/' + en + '&details=' + encodeURIComponent((e.time ? 'เวลา ' + e.time + ' น.\n' : '') + (e.note || ''));
+  }
+  function icsOf(e) {
+    var s = e.date.replace(/-/g, ''), en = isoPlus(e.end || e.date, 1).replace(/-/g, ''), stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+    function q(t) { return String(t || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//WEBPA//TH', 'BEGIN:VEVENT', 'UID:' + e.id + '@webpa', 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + s, 'DTEND;VALUE=DATE:' + en, 'SUMMARY:' + q(e.title), 'DESCRIPTION:' + q((e.time ? 'เวลา ' + e.time + ' น. ' : '') + (e.note || '')), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  }
+  function calOpen(id) {
+    var e = calFind(id); if (!e) return;
+    if (e.type === 'sys') { location.hash = e.href; return; }
+    var t = CAL_T[e.type] || CAL_T.teach;
+    openModal(esc(e.title), '<dl class="kvlist small"><dt>วันที่</dt><dd>' + fd(e.date) + (e.end ? ' – ' + fd(e.end) : '') + '</dd>' + (e.time ? '<dt>เวลา</dt><dd>' + esc(e.time) + ' น.</dd>' : '') + '<dt>ประเภท</dt><dd><span class="pill" style="background:color-mix(in srgb,' + t[1] + ' 14%,transparent);color:inherit">' + t[0] + '</span></dd>' +
+      (e.note ? '<dt>รายละเอียด</dt><dd style="white-space:pre-wrap">' + esc(e.note) + '</dd>' : '') + (S.admin ? '<dt>การเปิดเผย</dt><dd>' + (e.vis === 'public' ? 'สาธารณะ' : 'ส่วนตัว') + '</dd><dt>เตือนล่วงหน้า</dt><dd>' + (e.remind === '' ? 'ไม่เตือน' : e.remind ? e.remind + ' วัน' : 'วันงาน') + '</dd>' : '') + '</dl>',
+      '<a class="btn" href="' + esc(gcalLink(e)) + '" target="_blank" rel="noopener">' + ic('cal', 16) + ' Google Calendar</a><button class="btn" data-act="cal-ics" data-id="' + esc(e.id) + '">' + ic('download', 16) + ' ไฟล์ .ics</button>' +
+      (S.admin ? '<button class="btn danger" data-act="cal-del" data-id="' + esc(e.id) + '">' + ic('trash', 16) + ' ลบ</button><button class="btn primary" data-act="cal-edit" data-id="' + esc(e.id) + '">' + ic('edit', 16) + ' แก้ไข</button>' : ''));
+  }
+  function calForm(e) {
+    e = e || { id: '', date: todayIso(), end: '', time: '', title: '', type: 'teach', note: '', vis: 'private', remind: 1, done: false };
+    S.calEdit = e.id;
+    openModal(e.id ? 'แก้ไขกิจกรรม' : 'เพิ่มกิจกรรม',
+      '<div class="field"><label for="cf-title">ชื่อกิจกรรม</label><input id="cf-title" class="inp" maxlength="150" value="' + esc(e.title) + '" placeholder="เช่น ส่งแผนการจัดการเรียนรู้"></div>' +
+      '<div class="grid3"><div class="field"><label for="cf-date">วันที่</label><input id="cf-date" type="date" class="inp" value="' + esc(e.date) + '"></div><div class="field"><label for="cf-end">ถึงวันที่ (ถ้าหลายวัน)</label><input id="cf-end" type="date" class="inp" value="' + esc(e.end) + '"></div><div class="field"><label for="cf-time">เวลา</label><input id="cf-time" class="inp" value="' + esc(e.time) + '" placeholder="09:00-12:00"></div></div>' +
+      '<div class="grid3"><div class="field"><label for="cf-type">ประเภท</label><select id="cf-type" class="inp">' + Object.keys(CAL_T).filter(function (k) { return k !== 'sys'; }).map(function (k) { return '<option value="' + k + '"' + (e.type === k ? ' selected' : '') + '>' + CAL_T[k][0] + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="cf-remind">เตือนทาง LINE</label><select id="cf-remind" class="inp">' + [['', 'ไม่เตือน'], [0, 'เช้าวันงาน'], [1, 'ล่วงหน้า 1 วัน'], [3, 'ล่วงหน้า 3 วัน'], [7, 'ล่วงหน้า 7 วัน'], [14, 'ล่วงหน้า 14 วัน']].map(function (o) { return '<option value="' + o[0] + '"' + (String(e.remind) === String(o[0]) ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="cf-vis">การเปิดเผย</label><select id="cf-vis" class="inp"><option value="private"' + (e.vis !== 'public' ? ' selected' : '') + '>ส่วนตัว</option><option value="public"' + (e.vis === 'public' ? ' selected' : '') + '>สาธารณะ</option></select></div></div>' +
+      '<div class="field"><label for="cf-note">รายละเอียด</label><textarea id="cf-note" class="inp" rows="3" maxlength="500">' + esc(e.note) + '</textarea></div>' + (e.id ? chk('cf-done', e.done, 'ทำเสร็จแล้ว (ไม่เตือนอีก)') : '') + '<div id="f-err"></div>',
+      '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="cal-save">' + ic('check', 16) + ' บันทึก</button>');
+  }
+
+  /* =====================================================================
+     2) การเชื่อมต่อ: LINE OA · ผู้ช่วย AI · งานอัตโนมัติ
+     ===================================================================== */
+  function needOps(force) {
+    if ((S.ops && !force) || S.opsLoading) return; S.opsLoading = true;
+    api('opsGet', {}, { loader: false }, function (err, res) { S.opsLoading = false; if (err) { toast(err); return; } setOps(res); if (route() === 'admin-ops') render(); });
+  }
+  function setOps(res) {
+    S.ops = res; var o = opsSum();
+    o.line = !!(res.line.token && res.line.to); o.ai = !!res.ai.key; o.cron = !!res.cron.on;
+    if (D.admin) D.admin.ops = o;
+  }
+  function aOps() {
+    if (!S.ops) { needOps(); return adminShell('admin-ops', 'การเชื่อมต่อ', 'กำลังโหลด', '', '<div class="card"><div class="sk" style="height:300px"></div></div>'); }
+    var o = S.ops, L = o.line, A = o.ai, cfg = o.cfg, lineOk = !!(L.token && L.to);
+    var line = '<div class="card ops-card"><div class="ops-h"><span class="ops-ic" style="--c:#06c755">' + ic('chat', 20) + '</span><div style="flex:1"><h3>LINE OA แจ้งเตือน</h3><span class="small muted">ส่งข้อความหาครูผ่าน Messaging API · ส่งเดือนนี้แล้ว ' + L.month + ' ข้อความ (แพ็กเกจฟรีส่งได้จำกัดต่อเดือน)</span></div>' + (lineOk ? '<span class="pill good">เชื่อมแล้ว</span>' : '<span class="pill off">ยังไม่เชื่อม</span>') + '</div>' +
+      '<div class="grid2"><div class="field"><label for="op-ltok">Channel access token (long-lived)</label><input id="op-ltok" type="password" class="inp mono" autocomplete="off" placeholder="' + (L.token ? 'บันทึกไว้แล้ว ' + esc(L.token) + ' · ใส่ใหม่เพื่อเปลี่ยน' : 'วางจาก LINE Developers') + '"></div>' +
+      '<div class="field"><label for="op-lto">ผู้รับ (User ID หรือ Group ID)</label><input id="op-lto" class="inp mono" autocomplete="off" placeholder="' + (L.to ? esc(L.toName) + ' ' + esc(L.to) : 'U… ของครู หรือผูกด้วยรหัสด้านล่าง') + '"></div></div>' +
+      '<div class="row" style="gap:6px"><button class="btn primary" data-act="op-save-line">' + ic('check', 16) + ' บันทึก</button><button class="btn" data-act="op-line-test"' + (lineOk ? '' : ' disabled') + '>' + ic('bell', 16) + ' ส่งข้อความทดสอบ</button><button class="btn" data-act="op-line-bind"' + (L.token ? '' : ' disabled') + '>' + ic('link', 16) + ' ผูกกับกลุ่ม LINE ด้วยรหัส</button>' + (L.token || L.to ? '<button class="btn danger" data-act="op-clear" data-k="line">ลบการตั้งค่า</button>' : '') + '</div><div id="op-bind"></div>' +
+      '<details class="howto"><summary>วิธีตั้งค่า LINE OA (ทำครั้งเดียว ประมาณ 10 นาที)</summary><ol>' +
+      '<li>เข้า <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">LINE Developers Console</a> ด้วยบัญชี LINE ของครู สร้าง Provider แล้วสร้าง Channel ประเภท <b>Messaging API</b> (ได้ LINE OA มาพร้อมกัน)</li>' +
+      '<li>แท็บ <b>Messaging API</b> → Channel access token (long-lived) กด Issue แล้วคัดลอกมาวางช่องแรก</li>' +
+      '<li>แท็บ <b>Basic settings</b> → เลื่อนลงหา <b>Your user ID</b> (ขึ้นต้นด้วย U) คัดลอกมาวางช่องผู้รับ แล้วสแกน QR ของ OA เพิ่มเป็นเพื่อน</li>' +
+      '<li>กด “บันทึก” แล้ว “ส่งข้อความทดสอบ” ถ้าได้รับข้อความในแชต OA แปลว่าใช้ได้</li>' +
+      '<li>ถ้าต้องการให้แจ้งในกลุ่ม: ตั้ง Webhook URL ในแท็บ Messaging API เป็น <span class="mono small" style="word-break:break-all">' + esc(GAS_URL) + '</span> เปิด Use webhook เชิญ OA เข้ากลุ่ม แล้วกด “ผูกกับกลุ่ม LINE ด้วยรหัส” (ปุ่ม Verify ของ LINE อาจขึ้นว่าไม่สำเร็จเพราะ Apps Script ตอบแบบเปลี่ยนเส้นทาง แต่การผูกยังใช้ได้)</li></ol></details></div>';
+    var notify = '<div class="card ops-card"><h3>เรื่องที่จะแจ้งเตือน</h3><div class="ops-list">' + Object.keys(NOTIFY_T).map(function (k) { return '<label class="ops-tg"><input type="checkbox" data-notify="' + k + '"' + (cfg.notify[k] ? ' checked' : '') + '><span><b>' + NOTIFY_T[k][0] + '</b><span class="small muted">' + NOTIFY_T[k][1] + '</span></span></label>'; }).join('') + '</div></div>';
+    var cron = '<div class="card ops-card"><div class="ops-h"><span class="ops-ic" style="--c:var(--accent)">' + ic('refresh', 20) + '</span><div style="flex:1"><h3>งานอัตโนมัติประจำวัน 07:00 น.</h3><span class="small muted">สำรองข้อมูลทุกสัปดาห์ · ส่งสรุปทาง LINE · ล้างการเข้าระบบที่หมดอายุ · เก็บบันทึกการใช้งานล่าสุด 5,000 แถว</span></div>' + (o.cron.on ? '<span class="pill good">เปิดอยู่</span>' : '<span class="pill warn">ยังไม่เปิด</span>') + '</div>' +
+      (o.cron.last ? '<p class="small">ทำงานล่าสุด ' + fdt(o.cron.last) + ' · ' + esc(o.cron.msg) + '</p>' : '<p class="small muted">ยังไม่เคยทำงาน</p>') +
+      '<div class="row"><button class="btn ' + (o.cron.on ? '' : 'primary') + '" data-act="op-cron" data-k="' + (o.cron.on ? '0' : '1') + '">' + (o.cron.on ? 'ปิดงานอัตโนมัติ' : ic('check', 16) + ' เปิดงานอัตโนมัติ') + '</button></div></div>';
+    var ai = '<div class="card ops-card"><div class="ops-h"><span class="ops-ic" style="--c:var(--s1)">' + ic('spark', 20) + '</span><div style="flex:1"><h3>ผู้ช่วยเขียนด้วย AI (Gemini)</h3><span class="small muted">ช่วยร่างข้อความแฟ้ม PA ประเด็นท้าทาย และสรุปแบบประเมิน · ใช้วันนี้ ' + A.today + '/' + A.max + ' ครั้ง</span></div>' + (A.key ? '<span class="pill good">พร้อมใช้</span>' : '<span class="pill off">ยังไม่ตั้งค่า</span>') + '</div>' +
+      '<div class="grid2"><div class="field"><label for="op-gkey">Gemini API key</label><input id="op-gkey" type="password" class="inp mono" autocomplete="off" placeholder="' + (A.key ? 'บันทึกไว้แล้ว ' + esc(A.key) + ' · ใส่ใหม่เพื่อเปลี่ยน' : 'AIza… จาก Google AI Studio') + '"></div>' +
+      '<div class="field"><label for="op-model">รุ่น AI</label><select id="op-model" class="inp">' + o.models.map(function (m) { return '<option' + (cfg.aiModel === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></div></div>' +
+      (o.available ? '<p class="small">' + (o.ok ? '<span class="pill good">รุ่นที่เลือกใช้ได้</span>' : '<span class="pill warn">รุ่นที่เลือกไม่อยู่ในรายการ</span>') + ' รุ่น Flash ที่บัญชีนี้ใช้ได้: ' + o.available.map(esc).join(', ') + '</p>' : '') +
+      '<div class="row" style="gap:6px"><button class="btn primary" data-act="op-save-ai">' + ic('check', 16) + ' บันทึก</button><button class="btn" data-act="op-ai-test"' + (A.key ? '' : ' disabled') + '>' + ic('search', 16) + ' ทดสอบ</button>' + (A.key ? '<button class="btn danger" data-act="op-clear" data-k="ai">ลบ key</button>' : '') + '</div>' +
+      '<details class="howto"><summary>วิธีขอ API key (ฟรี)</summary><ol><li>เข้า <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> ด้วยบัญชี Google</li><li>กด Create API key แล้วคัดลอกมาวาง กดบันทึก แล้วกดทดสอบ</li><li>ข้อความที่ส่งให้ AI คือข้อความในแฟ้มที่ครูเขียน ไม่ควรใส่ชื่อนักเรียน ระบบสั่งให้ AI เว้นตัวเลขเป็น [ตัวเลข] ให้ครูเติมเอง ไม่แต่งผลลัพธ์</li></ol></details>' +
+      (A.key ? '<div class="field" style="margin-top:6px"><label for="op-polish">ลองเกลาข้อความ</label><textarea id="op-polish" class="inp" rows="3" maxlength="3000" placeholder="วางข้อความที่อยากให้เป็นภาษาราชการ"></textarea></div><div class="row"><button class="btn" data-act="op-polish">' + ic('spark', 16) + ' เกลาภาษา</button></div><div id="op-polish-out"></div>' : '') + '</div>';
+    return adminShell('admin-ops', 'การเชื่อมต่อ', 'LINE OA สำหรับแจ้งเตือน · ผู้ช่วย AI · งานอัตโนมัติ · token และ key เก็บใน Script Properties ไม่แสดงกลับมาที่หน้าเว็บ', '', '<div class="ops-grid">' + line + notify + cron + ai + '</div>');
+  }
+
+  /* ---------- ผู้ช่วย AI ในหน้าแก้ไขแฟ้ม ---------- */
+  function aiStrip(kind, code) {
+    if (!opsSum().ai) return '<div class="ai-strip off">' + ic('spark', 15) + ' <span class="small">มีผู้ช่วย AI ช่วยร่างข้อความ</span> <a class="small" href="#admin-ops" data-act="close-modal">ตั้งค่า</a></div>';
+    return '<div class="ai-strip">' + ic('spark', 15) + '<input id="ai-extra" class="inp" maxlength="600" placeholder="ข้อมูลเพิ่มเติมให้ AI เช่น ชั้น ป.5 เรื่องเศษส่วน (ไม่ใส่ชื่อนักเรียน)"><button class="btn sm primary" data-act="ai-run" data-k="' + kind + '" data-code="' + (code || '') + '">' + ic('spark', 14) + ' ร่าง/ปรับให้</button><button class="btn sm" data-act="ai-undo" id="ai-undo" hidden>ย้อนกลับ</button><span class="small muted" id="ai-msg">AI จะปรับจากข้อความที่มีอยู่ ตรวจทานก่อนบันทึก</span></div>';
+  }
+  function aiFill(map) {
+    S.aiUndo = {}; Object.keys(map).forEach(function (id) { var el = $(id); if (el && map[id] != null) { S.aiUndo[id] = el.value; el.value = map[id]; el.classList.add('ai-new'); } });
+    var u = $('ai-undo'); if (u) u.hidden = false;
+  }
+  function aiRun(kind, code, btn) {
+    var extra = ($('ai-extra') || {}).value || '', msg = $('ai-msg'), ctx;
+    if (kind === 'ind') ctx = { code: code, name: indName(code), cur: { task: $('pe-task').value, out: $('pe-out').value, kpi: $('pe-kpi').value }, ev: evidenceOf(code, S.fy).map(function (e) { return e.title; }), extra: extra };
+    else ctx = { cur: { title: $('ch-title').value, problem: $('ch-problem').value, steps: $('ch-steps').value.split('\n'), quant: $('ch-quant').value, qual: $('ch-qual').value }, extra: extra };
+    if (btn) btn.disabled = true; if (msg) msg.textContent = 'กำลังให้ AI เขียน ประมาณ 5–20 วินาที…';
+    api('aiWrite', { task: kind, ctx: ctx }, { loader: false, timeout: 90000 }, function (err, res) {
+      if (btn) btn.disabled = false;
+      if (err) { if (msg) msg.innerHTML = '<span style="color:var(--bad)">' + esc(err) + '</span>'; return; }
+      var d = res.data || {};
+      if (kind === 'ind') aiFill({ 'pe-task': d.task, 'pe-out': d.out, 'pe-kpi': d.kpi });
+      else aiFill({ 'ch-title': d.title, 'ch-problem': d.problem, 'ch-steps': d.steps ? [].concat(d.steps).join('\n') : null, 'ch-quant': d.quant, 'ch-qual': d.qual });
+      if (msg) msg.textContent = 'ใส่ข้อความจาก AI แล้ว (' + res.model + ' · เหลือ ' + res.left + ' ครั้งวันนี้) ตรวจทานและเติม [ตัวเลข] ก่อนกดบันทึก';
+    });
+  }
+  function aiSurvey() {
+    var r = svRoundOf(S.svSel), t = S.sv && S.sv.stats; if (!r || !t || !t.n) { toast('ยังไม่มีคำตอบให้สรุป'); return; }
+    var cm = S.sv.resp.filter(function (x) { return !x.hidden && x.comment; }).map(function (x) { return x.comment; });
+    api('aiWrite', { task: 'survey', ctx: { label: r.label, items: r.items, per: t.per, n: t.n, comments: cm } }, { loader: 'AI กำลังสรุปผล', timeout: 90000 }, function (err, res) {
+      if (err) { toast(err); return; }
+      S.aiText = res.text;
+      openModal('สรุปผลแบบประเมินด้วย AI', '<div class="ai-out">' + esc(res.text) + '</div><p class="small muted">' + esc(res.model) + ' · ตรวจทานก่อนนำไปใช้ · เหลือ ' + res.left + ' ครั้งวันนี้</p>', '<button class="btn" data-act="close-modal">ปิด</button><button class="btn primary" data-act="ai-copy">' + ic('copy', 16) + ' คัดลอก</button>', true);
+    });
+  }
+
+  /* =====================================================================
+     3) สำรองข้อมูล
+     ===================================================================== */
+  function needBk(force) {
+    if ((S.bk && !force) || S.bkLoading) return; S.bkLoading = true;
+    api('backupInfo', {}, { loader: false }, function (err, res) { S.bkLoading = false; if (err) { toast(err); return; } setBk(res); if (route() === 'admin-backup') render(); });
+  }
+  function setBk(res) { S.bk = res; if (D.admin && D.admin.ops && res.list.length) D.admin.ops.lastBackup = Date.now(); }
+  function aBackup() {
+    if (!S.bk) { needBk(); return adminShell('admin-backup', 'สำรองและกู้คืนข้อมูล', 'กำลังโหลด', '', '<div class="card"><div class="sk" style="height:260px"></div></div>'); }
+    var b = S.bk, cfg = b.cfg;
+    var rows = b.list.map(function (x, i) { return '<tr><td><b class="small">' + esc(x.name.replace('สำรอง_แฟ้มผลงาน_', '')) + '</b>' + (i === 0 ? ' <span class="pill good">ล่าสุด</span>' : '') + '</td><td class="small">' + fdt(x.at) + '</td><td><div class="row" style="gap:4px;flex-wrap:nowrap"><a class="btn sm" href="' + esc(x.url) + '" target="_blank" rel="noopener">' + ic('ext', 14) + ' เปิด</a><button class="btn sm" data-act="bk-restore" data-id="' + esc(x.id) + '" data-k="' + esc(x.name) + '">' + ic('refresh', 14) + ' กู้คืน</button></div></td></tr>'; }).join('');
+    return adminShell('admin-backup', 'สำรองและกู้คืนข้อมูล', 'สำรองโดยคัดลอกสเปรดชีตทั้งไฟล์ไว้ในโฟลเดอร์ “สำรองข้อมูล” ใน Google Drive · ไฟล์รูปและเอกสารอยู่ใน Drive อยู่แล้ว',
+      '<button class="btn" data-act="bk-export">' + ic('download', 16) + ' ส่งออก JSON</button><button class="btn primary" data-act="bk-run">' + ic('cloud', 16) + ' สำรองตอนนี้</button>',
+      (b.db.restored ? '<div class="note warn-note">' + ic('refresh', 15) + ' ตอนนี้ใช้ฐานข้อมูลที่กู้คืนจาก ' + esc(b.db.from) + ' <button class="btn sm" data-act="bk-undo">กลับไปใช้ฐานข้อมูลเดิม</button></div>' : '') +
+      '<div class="grid3"><div class="kpi' + (b.last ? '' : ' warn') + '"><span class="l">สำรองล่าสุด</span><span class="v" style="font-size:20px">' + (b.last ? fdt(b.last) : 'ยังไม่เคย') + '</span></div><div class="kpi"><span class="l">ไฟล์สำรองที่เก็บไว้</span><span class="v">' + b.list.length + ' / ' + cfg.backupKeep + '</span></div>' +
+      '<div class="kpi' + (b.cron && cfg.backupAuto ? '' : ' warn') + '"><span class="l">สำรองอัตโนมัติ</span><span class="v" style="font-size:20px">' + (b.cron && cfg.backupAuto ? 'ทุก 7 วัน' : 'ปิดอยู่') + '</span>' + (b.cron ? '' : '<a class="small" href="#admin-ops">เปิดงานอัตโนมัติ</a>') + '</div></div>' +
+      '<div class="card" style="margin-top:14px"><div class="sec-h"><h3>ไฟล์สำรอง</h3><a class="small" href="' + esc(b.db.url) + '" target="_blank" rel="noopener">' + ic('ext', 13) + ' เปิดฐานข้อมูลปัจจุบัน</a></div>' +
+      (rows ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อ</th><th>เวลา</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<p class="small muted">ยังไม่มีไฟล์สำรอง กด “สำรองตอนนี้”</p>') +
+      '<p class="small muted" style="margin-top:8px">การกู้คืนไม่ลบอะไรทิ้ง: ระบบสำรองสภาพปัจจุบันก่อน แล้วสร้างสำเนาจากไฟล์ที่เลือกมาใช้เป็นฐานข้อมูลหลัก ถ้าไม่ถูกต้องกด “กลับไปใช้ฐานข้อมูลเดิม” ได้</p></div>' +
+      '<div class="card" style="margin-top:14px;display:flex;flex-direction:column;gap:10px"><h3>ตัวเลือก</h3><div class="grid2">' + chk('bk-auto', cfg.backupAuto, 'สำรองอัตโนมัติทุก 7 วัน (ต้องเปิดงานอัตโนมัติ)') +
+      '<div class="field"><label for="bk-keep">เก็บไฟล์สำรองล่าสุดกี่ไฟล์</label><input id="bk-keep" type="number" min="2" max="30" class="inp" value="' + cfg.backupKeep + '"></div></div><div class="row"><button class="btn" data-act="bk-cfg">' + ic('check', 16) + ' บันทึกตัวเลือก</button></div></div>');
+  }
+
+  /* =====================================================================
+     4) ความปลอดภัย
+     ===================================================================== */
+  function needSec(force) {
+    if ((S.sec && !force) || S.secLoading) return; S.secLoading = true;
+    api('securityGet', {}, { loader: false }, function (err, res) { S.secLoading = false; if (err) { toast(err); return; } setSec(res); if (route() === 'admin-security') render(); });
+  }
+  function setSec(res) { S.sec = res; if (D.admin && D.admin.ops) D.admin.ops.twofa = res.twofa; }
+  function aSecurity() {
+    if (!S.sec) { needSec(); return adminShell('admin-security', 'ความปลอดภัย', 'กำลังตรวจ', '', '<div class="card"><div class="sk" style="height:300px"></div></div>'); }
+    var s = S.sec, n = s.checks.length, pct = s.score / n;
+    var ring = '<svg viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="ผ่าน ' + s.score + ' จาก ' + n + ' ข้อ"><circle cx="60" cy="60" r="50" style="fill:none;stroke:var(--surface-2);stroke-width:12"/><circle cx="60" cy="60" r="50" style="fill:none;stroke:' + (pct >= 0.85 ? 'var(--good)' : pct >= 0.6 ? 'var(--warn)' : 'var(--bad)') + ';stroke-width:12;stroke-linecap:round" stroke-dasharray="' + (pct * 314.2).toFixed(1) + ' 400" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" style="font-size:26px;font-weight:700;fill:var(--ink)">' + s.score + '/' + n + '</text></svg>';
+    var fixLink = { pw: '#admin-settings', '2fa': '', share: '', backup: '#admin-backup', cron: '#admin-ops', alert: '#admin-ops', fails: '#admin-logs' };
+    var checks = '<div class="sec-checks">' + s.checks.map(function (c) { return '<div class="sec-ck ' + (c.ok ? 'ok' : 'no') + '"><span class="sec-i">' + ic(c.ok ? 'check' : 'x', 14) + '</span><span style="flex:1"><b>' + esc(c.t) + '</b><span class="small muted">' + esc(c.v) + '</span></span>' + (!c.ok && fixLink[c.k] ? '<a class="btn sm" href="' + fixLink[c.k] + '">แก้ไข</a>' : '') + '</div>'; }).join('') + '</div>';
+    var tfa = '<div class="card"><div class="ops-h"><span class="ops-ic" style="--c:var(--accent)">' + ic('shield', 20) + '</span><div style="flex:1"><h3>ยืนยันตัวตน 2 ขั้น (2FA)</h3><span class="small muted">นอกจากรหัสผ่าน ต้องใส่รหัส 6 หลักจากแอป Google Authenticator หรือ Microsoft Authenticator ในมือถือ</span></div>' + (s.twofa ? '<span class="pill good">เปิดอยู่</span>' : '<span class="pill warn">ปิดอยู่</span>') + '</div>' +
+      (s.twofa ? '<div class="row"><button class="btn" data-act="tfa-codes">' + ic('refresh', 16) + ' สร้างรหัสสำรองชุดใหม่</button><button class="btn danger" data-act="tfa-off">ปิด 2FA</button></div>' : '<button class="btn primary" data-act="tfa-on">' + ic('shield', 16) + ' เปิดยืนยันตัวตน 2 ขั้น</button>') + '</div>';
+    var sess = '<div class="card"><div class="sec-h"><h3>อุปกรณ์ที่เข้าระบบอยู่ (' + s.sessions.length + ')</h3>' + (s.sessions.length > 1 ? '<button class="btn sm danger" data-act="sess-all">ออกจากระบบเครื่องอื่นทั้งหมด</button>' : '') + '</div><div class="sess-list">' +
+      s.sessions.map(function (x) { return '<div class="sess"><span class="ops-ic" style="--c:var(--muted)">' + ic(/มือถือ|Android|iPhone|iPad/i.test(x.dev) ? 'monitor' : 'monitor', 16) + '</span><span style="flex:1;min-width:0"><b class="small">' + esc(x.dev || 'ไม่ทราบอุปกรณ์') + '</b>' + (x.current ? ' <span class="pill good">เครื่องนี้</span>' : '') + '<span class="small muted">เข้าระบบ ' + fdt(x.at) + ' · หมดอายุ ' + fdt(x.exp) + '</span></span>' + (x.current ? '' : '<button class="btn sm" data-act="sess-kill" data-id="' + esc(x.id) + '">ออกจากระบบ</button>') + '</div>'; }).join('') + '</div>' +
+      (s.comSessions ? '<p class="small muted" style="margin-top:8px">กรรมการเข้าระบบอยู่ ' + s.comSessions + ' รายการ (จัดการได้ที่หน้ากรรมการ ด้วยการออกรหัสใหม่)</p>' : '') + '</div>';
+    var logins = '<div class="card"><h3>การเข้าสู่ระบบล่าสุด</h3><div class="tbl-wrap" style="margin-top:6px"><table class="tbl"><tbody>' + (s.logins.length ? s.logins.map(function (l) { var bad = /ไม่สำเร็จ/.test(l.action); return '<tr><td class="small" style="white-space:nowrap">' + fdt(l.at) + '</td><td>' + (bad ? '<span class="pill bad">' : '<span class="pill good">') + esc(l.action) + '</span></td><td class="small muted">' + esc(l.detail) + '</td></tr>'; }).join('') : '<tr><td class="muted">ยังไม่มี</td></tr>') + '</tbody></table></div></div>';
+    return adminShell('admin-security', 'ความปลอดภัย', 'ตรวจการตั้งค่าที่สำคัญ · ยืนยันตัวตน 2 ขั้น · อุปกรณ์ที่เข้าระบบ', '<button class="btn" data-act="sec-reload">' + ic('refresh', 16) + ' ตรวจอีกครั้ง</button>',
+      '<div class="card sec-top">' + ring + '<div style="flex:1;min-width:240px"><h3>รายการตรวจความปลอดภัย</h3>' + checks + '</div></div><div class="sec-cols">' + tfa + sess + '</div>' + logins);
+  }
+  function tfaStart() {
+    adminCall('twofaSetup', {}, '', function (res) {
+      openModal('เปิดยืนยันตัวตน 2 ขั้น', '<ol class="tfa-steps"><li>ติดตั้งแอป <b>Google Authenticator</b> หรือ <b>Microsoft Authenticator</b> ในมือถือ</li><li>ในแอปกด + แล้วสแกน QR นี้</li></ol><div class="qr-box">' + qrSvg(res.uri, 200, 'QR สำหรับแอปยืนยันตัวตน') + '<span class="small muted">สแกนไม่ได้? ใส่รหัสนี้ในแอปแทน</span><b class="mono" style="font-size:14px;user-select:all">' + esc(res.secret) + '</b></div>' +
+        '<div class="field"><label for="tfa-code">3. กรอกรหัส 6 หลักที่แอปแสดง</label><input id="tfa-code" class="inp mono" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="font-size:22px;letter-spacing:.3em;text-align:center"></div><div id="f-err"></div>',
+        '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="tfa-enable">' + ic('check', 16) + ' ยืนยันและเปิดใช้</button>');
+    }, 'กำลังเตรียม');
+  }
+  function showCodes(codes, title) {
+    S.tfaCodes = codes;
+    openModal(title, '<p>เก็บรหัสสำรองไว้ในที่ปลอดภัย (พิมพ์หรือบันทึกไฟล์) ใช้แทนรหัส 6 หลักได้รหัสละครั้งเดียว เมื่อมือถือหายหรือเปลี่ยนเครื่อง</p><div class="tfa-codes mono">' + codes.map(function (c) { return '<span>' + c + '</span>'; }).join('') + '</div><p class="small" style="color:var(--bad)">หน้าต่างนี้แสดงรหัสครั้งเดียว ปิดแล้วดูอีกไม่ได้</p>',
+      '<button class="btn" data-act="tfa-dl">' + ic('download', 16) + ' บันทึกเป็นไฟล์</button><button class="btn primary" data-act="close-modal">เก็บแล้ว</button>');
+  }
+  /* เข้าสู่ระบบขั้นที่ 2 */
+  function askOtp(u, p, rem) {
+    S.otpCred = { u: u, p: p, rem: rem };
+    openModal('ยืนยันตัวตน 2 ขั้น', '<p>เปิดแอปยืนยันตัวตนในมือถือ แล้วกรอกรหัส 6 หลัก หรือใช้รหัสสำรอง (เช่น ABCD-EF23)</p><form id="otp-form"><input id="otp-code" class="inp mono" maxlength="9" autocomplete="one-time-code" inputmode="text" style="font-size:24px;letter-spacing:.25em;text-align:center"></form><div id="f-err"></div>',
+      '<button class="btn" data-act="otp-cancel">ยกเลิก</button><button class="btn primary" data-act="otp-go">' + ic('lock', 16) + ' ยืนยัน</button>');
+  }
+  function otpGo() {
+    var c = S.otpCred, code = String(($('otp-code') || {}).value || '').trim(); if (!c) return;
+    if (code.length < 6) { $('f-err').innerHTML = '<div class="err">กรอกรหัส 6 หลัก หรือรหัสสำรอง</div>'; return; }
+    api('login', { user: c.u, pass: c.p, remember: c.rem, device: deviceName(), otp: code }, {}, function (err, res) {
+      if (err) { $('f-err').innerHTML = '<div class="err">' + esc(err) + '</div>'; if (/ล็อก/.test(err)) { S.otpCred = null; } return; }
+      S.otpCred = null; closeModal(); loginDone(res, c.rem);
+    });
+  }
+
+  /** รายการที่ควรทำในแดชบอร์ด */
+  function opsTodo() {
+    var o = opsSum(), out = '';
+    function t(dot, msg, href) { return '<a class="todo" href="#' + href + '"><span class="dot ' + dot + '"></span><span style="flex:1">' + msg + '</span>' + ic('chev', 14) + '</a>'; }
+    if (!o.lastBackup) out += t('warn', 'ยังไม่เคยสำรองข้อมูล', 'admin-backup');
+    else if (Date.now() - o.lastBackup > 8 * 864e5) out += t('warn', 'ไม่ได้สำรองข้อมูลมากกว่า 7 วัน', 'admin-backup');
+    if (!o.twofa) out += t('warn', 'แนะนำให้เปิดยืนยันตัวตน 2 ขั้น', 'admin-security');
+    if (!o.cron) out += t('warn', 'ยังไม่ได้เปิดงานอัตโนมัติประจำวัน', 'admin-ops');
+    var soon = (S.cal ? S.cal.list : []).filter(function (e) { return !e.done && e.type === 'deadline' && daysTo(e.date) >= 0 && daysTo(e.date) <= 7; });
+    soon.forEach(function (e) { out += t('warn', 'กำหนดส่ง: ' + esc(e.title) + ' (' + (daysTo(e.date) ? 'อีก ' + daysTo(e.date) + ' วัน' : 'วันนี้') + ')', 'admin-calendar'); });
+    if (!S.cal) needCal();
+    return out;
+  }
+
+  /* ---------- เหตุการณ์ ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!el) return;
+    var act = el.getAttribute('data-act'), k = el.getAttribute('data-k'), id = el.getAttribute('data-id');
+    switch (act) {
+      case 'cal-mon':
+        if (k === '0') S.calMonth = todayIso().slice(0, 7);
+        else { var p = S.calMonth.split('-'), d = new Date(+p[0], +p[1] - 1 + (+k), 1); S.calMonth = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
+        render(); break;
+      case 'cal-open': e.stopPropagation(); calOpen(id); break;
+      case 'cal-new': if (e.target.closest('.pc-ev')) break; calForm(k ? { id: '', date: k, end: '', time: '', title: '', type: 'teach', note: '', vis: 'private', remind: 1, done: false } : null); break;
+      case 'cal-edit': calForm(calFind(id)); break;
+      case 'cal-ics': var ev = calFind(id); if (ev) dlBlob(icsOf(ev), ev.title.replace(/[\\/:*?"<>|]+/g, '_') + '.ics', 'text/calendar;charset=utf-8'); break;
+      case 'cal-del': var ev2 = calFind(id); if (ev2) confirmBox('ลบกิจกรรม “' + esc(ev2.title) + '”?', 'ลบ', function () { adminCall('calDelete', { id: id }, 'ลบแล้ว', function (res) { S.cal = res; closeModal(); render(); }); }, true); break;
+      case 'cal-save':
+        adminCall('calSave', { item: { id: S.calEdit || '', title: $('cf-title').value, date: $('cf-date').value, end: $('cf-end').value, time: $('cf-time').value, type: $('cf-type').value, remind: $('cf-remind').value, vis: $('cf-vis').value, note: $('cf-note').value, done: $('cf-done') ? $('cf-done').checked : false } },
+          S.calEdit ? 'บันทึกแล้ว' : 'เพิ่มกิจกรรมแล้ว', function (res) { S.cal = res; closeModal(); render(); api('getPublic', {}, { loader: false }, function (e2, pd) { if (!e2) D.events = pd.events || []; }); });
+        break;
+      case 'op-save-line':
+        var tk = $('op-ltok').value.trim(), to = $('op-lto').value.trim();
+        if (!tk && !to) { toast('ใส่ token หรือผู้รับก่อน'); break; }
+        adminCall('opsSave', { lineToken: tk, lineTo: to }, 'บันทึกการตั้งค่า LINE แล้ว', function (res) { setOps(res); render(); });
+        break;
+      case 'op-line-test': adminCall('lineTest', {}, 'ส่งข้อความทดสอบแล้ว ตรวจในแชต LINE', function (res) { setOps(res); render(); }, 'กำลังส่ง'); break;
+      case 'op-line-bind':
+        adminCall('lineBind', {}, '', function (res) {
+          $('op-bind').innerHTML = '<div class="bind-box"><span>พิมพ์ข้อความนี้ในกลุ่มที่มี LINE OA อยู่ ภายใน 10 นาที</span><b class="mono">ผูก ' + res.code + '</b><button class="btn sm" data-act="op-bind-check">' + ic('refresh', 14) + ' ตรวจสถานะ</button></div>';
+        }, 'กำลังสร้างรหัส');
+        break;
+      case 'op-bind-check': needOps(true); break;
+      case 'op-clear': confirmBox(k === 'line' ? 'ลบ token และผู้รับ LINE? การแจ้งเตือนจะหยุดส่ง' : 'ลบ Gemini API key? ผู้ช่วย AI จะใช้ไม่ได้', 'ลบ', function () { adminCall('opsSave', { clear: [k] }, 'ลบแล้ว', function (res) { setOps(res); render(); }); }, true); break;
+      case 'op-save-ai': adminCall('opsSave', { geminiKey: $('op-gkey').value.trim(), cfg: { aiModel: $('op-model').value } }, 'บันทึกการตั้งค่า AI แล้ว', function (res) { setOps(res); render(); }); break;
+      case 'op-ai-test': adminCall('aiTest', {}, '', function (res) { setOps(res); render(); toast(res.ok ? 'เชื่อม Gemini ได้ รุ่นที่เลือกใช้ได้' : 'เชื่อมได้ แต่รุ่นที่เลือกไม่อยู่ในรายการ ลองเลือกรุ่นอื่น'); }, 'กำลังทดสอบ'); break;
+      case 'op-polish':
+        var tx = $('op-polish').value.trim(); if (!tx) { toast('วางข้อความก่อน'); break; }
+        api('aiWrite', { task: 'polish', ctx: { text: tx } }, { loader: 'AI กำลังเกลาข้อความ', timeout: 90000 }, function (err, res) { if (err) { toast(err); return; } S.aiText = res.text; $('op-polish-out').innerHTML = '<div class="ai-out">' + esc(res.text) + '</div><button class="btn sm" data-act="ai-copy">' + ic('copy', 14) + ' คัดลอก</button>'; });
+        break;
+      case 'op-cron': adminCall('cronInstall', { on: k === '1' }, k === '1' ? 'เปิดงานอัตโนมัติแล้ว ทำงานทุกวัน 07:00 น.' : 'ปิดงานอัตโนมัติแล้ว', function (res) { setOps(res); S.bk = null; render(); }); break;
+      case 'ai-run': aiRun(k, el.getAttribute('data-code'), el); break;
+      case 'ai-undo': if (S.aiUndo) { Object.keys(S.aiUndo).forEach(function (i2) { var x = $(i2); if (x) { x.value = S.aiUndo[i2]; x.classList.remove('ai-new'); } }); S.aiUndo = null; el.hidden = true; $('ai-msg').textContent = 'กลับเป็นข้อความเดิมแล้ว'; } break;
+      case 'ai-survey': aiSurvey(); break;
+      case 'ai-copy': if (S.aiText) copyText(S.aiText, 'คัดลอกแล้ว'); break;
+      case 'bk-run': adminCall('backupRun', {}, 'สำรองข้อมูลแล้ว', function (res) { setBk(res); render(); }, 'กำลังคัดลอกฐานข้อมูล'); break;
+      case 'bk-undo': confirmBox('กลับไปใช้ฐานข้อมูลก่อนการกู้คืน?', 'กลับไปใช้ฐานข้อมูลเดิม', function () { adminCall('undoRestore', {}, 'กลับไปใช้ฐานข้อมูลเดิมแล้ว กำลังโหลดใหม่', function (res) { setBk(res); setTimeout(function () { location.reload(); }, 900); }); }); break;
+      case 'bk-restore':
+        S.bkPick = id;
+        openModal('กู้คืนข้อมูล', '<p>กู้คืนจาก <b>' + esc(k) + '</b></p><ul class="small"><li>ระบบจะสำรองข้อมูลปัจจุบันก่อนเสมอ</li><li>ข้อมูลที่แก้หลังเวลาของไฟล์สำรองนี้จะไม่อยู่ในฐานข้อมูลที่กู้คืน</li><li>ย้อนกลับได้ด้วยปุ่ม “กลับไปใช้ฐานข้อมูลเดิม”</li></ul><div class="field"><label for="bk-confirm">พิมพ์คำว่า <b>กู้คืน</b> เพื่อยืนยัน</label><input id="bk-confirm" class="inp" autocomplete="off"></div><div id="f-err"></div>',
+          '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn danger" data-act="bk-go">' + ic('refresh', 16) + ' กู้คืน</button>');
+        break;
+      case 'bk-go': adminCall('restore', { id: S.bkPick, confirm: $('bk-confirm').value }, 'กู้คืนแล้ว กำลังโหลดข้อมูลใหม่', function (res) { setBk(res); closeModal(); setTimeout(function () { location.reload(); }, 900); }, 'กำลังกู้คืน อาจใช้เวลาสักครู่'); break;
+      case 'bk-cfg': adminCall('opsSave', { cfg: { backupAuto: $('bk-auto').checked, backupKeep: $('bk-keep').value } }, 'บันทึกตัวเลือกแล้ว', function (res) { setOps(res); S.bk.cfg = res.cfg; render(); }); break;
+      case 'bk-export': adminCall('exportAll', {}, 'ดาวน์โหลดไฟล์ JSON แล้ว', function (res) { dlBlob(JSON.stringify(res, null, 1), 'แฟ้มผลงาน_ข้อมูลทั้งหมด_' + res.at.slice(0, 10) + '.json', 'application/json'); }, 'กำลังรวบรวมข้อมูล'); break;
+      case 'sec-reload': needSec(true); break;
+      case 'tfa-on': tfaStart(); break;
+      case 'tfa-enable': adminCall('twofaEnable', { code: $('tfa-code').value }, 'เปิดยืนยันตัวตน 2 ขั้นแล้ว', function (res) { showCodes(res.codes, 'รหัสสำรอง 8 รหัส'); S.sec = null; needSec(true); }, 'กำลังตรวจรหัส'); break;
+      case 'tfa-dl': if (S.tfaCodes) dlBlob('รหัสสำรองยืนยันตัวตน 2 ขั้น · แฟ้มผลงานครู\nสร้างเมื่อ ' + new Date().toLocaleString('th-TH') + '\nใช้ได้รหัสละครั้ง\n\n' + S.tfaCodes.join('\n') + '\n', 'รหัสสำรอง_2FA.txt', 'text/plain;charset=utf-8'); break;
+      case 'tfa-codes':
+        openModal('สร้างรหัสสำรองชุดใหม่', '<p>รหัสสำรองชุดเดิมจะใช้ไม่ได้ทันที</p><div class="field"><label for="tfa-code">รหัส 6 หลักจากแอป</label><input id="tfa-code" class="inp mono" inputmode="numeric" maxlength="6" style="font-size:20px;letter-spacing:.3em;text-align:center"></div><div id="f-err"></div>',
+          '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="tfa-codes-go">สร้างใหม่</button>');
+        break;
+      case 'tfa-codes-go': adminCall('twofaCodes', { code: $('tfa-code').value }, '', function (res) { showCodes(res.codes, 'รหัสสำรองชุดใหม่'); }); break;
+      case 'tfa-off':
+        openModal('ปิดยืนยันตัวตน 2 ขั้น', '<p>เพื่อความปลอดภัย กรอกรหัสผ่านและรหัส 6 หลัก (หรือรหัสสำรอง)</p><div class="field"><label for="tfa-pass">รหัสผ่าน</label><input id="tfa-pass" type="password" class="inp" autocomplete="current-password"></div><div class="field"><label for="tfa-code">รหัสยืนยัน</label><input id="tfa-code" class="inp mono" maxlength="9"></div><div id="f-err"></div>',
+          '<button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn danger" data-act="tfa-off-go">ปิด 2FA</button>');
+        break;
+      case 'tfa-off-go': adminCall('twofaDisable', { pass: $('tfa-pass').value, code: $('tfa-code').value }, 'ปิดยืนยันตัวตน 2 ขั้นแล้ว', function (res) { setSec(res); closeModal(); render(); }); break;
+      case 'sess-kill': adminCall('sessRevoke', { id: id }, 'ออกจากระบบเครื่องนั้นแล้ว', function (res) { setSec(res); render(); }); break;
+      case 'sess-all': confirmBox('ออกจากระบบทุกเครื่องยกเว้นเครื่องนี้?', 'ออกจากระบบ', function () { adminCall('sessRevoke', { all: true }, 'ออกจากระบบเครื่องอื่นแล้ว', function (res) { setSec(res); render(); }); }, true); break;
+      case 'otp-go': otpGo(); break;
+      case 'otp-cancel': S.otpCred = null; closeModal(); break;
+    }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target, nk = t.getAttribute && t.getAttribute('data-notify');
+    if (nk) { var n = {}; n[nk] = t.checked; adminCall('opsSave', { cfg: { notify: n } }, (t.checked ? 'เปิด' : 'ปิด') + 'การแจ้งเตือน “' + NOTIFY_T[nk][0] + '” แล้ว', function (res) { setOps(res); }, false); }
+  });
+  document.addEventListener('submit', function (e) { if (e.target.id === 'otp-form') { e.preventDefault(); otpGo(); } });
+
 
   /* =====================================================================
      เส้นทางหน้าและการวาดหน้า
      ===================================================================== */
   var ADMIN_PAGES = { 'admin': aDash, 'admin-profile': aProfile, 'admin-years': aYears, 'admin-settings': aSettings, 'admin-logs': aLogs,
-    'admin-pa': aPA, 'admin-agreement': aAgreement, 'admin-idplan': aIdplan, 'admin-works': aWorks, 'admin-gallery': aGallery, 'admin-videos': aVideos, 'admin-awards': aAwards, 'admin-systems': aSystems, 'admin-themes': aThemes, 'admin-committee': aCommittee, 'admin-salary': aSalary, 'admin-survey': aSurvey, 'admin-stats': aStats, 'admin-verify': aVerify };
-  var PUB_PAGES = { 'pa': pPA, 'agreement': pAgreement, 'idplan': pIdplan, 'profile': pProfile, 'works': pWorks, 'gallery': pGallery, 'videos': pVideos, 'awards': pAwards, 'systems': pSystems, 'login': pLogin, 'committee': pCommittee, 'pa-forms': pForms, 'survey': pSurvey, 'salary-print': salaryPrint, 'survey-poster': svPoster, 'survey-report': svReport, 'verify': function () { return pVerify(''); }, 'report': pReport, 'present': pPresent };
+    'admin-pa': aPA, 'admin-agreement': aAgreement, 'admin-idplan': aIdplan, 'admin-works': aWorks, 'admin-gallery': aGallery, 'admin-videos': aVideos, 'admin-awards': aAwards, 'admin-systems': aSystems, 'admin-themes': aThemes, 'admin-committee': aCommittee, 'admin-salary': aSalary, 'admin-survey': aSurvey, 'admin-stats': aStats, 'admin-verify': aVerify, 'admin-calendar': aCalendar, 'admin-ops': aOps, 'admin-backup': aBackup, 'admin-security': aSecurity };
+  var PUB_PAGES = { 'pa': pPA, 'agreement': pAgreement, 'idplan': pIdplan, 'profile': pProfile, 'works': pWorks, 'gallery': pGallery, 'videos': pVideos, 'awards': pAwards, 'systems': pSystems, 'login': pLogin, 'committee': pCommittee, 'pa-forms': pForms, 'survey': pSurvey, 'salary-print': salaryPrint, 'survey-poster': svPoster, 'survey-report': svReport, 'verify': function () { return pVerify(''); }, 'report': pReport, 'present': pPresent, 'calendar': pCalendar };
   function route() { var h = (location.hash || '').replace('#', ''); return h || 'home'; }
   function render() {
     var r = route(), html;
@@ -3346,7 +3697,7 @@
       case 'cover-pause': S.coverPaused = !S.coverPaused; render(); break;
       case 'logout':
         confirmBox('ออกจากระบบหลังบ้าน?' + (dirtyCount() ? ' <b>การแก้ไขที่ยังไม่บันทึกจะหายไป</b>' : ''), 'ออกจากระบบ', function () {
-          api('logout', {}, { loader: 'กำลังออกจากระบบ' }, function () { saveToken(''); S.admin = false; D.admin = null; D.docs = {}; S.comList = {}; discardDraft(); backToPublic(); location.hash = 'home'; render(); toast('ออกจากระบบแล้ว'); });
+          api('logout', {}, { loader: 'กำลังออกจากระบบ' }, function () { saveToken(''); S.admin = false; D.admin = null; D.docs = {}; S.comList = {}; S.ops = S.bk = S.sec = S.cal = null; discardDraft(); backToPublic(); location.hash = 'home'; render(); toast('ออกจากระบบแล้ว'); });
         });
         break;
       case 'draft-save': saveDraft(); break;
@@ -3587,6 +3938,12 @@
     api('login', { user: u, pass: p, remember: rem, device: deviceName() }, {}, function (err, res) {
       btn.disabled = false;
       if (err) { S.loginErr = err; render(); var f = $('lg-user'); if (f) f.value = u; return; }
+      if (res.need2fa) { S.loginErr = ''; askOtp(u, p, rem); return; }
+      loginDone(res, rem);
+    });
+  }
+  function loginDone(res, rem) {
+    {
       saveToken(res.token, rem); S.loginErr = ''; if (S.com) comClear();
       api('adminBoot', {}, {}, function (e2, data) {
         if (e2) { toast(e2); return; }
@@ -3594,7 +3951,7 @@
         location.hash = data.mustChange ? 'admin-settings' : 'admin';
         render(); toast(data.mustChange ? 'กรุณาเปลี่ยนรหัสผ่านชั่วคราวก่อนใช้งาน' : 'เข้าสู่ระบบแล้ว');
       });
-    });
+    }
   }
 
   /* ---------- เริ่มทำงาน ---------- */
