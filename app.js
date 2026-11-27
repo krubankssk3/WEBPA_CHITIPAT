@@ -387,7 +387,7 @@
     var t = document.createElement('div'); t.textContent = msg; $('toast').appendChild(t);
     setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3200);
   }
-  function seal(cls) { var s = st(); return '<span class="seal ' + (cls || '') + '">' + (s.logo ? '<img src="' + esc(s.logo) + '" alt="โลโก้ ' + esc(s.school) + '">' : esc(s.initials || 'บล')) + '</span>'; }
+  function seal(cls) { var s = st(); return '<span class="seal ' + (cls || '') + '">' + (s.logo ? frImg(s.logo, s.logoPos, 'โลโก้ ' + s.school, false, 'contain') : esc(s.initials || 'บล')) + '</span>'; }
   function setFavicon() {
     var l = document.getElementById('fav'), s = D.settings || {};
     if (!s.logo) { if (l) l.parentNode.removeChild(l); return; }
@@ -432,12 +432,12 @@
     return '<footer class="foot"><div class="wrap"><span>' + FOOTER + '</span><span><a href="#verify">ตรวจสอบเอกสาร</a> · Google Apps Script + Google Sheets</span></div></footer>';
   }
   function pub(r, inner, top) { return siteHead(r) + comBanner(r) + (top || '') + '<main class="pub"><div class="wrap">' + inner + '</div></main>' + siteFoot(); }
-  function slideArt(x, paused) { var src = x.type === 'image/gif' && paused && x.still ? x.still : x.url; return '<img src="' + esc(src) + '" alt="">'; }
-  function coverSlides(s) { return (s.cover ? [{ url: s.cover, type: s.coverType, still: s.coverStill, cap: s.coverCaption }] : []).concat(s.coverSlides || []); }
+  function slideArt(x, paused) { var src = x.type === 'image/gif' && paused && x.still ? x.still : x.url; return frImg(src, x.pos, '', true); }
+  function coverSlides(s) { return (s.cover ? [{ url: s.cover, type: s.coverType, still: s.coverStill, cap: s.coverCaption, pos: s.coverPos }] : []).concat(s.coverSlides || []); }
 
   function avatarHtml(cls) {
     var s = D.settings;
-    return '<div class="avatar ' + (cls || '') + '">' + (s.avatar ? '<img src="' + esc(s.avatar) + '" alt="รูป ' + esc(s.name) + '">' : esc((s.nick || s.name || 'ครู').replace(/^ครู/, '').slice(0, 2)) + '<small>รูปครู</small>') + '</div>';
+    return '<div class="avatar ' + (cls || '') + '">' + (s.avatar ? frImg(s.avatar, s.avatarPos, 'รูป ' + s.name) : esc((s.nick || s.name || 'ครู').replace(/^ครู/, '').slice(0, 2)) + '<small>รูปครู</small>') + '</div>';
   }
   function cover() {
     var s = st(), sl = coverSlides(s), multi = sl.length > 1 && +s.rotSec > 0;
@@ -577,7 +577,7 @@
   function aProfile() {
     var d = ensureDraft(), s = d.s;
     var gifTxt = s.cover ? '<span class="chip ' + (s.coverType === 'image/gif' ? 'gold' : '') + '">' + (s.coverType === 'image/gif' ? 'GIF เคลื่อนไหว' : 'ภาพนิ่ง') + ' · ' + fix((+s.coverSize || 0) / 1048576, 1) + ' MB</span>' : '';
-    var prev = '<div class="cover-prev"><div class="cover-bg">' + (s.cover ? '<img src="' + esc(s.cover) + '" alt="">' : '') + '</div>' + (s.cover ? '' : GLYPHS) + '<div class="cover-shade"></div><div class="cp-t"><b>' + esc(s.name) + '</b><span class="small">' + esc(s.tagline) + '</span></div></div>';
+    var prev = '<div class="cover-prev"><div class="cover-bg">' + (s.cover ? frImg(s.cover, s.coverPos, '', true) : '') + '</div>' + (s.cover ? '' : GLYPHS) + '<div class="cover-shade"></div><div class="cp-t"><b>' + esc(s.name) + '</b><span class="small">' + esc(s.tagline) + '</span></div></div>';
     var pf = (s.profileFields || []).map(function (f, i) {
       return '<div class="pf-row"><input class="inp" data-b="pf.' + i + '.0" value="' + esc(f[0]) + '" aria-label="หัวข้อ แถว ' + (i + 1) + '"><input class="inp" data-b="pf.' + i + '.1" value="' + esc(f[1]) + '" aria-label="ข้อมูล แถว ' + (i + 1) + '"><span class="row" style="gap:2px;flex-wrap:nowrap">' + mv('pf', i, s.profileFields.length) + '<button class="btn icon sm danger" data-act="row-del" data-k="pf" data-i="' + i + '" aria-label="ลบแถว ' + (i + 1) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
@@ -593,11 +593,11 @@
     }).join('');
     return adminShell('admin-profile', 'หน้าปกและประวัติ', 'ภาพปก รูปครู ข้อมูลส่วนตัว ประวัติการศึกษา และประวัติการทำงาน · รูปอัปโหลดทันที ข้อความกดบันทึกครั้งเดียว', '<a class="btn" href="#profile">' + ic('eye', 16) + ' ดูหน้าประวัติ</a><button class="btn primary" data-act="draft-save">' + ic('check', 16) + ' บันทึก</button>',
       '<div class="card" style="display:flex;flex-direction:column;gap:14px"><h3>ภาพปก (Banner)</h3>' + prev +
-        '<div class="row"><label class="btn" for="cover-up">' + ic('upload', 16) + ' เลือกภาพปก</label><input id="cover-up" type="file" data-up="cover" accept="' + upAccept('cover') + '" style="display:none">' + (s.cover ? '<button class="btn danger" data-act="img-del" data-k="cover">' + ic('trash', 16) + ' ใช้ลายเริ่มต้น</button>' : '') + gifTxt + '</div>' +
+        '<div class="row"><label class="btn" for="cover-up">' + ic('upload', 16) + ' เลือกภาพปก</label><input id="cover-up" type="file" data-up="cover" accept="' + upAccept('cover') + '" style="display:none">' + (s.cover ? '<button class="btn" data-act="fr-edit" data-k="cover">' + ic('target', 16) + ' จุดโฟกัส / ย่อ–ขยาย</button><button class="btn danger" data-act="img-del" data-k="cover">' + ic('trash', 16) + ' ใช้ลายเริ่มต้น</button>' : '') + gifTxt + '</div>' +
         '<p class="small muted">JPG PNG WebP' + (upc('cover').gif ? ' หรือ GIF เคลื่อนไหว' : '') + ' ไม่เกิน ' + upc('cover').mb + ' MB · แนะนำ 1920 × 600 px · ภาพนิ่งถูกย่อก่อนอัปโหลด ส่วน GIF ส่งไฟล์เดิมเพื่อให้ยังเคลื่อนไหว</p>' +
         '<div class="field"><label for="b-cap">คำอธิบายภาพปกหลัก (ไม่บังคับ)</label><input id="b-cap" class="inp" data-b="s.coverCaption" value="' + esc(s.coverCaption) + '"></div></div>' + coverManager() +
       '<div class="card" style="display:flex;flex-direction:column;gap:14px;margin-top:16px"><h3>รูปครู</h3><div class="row" style="gap:16px;align-items:flex-start">' + avatarEdit(s) +
-        '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="avatar-up">' + ic('upload', 16) + ' เลือกรูป</label><input id="avatar-up" type="file" data-up="avatar" accept="' + upAccept('avatar') + '" style="display:none">' + (s.avatar ? '<button class="btn danger" data-act="img-del" data-k="avatar">' + ic('trash', 16) + ' ลบรูป</button>' : '') + '</div><span class="small muted">รูปแนวตั้ง สัดส่วนประมาณ 4:5 แสดงบนภาพปกและหน้าประวัติ</span></div></div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="avatar-up">' + ic('upload', 16) + ' เลือกรูป</label><input id="avatar-up" type="file" data-up="avatar" accept="' + upAccept('avatar') + '" style="display:none">' + (s.avatar ? '<button class="btn" data-act="fr-edit" data-k="avatar">' + ic('target', 16) + ' จุดโฟกัส / ย่อ–ขยาย</button><button class="btn danger" data-act="img-del" data-k="avatar">' + ic('trash', 16) + ' ลบรูป</button>' : '') + '</div><span class="small muted">รูปแนวตั้ง สัดส่วนประมาณ 4:5 แสดงบนภาพปกและหน้าประวัติ</span></div></div></div>' +
       '<div class="card" style="display:flex;flex-direction:column;gap:12px;margin-top:16px"><div class="sec-h"><h3>' + ic('user', 18) + ' ข้อมูลส่วนตัว</h3><button class="btn sm" data-act="row-add" data-k="pf">' + ic('plus', 15) + ' เพิ่มหัวข้อ</button></div>' +
         '<div class="pf-row h"><span>หัวข้อ</span><span>ข้อมูล</span><span></span></div>' + pf +
         '<div class="field"><label for="b-bio">แนะนำตัวสั้นๆ (หน้าประวัติ)</label><textarea id="b-bio" class="inp" data-b="s.bio">' + esc(s.bio) + '</textarea></div>' +
@@ -614,7 +614,7 @@
     return '<button class="btn icon sm" data-act="row-mv" data-k="' + k + '" data-i="' + i + '" data-d="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนขึ้น">' + ic('chev', 15).replace('<svg', '<svg style="transform:rotate(-90deg)"') + '</button><button class="btn icon sm" data-act="row-mv" data-k="' + k + '" data-i="' + i + '" data-d="1"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="เลื่อนลง">' + ic('chev', 15).replace('<svg', '<svg style="transform:rotate(90deg)"') + '</button>';
   }
   function avatarEdit(s) {
-    return '<div class="avatar">' + (s.avatar ? '<img src="' + esc(s.avatar) + '" alt="">' : 'รูป<small>ยังไม่มีรูป</small>') + '</div>';
+    return '<div class="avatar">' + (s.avatar ? frImg(s.avatar, s.avatarPos, '') : 'รูป<small>ยังไม่มีรูป</small>') + '</div>';
   }
 
   /* ---------- ปีงบประมาณและธีม ---------- */
@@ -650,7 +650,7 @@
     return adminShell('admin-settings', 'ตั้งค่า', 'ข้อมูลเจ้าของแฟ้ม โลโก้ ค่าเริ่มต้นของผลงาน เอฟเฟค และรหัสผ่าน · ชุดธีมและฟอนต์อยู่ที่เมนู “ชุดธีมและฟอนต์”', '<button class="btn primary" data-act="draft-save">' + ic('check', 16) + ' บันทึกการตั้งค่า</button>',
       '<div class="grid2" style="align-items:start"><div style="display:flex;flex-direction:column;gap:14px">' + (must ? pw : '') +
       '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>ข้อมูลเจ้าของแฟ้ม</h3>' + inp('name', 'ชื่อ–สกุล') + '<div class="grid2">' + inp('nick', 'ชื่อที่แสดง') + inp('position', 'ตำแหน่ง/วิทยฐานะ') + '</div>' + inp('subject', 'กลุ่มสาระ') + '<div class="grid2">' + inp('school', 'โรงเรียน') + inp('area', 'สังกัด') + '</div>' + inp('duty', 'หน้าที่') + '</div>' +
-      '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>โลโก้โรงเรียน</h3><div class="row" style="gap:16px">' + seal('big') + '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="logo-up">' + ic('upload', 16) + ' อัปโหลดโลโก้</label><input id="logo-up" type="file" data-up="logo" accept="' + upAccept('logo') + '" style="display:none">' + (s.logo ? '<button class="btn danger" data-act="img-del" data-k="logo">' + ic('trash', 16) + ' ลบโลโก้</button>' : '') + '</div><span class="hint small muted">PNG พื้นหลังโปร่งใส ไม่เกิน 2 MB ใช้ที่หัวเว็บ หลังบ้าน หน้าเข้าสู่ระบบ วงแหวนโหลด และไอคอนแท็บ</span></div></div>' + inp('initials', 'อักษรย่อเมื่อไม่มีโลโก้') + '</div>' +
+      '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>โลโก้โรงเรียน</h3><div class="row" style="gap:16px">' + seal('big') + '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="logo-up">' + ic('upload', 16) + ' อัปโหลดโลโก้</label><input id="logo-up" type="file" data-up="logo" accept="' + upAccept('logo') + '" style="display:none">' + (s.logo ? '<button class="btn" data-act="fr-edit" data-k="logo">' + ic('target', 16) + ' ย่อ–ขยาย</button>' : '') + (s.logo ? '<button class="btn danger" data-act="img-del" data-k="logo">' + ic('trash', 16) + ' ลบโลโก้</button>' : '') + '</div><span class="hint small muted">PNG พื้นหลังโปร่งใส ไม่เกิน 2 MB ใช้ที่หัวเว็บ หลังบ้าน หน้าเข้าสู่ระบบ วงแหวนโหลด และไอคอนแท็บ</span></div></div>' + inp('initials', 'อักษรย่อเมื่อไม่มีโลโก้') + '</div>' +
       '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>ค่าเริ่มต้นของผลงาน</h3><div class="grid2"><div class="field"><label for="b-defvis">สิทธิ์เริ่มต้นเมื่อเพิ่มรายการใหม่</label><select id="b-defvis" class="inp" data-b="s.defaultVis">' + Object.keys(VIS).map(function (k) { return '<option value="' + k + '"' + ((s.defaultVis || 'public') === k ? ' selected' : '') + '>' + VIS[k] + '</option>'; }).join('') + '</select></div>' +
         '<div class="field"><label for="b-hgoal">เป้าชั่วโมงพัฒนาตนเองต่อปี</label><input id="b-hgoal" type="number" min="0" class="inp" data-b="s.hoursGoal" value="' + (+s.hoursGoal || 20) + '"></div></div>' +
         '<b class="small">ใครเห็นเอกสาร PA ของแต่ละปีได้บ้าง</b><div class="grid3">' + [['pa', 'แฟ้ม PA'], ['agree', 'ข้อตกลง PA'], ['idp', 'ID Plan']].map(function (x) { var dv = (s.docVis || {})[x[0]] || 'public'; return '<div class="field"><label for="b-dv-' + x[0] + '">' + x[1] + '</label><select id="b-dv-' + x[0] + '" class="inp" data-b="docVis.' + x[0] + '">' + Object.keys(VIS).map(function (k) { return '<option value="' + k + '"' + (dv === k ? ' selected' : '') + '>' + VIS[k] + '</option>'; }).join('') + '</select></div>'; }).join('') + '</div></div></div>' +
@@ -1565,8 +1565,8 @@
   function coverManager() {
     var s = st(), list = (D.settings.coverSlides || []);
     var rows = list.map(function (x, i) {
-      return '<div class="cs-row"><div class="cs-thumb"><img src="' + esc(x.still || x.url) + '" alt=""></div><input class="inp" data-cs="' + i + '" value="' + esc(x.cap || '') + '" placeholder="คำบรรยายภาพ (ไม่บังคับ)" aria-label="คำบรรยายสไลด์ ' + (i + 2) + '">' +
-        '<span class="row" style="gap:2px;flex-wrap:nowrap"><button class="btn icon sm" data-act="cs-mv" data-i="' + i + '" data-d="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนขึ้น">↑</button><button class="btn icon sm" data-act="cs-mv" data-i="' + i + '" data-d="1"' + (i === list.length - 1 ? ' disabled' : '') + ' aria-label="เลื่อนลง">↓</button><button class="btn icon sm danger" data-act="cs-del" data-i="' + i + '" aria-label="ลบสไลด์ ' + (i + 2) + '">' + ic('trash', 15) + '</button></span></div>';
+      return '<div class="cs-row"><div class="cs-thumb">' + frImg(x.still || x.url, x.pos, '') + '</div><input class="inp" data-cs="' + i + '" value="' + esc(x.cap || '') + '" placeholder="คำบรรยายภาพ (ไม่บังคับ)" aria-label="คำบรรยายสไลด์ ' + (i + 2) + '">' +
+        '<span class="row" style="gap:2px;flex-wrap:nowrap"><button class="btn icon sm" data-act="fr-edit" data-k="slide" data-id="' + esc(x.id) + '" aria-label="จุดโฟกัสและย่อขยาย สไลด์ ' + (i + 2) + '" title="จุดโฟกัส / ย่อ–ขยาย">' + ic('target', 15) + '</button><button class="btn icon sm" data-act="cs-mv" data-i="' + i + '" data-d="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนขึ้น">↑</button><button class="btn icon sm" data-act="cs-mv" data-i="' + i + '" data-d="1"' + (i === list.length - 1 ? ' disabled' : '') + ' aria-label="เลื่อนลง">↓</button><button class="btn icon sm danger" data-act="cs-del" data-i="' + i + '" aria-label="ลบสไลด์ ' + (i + 2) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
     return '<div class="card" style="display:flex;flex-direction:column;gap:12px;margin-top:16px"><div class="sec-h"><h3>สไลด์ภาพปกเพิ่มเติม (วนสลับ)</h3><span class="row"><label class="btn sm" for="cs-up">' + ic('upload', 15) + ' เพิ่มภาพ</label><input id="cs-up" type="file" accept="' + upAccept('cover') + '" multiple style="display:none"></span></div>' +
       '<p class="small muted">ภาพปกหลักด้านบนเป็นสไลด์แรก ตามด้วยรายการนี้ (สูงสุด 8 ภาพ) · เฟดสลับทุก ' + (+s.rotSec || 0) + ' วินาที ตั้งได้ที่หน้าตั้งค่า · หยุดเมื่อชี้เมาส์ค้าง · เพิ่ม ลบ เรียง และแก้คำบรรยายบันทึกทันที</p>' + (rows || '<p class="small muted">ยังไม่มีสไลด์เพิ่ม</p>') +
@@ -4288,6 +4288,92 @@
     return bad ? { err: bad } : { cfg: o };
   }
 
+  /* ---------- 11) จุดโฟกัสและย่อ/ขยายภาพที่แสดง ---------- */
+  function fpos(p, defFit) {
+    p = p || {};
+    return { x: p.x != null && isFinite(+p.x) ? +p.x : 50, y: p.y != null && isFinite(+p.y) ? +p.y : 50, z: +p.z >= 50 ? +p.z : 100, fit: p.fit === 'contain' || p.fit === 'cover' ? p.fit : (defFit || 'cover') };
+  }
+  function frStyle(p) { return 'object-fit:' + p.fit + ';object-position:' + p.x + '% ' + p.y + '%;--fz:' + (p.z / 100) + ';--fo:' + p.x + '% ' + p.y + '%'; }
+  /** <img> ที่ใช้จุดโฟกัส/ย่อขยายที่ครูตั้งไว้ · blur = ใส่พื้นหลังเบลอเมื่อแสดงทั้งภาพ */
+  function frImg(src, pos, alt, blur, defFit) {
+    var p = fpos(pos, defFit), main = '<img class="fr" src="' + esc(src) + '" alt="' + esc(alt || '') + '" style="' + frStyle(p) + '">';
+    return blur && p.fit === 'contain' ? '<img class="fr-blur" src="' + esc(src) + '" alt="" aria-hidden="true">' + main : main;
+  }
+  var FR_T = { cover: 'ภาพปกหลัก', slide: 'สไลด์ภาพปก', avatar: 'รูปครู', logo: 'โลโก้โรงเรียน' };
+  function frSrc(k, id) {
+    var s = D.settings;
+    if (k === 'slide') { var x = find(s.coverSlides || [], 'id', id); return x ? { src: x.url, pos: x.pos } : null; }
+    return s[k] ? { src: s[k], pos: s[k + 'Pos'] } : null;
+  }
+  function frBoxes(k) {
+    if (k === 'avatar') return [{ l: 'บนหน้าปก', w: 156, h: 188, c: 'r10' }, { l: 'ขนาดเล็ก', w: 112, h: 136, c: 'r10' }];
+    if (k === 'logo') return [{ l: 'ตราโรงเรียน', w: 120, h: 120, c: 'round' }, { l: 'ขนาดเล็ก', w: 46, h: 46, c: 'round' }];
+    return [{ l: 'จอคอมพิวเตอร์', w: 340, h: 110 }, { l: 'มือถือ', w: 120, h: 192 }];
+  }
+  function frEdit(k, id) {
+    var o = frSrc(k, id); if (!o) { toast('ยังไม่มีภาพ'); return; }
+    var def = k === 'logo' ? 'contain' : 'cover';
+    S.fr = { k: k, id: id || '', src: o.src, p: fpos(o.pos, def), def: def };
+    var P = S.fr.p, boxes = frBoxes(k);
+    var body = '<div class="fr-ed"><div><div class="small muted" style="margin-bottom:6px">ลากหรือคลิกบนภาพเพื่อเลือกจุดที่ต้องการให้เห็น (จุดโฟกัส)</div>' +
+      '<div class="fr-src" id="fr-src"><img src="' + esc(o.src) + '" alt="ภาพต้นฉบับ" draggable="false"><span class="fr-dot" id="fr-dot" style="left:' + P.x + '%;top:' + P.y + '%"></span></div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:12px"><div class="small muted">ตัวอย่างตามขนาดที่แสดงจริง (ลากในกรอบเพื่อเลื่อนภาพ หมุนล้อเมาส์เพื่อย่อ–ขยาย)</div><div class="fr-pvs">' +
+        boxes.map(function (b, i) { return '<div class="fr-pv"><div class="fr-box ' + (b.c || '') + (k === 'cover' || k === 'slide' ? ' dark' : '') + '" data-frbox="' + i + '" style="width:' + b.w + 'px;height:' + b.h + 'px">' + (k === 'cover' || k === 'slide' ? '<img class="fr-blur fr-bl" src="' + esc(o.src) + '" alt="" aria-hidden="true"' + (P.fit === 'contain' ? '' : ' style="display:none"') + '>' : '') + '<img class="fr fr-live" src="' + esc(o.src) + '" alt="" style="' + frStyle(P) + '">' + '</div><span class="small muted">' + b.l + '</span></div>'; }).join('') + '</div>' +
+        '<div class="field"><label>การแสดงภาพ</label><div class="seg" role="group" aria-label="การแสดงภาพ"><button type="button" data-act="fr-fit" data-k="cover" class="' + (P.fit === 'cover' ? 'on' : '') + '">เต็มกรอบ (ตัดขอบ)</button><button type="button" data-act="fr-fit" data-k="contain" class="' + (P.fit === 'contain' ? 'on' : '') + '">เห็นทั้งภาพ</button></div></div>' +
+        '<div class="field"><label for="fr-z">ย่อ–ขยาย <b id="fr-zv">' + P.z + '%</b></label><input id="fr-z" type="range" min="50" max="300" step="5" value="' + P.z + '" data-fr="z"></div>' +
+        '<div class="grid2"><div class="field"><label for="fr-x">แนวนอน <span id="fr-xv">' + Math.round(P.x) + '%</span></label><input id="fr-x" type="range" min="0" max="100" step="1" value="' + P.x + '" data-fr="x"></div>' +
+        '<div class="field"><label for="fr-y">แนวตั้ง <span id="fr-yv">' + Math.round(P.y) + '%</span></label><input id="fr-y" type="range" min="0" max="100" step="1" value="' + P.y + '" data-fr="y"></div></div>' +
+        '<div class="row" style="gap:6px"><button class="btn sm" data-act="fr-center">' + ic('target', 14) + ' จัดกึ่งกลาง 100%</button><button class="btn sm" data-act="fr-zoom" data-k="-10">−</button><button class="btn sm" data-act="fr-zoom" data-k="10">+</button></div></div></div>';
+    openModal('จุดโฟกัสและย่อ–ขยาย · ' + FR_T[k], body, '<button class="btn" data-act="fr-reset">คืนค่าเริ่มต้น</button><span style="flex:1"></span><button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="fr-save">' + ic('check', 16) + ' บันทึก</button>', true);
+  }
+  function frApply() {
+    var P = S.fr.p, st2 = frStyle(P), l = document.querySelectorAll('.fr-live'), i;
+    for (i = 0; i < l.length; i++) l[i].setAttribute('style', st2);
+    var bl = document.querySelectorAll('.fr-bl'); for (i = 0; i < bl.length; i++) bl[i].style.display = P.fit === 'contain' ? '' : 'none';
+    var d = $('fr-dot'); if (d) { d.style.left = P.x + '%'; d.style.top = P.y + '%'; }
+    function set(id, v) { var e = $(id); if (e) e.value = v; }
+    set('fr-z', P.z); set('fr-x', P.x); set('fr-y', P.y);
+    var zv = $('fr-zv'); if (zv) zv.textContent = P.z + '%';
+    var xv = $('fr-xv'); if (xv) xv.textContent = Math.round(P.x) + '%';
+    var yv = $('fr-yv'); if (yv) yv.textContent = Math.round(P.y) + '%';
+  }
+  function frClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, Math.round(v * 10) / 10)); }
+  function frSave(reset) {
+    var f = S.fr; if (!f) return;
+    api('saveFrame', { k: f.k, id: f.id, pos: f.p, reset: !!reset }, { loader: 'กำลังบันทึกตำแหน่งภาพ' }, function (err, res) {
+      if (err) { toast(err); return; }
+      D.settings = res.settings;
+      if (S.draft) ['coverPos', 'avatarPos', 'logoPos', 'coverSlides'].forEach(function (k2) { S.draft.s[k2] = res.settings[k2]; });
+      cachePublic(); closeModal(); S.fr = null; render(); toast(reset ? 'คืนค่าตำแหน่งภาพแล้ว' : 'บันทึกจุดโฟกัสและขนาดภาพแล้ว');
+    });
+  }
+  var frDrag = null;
+  document.addEventListener('pointerdown', function (e) {
+    if (!S.fr || !e.target.closest) return;
+    var src = e.target.closest('#fr-src'), box = e.target.closest('[data-frbox]');
+    if (!src && !box) return;
+    e.preventDefault();
+    var r = (src || box).getBoundingClientRect();
+    frDrag = { src: !!src, r: r, x0: e.clientX, y0: e.clientY, px: S.fr.p.x, py: S.fr.p.y };
+    if (src) { var im = src.querySelector('img').getBoundingClientRect(); frDrag.r = im; S.fr.p.x = frClamp((e.clientX - im.left) / im.width * 100, 0, 100); S.fr.p.y = frClamp((e.clientY - im.top) / im.height * 100, 0, 100); frApply(); }
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!frDrag || !S.fr) return;
+    var r = frDrag.r, P = S.fr.p;
+    if (frDrag.src) { P.x = frClamp((e.clientX - r.left) / r.width * 100, 0, 100); P.y = frClamp((e.clientY - r.top) / r.height * 100, 0, 100); }
+    else { P.x = frClamp(frDrag.px - (e.clientX - frDrag.x0) / r.width * 100 / (P.z / 100), 0, 100); P.y = frClamp(frDrag.py - (e.clientY - frDrag.y0) / r.height * 100 / (P.z / 100), 0, 100); }
+    frApply();
+  });
+  document.addEventListener('pointerup', function () { frDrag = null; });
+  document.addEventListener('wheel', function (e) {
+    if (!S.fr || !e.target.closest || !e.target.closest('[data-frbox],#fr-src')) return;
+    e.preventDefault(); S.fr.p.z = Math.max(50, Math.min(300, S.fr.p.z + (e.deltaY < 0 ? 5 : -5))); frApply();
+  }, { passive: false });
+  document.addEventListener('input', function (e) {
+    var k = e.target.getAttribute && e.target.getAttribute('data-fr'); if (!k || !S.fr) return;
+    S.fr.p[k] = +e.target.value; frApply();
+  });
+
   /* ---------- คลิก / พิมพ์ ---------- */
   document.addEventListener('click', function (e) {
     var el = e.target.closest ? e.target.closest('[data-act]') : null;
@@ -4347,6 +4433,12 @@
         adminCall('paPastSave', { past: past }, 'บันทึกคะแนนย้อนหลังแล้ว', function (res) { S.trend = res; closeModal(); render(); });
         break;
       case 'nf-reload': needNotifs(true); break;
+      case 'fr-edit': frEdit(k, id); break;
+      case 'fr-fit': if (S.fr) { S.fr.p.fit = k; var fb = document.querySelectorAll('[data-act="fr-fit"]'); for (var q = 0; q < fb.length; q++) fb[q].classList.toggle('on', fb[q].getAttribute('data-k') === k); frApply(); } break;
+      case 'fr-zoom': if (S.fr) { S.fr.p.z = Math.max(50, Math.min(300, S.fr.p.z + +k)); frApply(); } break;
+      case 'fr-center': if (S.fr) { S.fr.p.x = 50; S.fr.p.y = 50; S.fr.p.z = 100; frApply(); } break;
+      case 'fr-save': frSave(false); break;
+      case 'fr-reset': confirmBox('คืนค่าตำแหน่งภาพเป็นค่าเริ่มต้น (กึ่งกลาง 100%)?', 'คืนค่า', function () { frSave(true); }); break;
       case 'upc-save': var ur = upCfgRead(); if (ur.err) { toast(ur.err); break; } adminCall('upCfgSave', { cfg: ur.cfg }, 'บันทึกขนาดไฟล์รูปภาพแล้ว', function (res) { D.admin.upCfg = res.upCfg; render(); }); break;
       case 'upc-reset': confirmBox('คืนค่าขนาดไฟล์รูปภาพทุกประเภทเป็นค่าเริ่มต้น?', 'คืนค่า', function () { adminCall('upCfgSave', { reset: true }, 'คืนค่าเริ่มต้นแล้ว', function (res) { D.admin.upCfg = res.upCfg; render(); }); }); break;
     }
