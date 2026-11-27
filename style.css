@@ -1336,3 +1336,9 @@ a.chip:hover{color:var(--accent)}
   tr{break-inside:avoid} thead{display:table-header-group}
 }
 .ops-card label.row{flex-wrap:nowrap;align-items:flex-start}.ops-card label.row input{flex:none;margin-top:2px}
+.up-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:12px}
+.up-g{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.up-g .grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.up-g .inp.num{min-width:0}
+@media (max-width:420px){.up-g .grid3{grid-template-columns:1fr 1fr}}
+.up-g label.row{flex-wrap:nowrap;align-items:flex-start}.up-g label.row input{flex:none;margin-top:2px}
