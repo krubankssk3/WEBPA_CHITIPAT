@@ -195,7 +195,7 @@
   }
   function setAdmin(data) {
     D.docs = {};
-    D.admin = { logs: data.logs || [], evalSum: data.evalSum || { salary: [], survey: [] }, mustChange: !!data.mustChange, sheetUrl: data.sheetUrl, folderUrl: data.folderUrl, ops: data.ops, requests: data.requests || [] };
+    D.admin = { logs: data.logs || [], evalSum: data.evalSum || { salary: [], survey: [] }, mustChange: !!data.mustChange, sheetUrl: data.sheetUrl, folderUrl: data.folderUrl, ops: data.ops, requests: data.requests || [], upCfg: data.upCfg || null };
     D.logs = data.logs || [];
     setPublic({ settings: data.settings, education: data.education, career: data.career, years: data.years, version: data.version }, true);
     setContent(data.content);
@@ -240,13 +240,15 @@
   /* ---------- ภาพ: ย่อขนาดก่อนอัปโหลด ---------- */
   function readAsDataUrl(file, cb) { var r = new FileReader(); r.onload = function () { cb(null, String(r.result)); }; r.onerror = function () { cb('อ่านไฟล์ไม่ได้'); }; r.readAsDataURL(file); }
   function b64Of(dataUrl) { return dataUrl.slice(dataUrl.indexOf(',') + 1); }
-  function prepImage(file, maxW, maxH, keepPng, cb) {
-    var isGif = file.type === 'image/gif';
+  /** opt = { q: คุณภาพ 0–1, orig: ใช้ไฟล์ต้นฉบับถ้าไม่เกิน maxBytes, maxBytes } */
+  function prepImage(file, maxW, maxH, keepPng, cb, opt) {
+    var isGif = file.type === 'image/gif'; opt = opt || {};
     readAsDataUrl(file, function (err, url) {
       if (err) return cb(err);
       var img = new Image();
       img.onload = function () {
         var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, maxW / w, maxH / h);
+        if (opt.orig && !isGif && /^image\/(jpeg|png|webp)$/.test(file.type) && file.size <= (opt.maxBytes || Infinity)) return cb(null, { mime: file.type, b64: b64Of(url), w: w, h: h, size: file.size, orig: true });
         var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
         var x = c.getContext('2d');
         if (isGif) {
@@ -257,42 +259,59 @@
         var png = keepPng && file.type === 'image/png';
         if (!png) { x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height); }
         x.drawImage(img, 0, 0, c.width, c.height);
-        var out = c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.86);
+        var out = c.toDataURL(png ? 'image/png' : 'image/jpeg', opt.q || 0.86);
         cb(null, { mime: png ? 'image/png' : 'image/jpeg', b64: b64Of(out), w: c.width, h: c.height, size: Math.round(b64Of(out).length * 0.75) });
       };
       img.onerror = function () { cb('ไฟล์นี้ไม่ใช่รูปภาพที่เบราว์เซอร์เปิดได้'); };
       img.src = url;
     });
   }
+  /* ขนาดไฟล์รูปภาพ/GIF แยกตามประเภท (ครูตั้งเองได้ที่ ตั้งค่า › ขนาดไฟล์รูปภาพ) */
+  var UPG_DEF = {
+    cover: { mb: 10, px: 2400, q: 86, gif: true, orig: false, t: 'ภาพปกและสไลด์หน้าแรก', u: 'ภาพปกหน้าแรก สไลด์ภาพปก' },
+    avatar: { mb: 3, px: 1100, q: 86, gif: false, orig: false, t: 'รูปครู', u: 'รูปโปรไฟล์ครู' },
+    logo: { mb: 2, px: 512, q: 90, gif: false, orig: false, t: 'โลโก้', u: 'โลโก้โรงเรียน โลโก้สถานศึกษา โลโก้ที่ทำงาน' },
+    photo: { mb: 6, px: 2000, q: 86, gif: false, orig: false, t: 'ภาพกิจกรรม', u: 'อัลบั้มภาพกิจกรรม' },
+    paphoto: { mb: 6, px: 1600, q: 86, gif: false, orig: false, t: 'ภาพประกอบตัวชี้วัด PA', u: 'ภาพในแฟ้ม PA รายตัวชี้วัด' },
+    content: { mb: 5, px: 2000, q: 86, gif: false, orig: false, t: 'รูปในคลังผลงาน', u: 'รูปผลงาน เกียรติบัตร ภาพหน้าจอระบบ ปกวิดีโอ' }
+  };
+  function upc(g) {
+    var d = UPG_DEF[g], s = (D.admin && D.admin.upCfg && D.admin.upCfg[g]) || {}, o = {};
+    ['mb', 'px', 'q', 'gif', 'orig'].forEach(function (k) { o[k] = s[k] != null ? s[k] : d[k]; });
+    return o;
+  }
+  function upOpt(c) { return { q: c.q / 100, orig: c.orig, maxBytes: c.mb * 1048576 }; }
+  function upAccept(g) { return 'image/png,image/jpeg,image/webp' + (upc(g).gif ? ',image/gif' : ''); }
   var UP = {
-    cover: { w: 2400, h: 1200, png: false, max: 10, label: 'ภาพปก' },
-    logo: { w: 512, h: 512, png: true, max: 2, label: 'โลโก้' },
-    avatar: { w: 900, h: 1100, png: false, max: 3, label: 'รูปครู' },
-    edu: { w: 400, h: 400, png: true, max: 2, label: 'โลโก้สถานศึกษา' },
-    car: { w: 400, h: 400, png: true, max: 2, label: 'โลโก้ที่ทำงาน' },
-    slide: { w: 2400, h: 1200, png: false, max: 10, label: 'สไลด์ภาพปก' }
+    cover: { g: 'cover', png: false, label: 'ภาพปก' },
+    logo: { g: 'logo', png: true, label: 'โลโก้' },
+    avatar: { g: 'avatar', png: false, label: 'รูปครู' },
+    edu: { g: 'logo', png: true, label: 'โลโก้สถานศึกษา' },
+    car: { g: 'logo', png: true, label: 'โลโก้ที่ทำงาน' },
+    slide: { g: 'cover', png: false, label: 'สไลด์ภาพปก' }
   };
   function doUpload(kind, file, extra, cb) {
-    var u = UP[kind];
+    var u = UP[kind], c = upc(u.g);
     if (!file) return;
-    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type) || (file.type === 'image/gif' && kind !== 'cover' && kind !== 'slide')) { toast('รองรับเฉพาะ JPG PNG WebP' + (kind === 'cover' || kind === 'slide' ? ' และ GIF' : '')); return; }
-    if (file.type === 'image/gif' && file.size > u.max * 1048576) { toast('ไฟล์ GIF ใหญ่เกิน ' + u.max + ' MB'); return; }
-    if (file.size > 30 * 1048576) { toast('ไฟล์ใหญ่เกินไป'); return; }
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) { toast('รองรับเฉพาะ JPG PNG WebP' + (c.gif ? ' และ GIF' : '')); return; }
+    if (file.type === 'image/gif' && !c.gif) { toast(u.label + ' ยังไม่เปิดให้ใช้ GIF (เปิดได้ที่ ตั้งค่า › ขนาดไฟล์รูปภาพ)'); return; }
+    if (file.type === 'image/gif' && file.size > c.mb * 1048576) { toast('ไฟล์ GIF ใหญ่ ' + fix(file.size / 1048576, 1) + ' MB เกินที่ตั้งไว้ ' + c.mb + ' MB'); return; }
+    if (file.size > 60 * 1048576) { toast('ไฟล์ใหญ่เกินไป'); return; }
     showLoader('กำลังเตรียมไฟล์');
-    prepImage(file, u.w, u.h, u.png, function (err, img) {
+    prepImage(file, c.px, c.px, u.png, function (err, img) {
       hideLoader();
       if (err) { toast(err); return; }
-      if (img.size > u.max * 1048576) { toast(u.label + ' ใหญ่เกิน ' + u.max + ' MB หลังย่อขนาด'); return; }
+      if (img.size > c.mb * 1048576) { toast(u.label + ' ใหญ่ ' + fix(img.size / 1048576, 1) + ' MB เกินที่ตั้งไว้ ' + c.mb + ' MB' + (img.orig ? '' : ' (หลังย่อแล้ว)') + ' · ปรับได้ที่ ตั้งค่า › ขนาดไฟล์รูปภาพ'); return; }
       var data = { kind: kind, mime: img.mime, b64: img.b64, stillB64: img.stillB64 || '', name: file.name.replace(/\.[^.]+$/, '') };
       for (var k in extra || {}) if (k !== 'quiet') data[k] = extra[k];
-      api('upload', data, {}, function (e2, res) {
+      api('upload', data, { timeout: 180000 }, function (e2, res) {
         if (e2) { toast(e2); return; }
         var keys = ['cover', 'coverId', 'coverType', 'coverSize', 'coverStill', 'coverStillId', 'logo', 'logoId', 'avatar', 'avatarId', 'coverSlides'];
         D.settings = res.settings;
         if (S.draft) keys.forEach(function (k2) { S.draft.s[k2] = res.settings[k2]; });
-        cachePublic(); cb(res); if (!extra || !extra.quiet) toast('อัปโหลด' + u.label + 'แล้ว');
+        cachePublic(); cb(res); if (!extra || !extra.quiet) toast('อัปโหลด' + u.label + 'แล้ว (' + (img.size > 1048576 ? fix(img.size / 1048576, 1) + ' MB' : Math.round(img.size / 1024) + ' KB') + ')');
       });
-    });
+    }, upOpt(c));
   }
   function imgFallback(e) {
     var t = e.target;
@@ -563,22 +582,22 @@
       return '<div class="pf-row"><input class="inp" data-b="pf.' + i + '.0" value="' + esc(f[0]) + '" aria-label="หัวข้อ แถว ' + (i + 1) + '"><input class="inp" data-b="pf.' + i + '.1" value="' + esc(f[1]) + '" aria-label="ข้อมูล แถว ' + (i + 1) + '"><span class="row" style="gap:2px;flex-wrap:nowrap">' + mv('pf', i, s.profileFields.length) + '<button class="btn icon sm danger" data-act="row-del" data-k="pf" data-i="' + i + '" aria-label="ลบแถว ' + (i + 1) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
     var edu = d.edu.map(function (e, i) {
-      return '<div class="erow"><span style="position:relative"><label class="logo-up" for="edu-logo-' + i + '" title="อัปโหลดโลโก้">' + (e.logoUrl ? '<img src="' + esc(e.logoUrl) + '" alt="">' : ic('upload', 18)) + '<span class="sr">อัปโหลดโลโก้สถานศึกษา แถว ' + (i + 1) + '</span></label><input type="file" id="edu-logo-' + i + '" data-up="edu" data-i="' + i + '" accept="image/png,image/jpeg,image/webp" style="display:none">' + (e.logoUrl ? '<button class="iph-x" style="top:-6px;right:-6px" data-act="edu-logo-del" data-i="' + i + '" aria-label="ลบโลโก้ แถว ' + (i + 1) + '">' + ic('x', 12) + '</button>' : '') + '</span>' +
+      return '<div class="erow"><span style="position:relative"><label class="logo-up" for="edu-logo-' + i + '" title="อัปโหลดโลโก้">' + (e.logoUrl ? '<img src="' + esc(e.logoUrl) + '" alt="">' : ic('upload', 18)) + '<span class="sr">อัปโหลดโลโก้สถานศึกษา แถว ' + (i + 1) + '</span></label><input type="file" id="edu-logo-' + i + '" data-up="edu" data-i="' + i + '" accept="' + upAccept('logo') + '" style="display:none">' + (e.logoUrl ? '<button class="iph-x" style="top:-6px;right:-6px" data-act="edu-logo-del" data-i="' + i + '" aria-label="ลบโลโก้ แถว ' + (i + 1) + '">' + ic('x', 12) + '</button>' : '') + '</span>' +
         '<input class="inp" data-b="edu.' + i + '.level" value="' + esc(e.level) + '" placeholder="ปริญญาตรี" aria-label="ระดับ แถว ' + (i + 1) + '"><input class="inp" data-b="edu.' + i + '.degree" value="' + esc(e.degree) + '" placeholder="ค.บ. คณิตศาสตร์" aria-label="วุฒิ/สาขา แถว ' + (i + 1) + '"><input class="inp" data-b="edu.' + i + '.inst" value="' + esc(e.inst) + '" placeholder="ชื่อสถานศึกษา" aria-label="สถานศึกษา แถว ' + (i + 1) + '"><input class="inp" data-b="edu.' + i + '.year" value="' + esc(e.year) + '" placeholder="2560" aria-label="ปีที่สำเร็จ แถว ' + (i + 1) + '">' +
         '<span class="row" style="gap:2px;flex-wrap:nowrap">' + mv('edu', i, d.edu.length) + '<button class="btn icon sm danger" data-act="row-del" data-k="edu" data-i="' + i + '" aria-label="ลบแถว ' + (i + 1) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
     var car = d.car.map(function (c, i) {
-      return '<div class="erow c4"><span style="position:relative"><label class="logo-up" for="car-logo-' + i + '" title="อัปโหลดโลโก้">' + (c.logoUrl ? '<img src="' + esc(c.logoUrl) + '" alt="">' : ic('upload', 18)) + '<span class="sr">อัปโหลดโลโก้ที่ทำงาน แถว ' + (i + 1) + '</span></label><input type="file" id="car-logo-' + i + '" data-up="car" data-i="' + i + '" accept="image/png,image/jpeg,image/webp" style="display:none">' + (c.logoUrl ? '<button class="iph-x" style="top:-6px;right:-6px" data-act="car-logo-del" data-i="' + i + '" aria-label="ลบโลโก้ แถว ' + (i + 1) + '">' + ic('x', 12) + '</button>' : '') + '</span>' +
+      return '<div class="erow c4"><span style="position:relative"><label class="logo-up" for="car-logo-' + i + '" title="อัปโหลดโลโก้">' + (c.logoUrl ? '<img src="' + esc(c.logoUrl) + '" alt="">' : ic('upload', 18)) + '<span class="sr">อัปโหลดโลโก้ที่ทำงาน แถว ' + (i + 1) + '</span></label><input type="file" id="car-logo-' + i + '" data-up="car" data-i="' + i + '" accept="' + upAccept('logo') + '" style="display:none">' + (c.logoUrl ? '<button class="iph-x" style="top:-6px;right:-6px" data-act="car-logo-del" data-i="' + i + '" aria-label="ลบโลโก้ แถว ' + (i + 1) + '">' + ic('x', 12) + '</button>' : '') + '</span>' +
         '<input class="inp" data-b="car.' + i + '.period" value="' + esc(c.period) + '" placeholder="2562 – ปัจจุบัน" aria-label="ช่วงเวลา แถว ' + (i + 1) + '"><input class="inp" data-b="car.' + i + '.role" value="' + esc(c.role) + '" placeholder="ตำแหน่ง" aria-label="ตำแหน่ง แถว ' + (i + 1) + '"><input class="inp" data-b="car.' + i + '.place" value="' + esc(c.place) + '" placeholder="หน่วยงาน" aria-label="หน่วยงาน แถว ' + (i + 1) + '">' +
         '<span class="row" style="gap:2px;flex-wrap:nowrap">' + mv('car', i, d.car.length) + '<button class="btn icon sm danger" data-act="row-del" data-k="car" data-i="' + i + '" aria-label="ลบแถว ' + (i + 1) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
     return adminShell('admin-profile', 'หน้าปกและประวัติ', 'ภาพปก รูปครู ข้อมูลส่วนตัว ประวัติการศึกษา และประวัติการทำงาน · รูปอัปโหลดทันที ข้อความกดบันทึกครั้งเดียว', '<a class="btn" href="#profile">' + ic('eye', 16) + ' ดูหน้าประวัติ</a><button class="btn primary" data-act="draft-save">' + ic('check', 16) + ' บันทึก</button>',
       '<div class="card" style="display:flex;flex-direction:column;gap:14px"><h3>ภาพปก (Banner)</h3>' + prev +
-        '<div class="row"><label class="btn" for="cover-up">' + ic('upload', 16) + ' เลือกภาพปก</label><input id="cover-up" type="file" data-up="cover" accept="image/gif,image/png,image/jpeg,image/webp" style="display:none">' + (s.cover ? '<button class="btn danger" data-act="img-del" data-k="cover">' + ic('trash', 16) + ' ใช้ลายเริ่มต้น</button>' : '') + gifTxt + '</div>' +
-        '<p class="small muted">JPG PNG WebP หรือ GIF เคลื่อนไหว ไม่เกิน 10 MB · แนะนำ 1920 × 600 px · ภาพนิ่งถูกย่อก่อนอัปโหลด ส่วน GIF ส่งไฟล์เดิมเพื่อให้ยังเคลื่อนไหว</p>' +
+        '<div class="row"><label class="btn" for="cover-up">' + ic('upload', 16) + ' เลือกภาพปก</label><input id="cover-up" type="file" data-up="cover" accept="' + upAccept('cover') + '" style="display:none">' + (s.cover ? '<button class="btn danger" data-act="img-del" data-k="cover">' + ic('trash', 16) + ' ใช้ลายเริ่มต้น</button>' : '') + gifTxt + '</div>' +
+        '<p class="small muted">JPG PNG WebP' + (upc('cover').gif ? ' หรือ GIF เคลื่อนไหว' : '') + ' ไม่เกิน ' + upc('cover').mb + ' MB · แนะนำ 1920 × 600 px · ภาพนิ่งถูกย่อก่อนอัปโหลด ส่วน GIF ส่งไฟล์เดิมเพื่อให้ยังเคลื่อนไหว</p>' +
         '<div class="field"><label for="b-cap">คำอธิบายภาพปกหลัก (ไม่บังคับ)</label><input id="b-cap" class="inp" data-b="s.coverCaption" value="' + esc(s.coverCaption) + '"></div></div>' + coverManager() +
       '<div class="card" style="display:flex;flex-direction:column;gap:14px;margin-top:16px"><h3>รูปครู</h3><div class="row" style="gap:16px;align-items:flex-start">' + avatarEdit(s) +
-        '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="avatar-up">' + ic('upload', 16) + ' เลือกรูป</label><input id="avatar-up" type="file" data-up="avatar" accept="image/png,image/jpeg,image/webp" style="display:none">' + (s.avatar ? '<button class="btn danger" data-act="img-del" data-k="avatar">' + ic('trash', 16) + ' ลบรูป</button>' : '') + '</div><span class="small muted">รูปแนวตั้ง สัดส่วนประมาณ 4:5 แสดงบนภาพปกและหน้าประวัติ</span></div></div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="avatar-up">' + ic('upload', 16) + ' เลือกรูป</label><input id="avatar-up" type="file" data-up="avatar" accept="' + upAccept('avatar') + '" style="display:none">' + (s.avatar ? '<button class="btn danger" data-act="img-del" data-k="avatar">' + ic('trash', 16) + ' ลบรูป</button>' : '') + '</div><span class="small muted">รูปแนวตั้ง สัดส่วนประมาณ 4:5 แสดงบนภาพปกและหน้าประวัติ</span></div></div></div>' +
       '<div class="card" style="display:flex;flex-direction:column;gap:12px;margin-top:16px"><div class="sec-h"><h3>' + ic('user', 18) + ' ข้อมูลส่วนตัว</h3><button class="btn sm" data-act="row-add" data-k="pf">' + ic('plus', 15) + ' เพิ่มหัวข้อ</button></div>' +
         '<div class="pf-row h"><span>หัวข้อ</span><span>ข้อมูล</span><span></span></div>' + pf +
         '<div class="field"><label for="b-bio">แนะนำตัวสั้นๆ (หน้าประวัติ)</label><textarea id="b-bio" class="inp" data-b="s.bio">' + esc(s.bio) + '</textarea></div>' +
@@ -587,7 +606,7 @@
         '<p class="small muted">หน้านี้เปิดให้บุคคลภายนอกดู ไม่ควรใส่เลขบัตรประชาชน ที่อยู่บ้าน หรือเบอร์โทรส่วนตัว · ข้อความในวงเล็บเหลี่ยม [ ] จะแสดงเป็นช่องที่ยังต้องกรอก</p></div>' +
       '<div class="card" style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><div class="sec-h"><h3>' + ic('grad', 18) + ' ประวัติการศึกษา</h3><button class="btn sm" data-act="row-add" data-k="edu">' + ic('plus', 15) + ' เพิ่มแถว</button></div>' +
         (d.edu.length ? '<div class="erow h"><span>โลโก้</span><span>ระดับ</span><span>วุฒิ / สาขา</span><span>สถานศึกษา</span><span>ปีที่สำเร็จ</span><span></span></div>' + edu : '<p class="small muted">ยังไม่มี กดเพิ่มแถว</p>') +
-        '<p class="small muted">โลโก้สถานศึกษา PNG พื้นโปร่งใสดีที่สุด ไม่เกิน 2 MB · เรียงจากล่าสุดไปเก่าสุด</p></div>' +
+        '<p class="small muted">โลโก้สถานศึกษา PNG พื้นโปร่งใสดีที่สุด ไม่เกิน ' + upc('logo').mb + ' MB · เรียงจากล่าสุดไปเก่าสุด</p></div>' +
       '<div class="card" style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><div class="sec-h"><h3>' + ic('brief', 18) + ' ประวัติการทำงาน</h3><button class="btn sm" data-act="row-add" data-k="car">' + ic('plus', 15) + ' เพิ่มแถว</button></div>' +
         (d.car.length ? '<div class="erow c4 h"><span>โลโก้</span><span>ช่วงเวลา</span><span>ตำแหน่ง</span><span>หน่วยงาน</span><span></span></div>' + car : '<p class="small muted">ยังไม่มี กดเพิ่มแถว</p>') + '</div>');
   }
@@ -631,7 +650,7 @@
     return adminShell('admin-settings', 'ตั้งค่า', 'ข้อมูลเจ้าของแฟ้ม โลโก้ ค่าเริ่มต้นของผลงาน เอฟเฟค และรหัสผ่าน · ชุดธีมและฟอนต์อยู่ที่เมนู “ชุดธีมและฟอนต์”', '<button class="btn primary" data-act="draft-save">' + ic('check', 16) + ' บันทึกการตั้งค่า</button>',
       '<div class="grid2" style="align-items:start"><div style="display:flex;flex-direction:column;gap:14px">' + (must ? pw : '') +
       '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>ข้อมูลเจ้าของแฟ้ม</h3>' + inp('name', 'ชื่อ–สกุล') + '<div class="grid2">' + inp('nick', 'ชื่อที่แสดง') + inp('position', 'ตำแหน่ง/วิทยฐานะ') + '</div>' + inp('subject', 'กลุ่มสาระ') + '<div class="grid2">' + inp('school', 'โรงเรียน') + inp('area', 'สังกัด') + '</div>' + inp('duty', 'หน้าที่') + '</div>' +
-      '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>โลโก้โรงเรียน</h3><div class="row" style="gap:16px">' + seal('big') + '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="logo-up">' + ic('upload', 16) + ' อัปโหลดโลโก้</label><input id="logo-up" type="file" data-up="logo" accept="image/png,image/jpeg,image/webp" style="display:none">' + (s.logo ? '<button class="btn danger" data-act="img-del" data-k="logo">' + ic('trash', 16) + ' ลบโลโก้</button>' : '') + '</div><span class="hint small muted">PNG พื้นหลังโปร่งใส ไม่เกิน 2 MB ใช้ที่หัวเว็บ หลังบ้าน หน้าเข้าสู่ระบบ วงแหวนโหลด และไอคอนแท็บ</span></div></div>' + inp('initials', 'อักษรย่อเมื่อไม่มีโลโก้') + '</div>' +
+      '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>โลโก้โรงเรียน</h3><div class="row" style="gap:16px">' + seal('big') + '<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><label class="btn" for="logo-up">' + ic('upload', 16) + ' อัปโหลดโลโก้</label><input id="logo-up" type="file" data-up="logo" accept="' + upAccept('logo') + '" style="display:none">' + (s.logo ? '<button class="btn danger" data-act="img-del" data-k="logo">' + ic('trash', 16) + ' ลบโลโก้</button>' : '') + '</div><span class="hint small muted">PNG พื้นหลังโปร่งใส ไม่เกิน 2 MB ใช้ที่หัวเว็บ หลังบ้าน หน้าเข้าสู่ระบบ วงแหวนโหลด และไอคอนแท็บ</span></div></div>' + inp('initials', 'อักษรย่อเมื่อไม่มีโลโก้') + '</div>' +
       '<div class="card" style="display:flex;flex-direction:column;gap:12px"><h3>ค่าเริ่มต้นของผลงาน</h3><div class="grid2"><div class="field"><label for="b-defvis">สิทธิ์เริ่มต้นเมื่อเพิ่มรายการใหม่</label><select id="b-defvis" class="inp" data-b="s.defaultVis">' + Object.keys(VIS).map(function (k) { return '<option value="' + k + '"' + ((s.defaultVis || 'public') === k ? ' selected' : '') + '>' + VIS[k] + '</option>'; }).join('') + '</select></div>' +
         '<div class="field"><label for="b-hgoal">เป้าชั่วโมงพัฒนาตนเองต่อปี</label><input id="b-hgoal" type="number" min="0" class="inp" data-b="s.hoursGoal" value="' + (+s.hoursGoal || 20) + '"></div></div>' +
         '<b class="small">ใครเห็นเอกสาร PA ของแต่ละปีได้บ้าง</b><div class="grid3">' + [['pa', 'แฟ้ม PA'], ['agree', 'ข้อตกลง PA'], ['idp', 'ID Plan']].map(function (x) { var dv = (s.docVis || {})[x[0]] || 'public'; return '<div class="field"><label for="b-dv-' + x[0] + '">' + x[1] + '</label><select id="b-dv-' + x[0] + '" class="inp" data-b="docVis.' + x[0] + '">' + Object.keys(VIS).map(function (k) { return '<option value="' + k + '"' + (dv === k ? ' selected' : '') + '>' + VIS[k] + '</option>'; }).join('') + '</select></div>'; }).join('') + '</div></div></div>' +
@@ -1231,15 +1250,24 @@
   function visSel(cur, id) { return '<div class="field"><label for="' + (id || 'f-vis') + '">สิทธิ์การมองเห็น</label><select id="' + (id || 'f-vis') + '" class="inp">' + opts(VIS, cur) + '</select><span class="hint">เฉพาะกรรมการ = หน้าสาธารณะเห็นชื่อรายการแต่เปิดไฟล์ไม่ได้ · ส่วนตัว = ไม่แสดงเลย</span></div>'; }
   /** ช่องเลือกไฟล์ในฟอร์ม: เก็บไฟล์ไว้ใน S.form.files จนกว่าจะกดบันทึก */
   function fileField(key, label, cur, curName) {
-    var r = FILE_RULE[key], f = S.form.files[key.split('.')[1]], cleared = S.form.clear.indexOf(key.split('.')[1]) > -1;
+    var r = fileRule(key), f = S.form.files[key.split('.')[1]], cleared = S.form.clear.indexOf(key.split('.')[1]) > -1;
     var now = f ? ic('check', 15) + ' ' + esc(f.name) + ' (' + fix(f.size / 1048576, 1) + ' MB)' : (cur && !cleared ? ic('file', 15) + ' มีไฟล์แล้ว' + (curName ? ': ' + esc(curName) : '') + ' · คลิกเพื่อเปลี่ยน' : 'คลิกเพื่อเลือกไฟล์');
     return '<div class="field"><label>' + label + '</label><label class="drop" for="ff-' + key.replace('.', '-') + '">' + ic('upload', 22) + '<span>' + now + '</span><span class="small">' + r.label + '</span></label><input id="ff-' + key.replace('.', '-') + '" type="file" data-ff="' + key + '" accept="' + r.mimes.join(',') + '" style="display:none">' +
       (cur && !cleared && !f ? '<button class="btn sm danger" type="button" data-act="ff-clear" data-k="' + key + '" style="align-self:flex-start">' + ic('trash', 14) + ' ลบไฟล์นี้</button>' : '') + '</div>';
   }
+  /** กติกาไฟล์ในฟอร์ม + ขนาดรูปภาพที่ครูตั้งเอง (กลุ่ม “รูปในคลังผลงาน”) */
+  function fileRule(key) {
+    var r = clone(FILE_RULE[key]); if (!r.img) return r;
+    var c = upc('content'); r.img = [c.px, c.px]; r.imgMax = c.mb; r.opt = upOpt(c);
+    if (c.gif && r.mimes.indexOf('image/gif') < 0) r.mimes.push('image/gif');
+    if (key !== 'works.file') r.label = r.label + ' · ไม่เกิน ' + c.mb + ' MB' + (c.gif ? ' · รองรับ GIF' : '');
+    else r.label = 'PDF Word Excel PowerPoint ไม่เกิน ' + r.max + ' MB · รูปภาพไม่เกิน ' + c.mb + ' MB' + (c.gif ? ' (รวม GIF)' : '');
+    return r;
+  }
   function prepFile(key, file, cb) {
-    var r = FILE_RULE[key];
+    var r = fileRule(key);
     if (r.mimes.indexOf(file.type) < 0) return cb('ไฟล์ชนิดนี้ใช้ไม่ได้ (' + (file.type || 'ไม่ทราบชนิด') + ') · ' + r.label);
-    if (r.img && /^image\//.test(file.type)) return prepImage(file, r.img[0], r.img[1], true, function (err, img) { if (err) return cb(err); if (img.size > r.max * 1048576) return cb('ไฟล์ใหญ่เกิน ' + r.max + ' MB หลังย่อขนาด'); cb(null, { mime: img.mime, b64: img.b64, name: file.name }); });
+    if (r.img && /^image\//.test(file.type)) return prepImage(file, r.img[0], r.img[1], true, function (err, img) { if (err) return cb(err); if (img.size > r.imgMax * 1048576) return cb('รูปใหญ่ ' + fix(img.size / 1048576, 1) + ' MB เกินที่ตั้งไว้ ' + r.imgMax + ' MB · ปรับได้ที่ ตั้งค่า › ขนาดไฟล์รูปภาพ'); cb(null, { mime: img.mime, b64: img.b64, name: file.name }); }, r.opt);
     if (file.size > r.max * 1048576) return cb('ไฟล์ใหญ่เกิน ' + r.max + ' MB');
     readAsDataUrl(file, function (err, url) { if (err) return cb(err); cb(null, { mime: file.type, b64: b64Of(url), name: file.name }); });
   }
@@ -1443,7 +1471,7 @@
     var cards = pageOf(list, 'a-gallery', perA()).map(function (a) {
       var ps = photosOf(a.id), cov = find(ps, 'id', a.coverId) || ps[0];
       return '<div class="card alb-admin">' + ph(hueOf(a.id), 'image', ps.length + ' ภาพ', '', cov && cov.url) + '<div class="row" style="justify-content:space-between;gap:6px"><b>' + esc(a.title) + '</b>' + visChip(a.vis) + '</div><span class="small muted">' + fd(a.date) + (a.featured ? ' · แสดงหน้าแรก' : '') + '</span>' +
-        '<div class="row" style="gap:6px"><label class="btn sm primary" for="up-' + a.id + '">' + ic('upload', 15) + ' อัปโหลดภาพ</label><input type="file" id="up-' + a.id + '" data-up-alb="' + a.id + '" accept="image/jpeg,image/png,image/webp" multiple style="display:none">' +
+        '<div class="row" style="gap:6px"><label class="btn sm primary" for="up-' + a.id + '">' + ic('upload', 15) + ' อัปโหลดภาพ</label><input type="file" id="up-' + a.id + '" data-up-alb="' + a.id + '" accept="' + upAccept('photo') + '" multiple style="display:none">' +
         '<a class="btn sm" href="#admin-album-' + a.id + '">' + ic('image', 15) + ' จัดการภาพ</a><button class="btn icon sm" data-act="c-edit" data-k="albums" data-id="' + a.id + '" aria-label="แก้ไขอัลบั้ม">' + ic('edit', 15) + '</button><button class="btn icon sm danger" data-act="c-del" data-k="albums" data-id="' + a.id + '" aria-label="ลบอัลบั้ม">' + ic('trash', 15) + '</button></div></div>';
     }).join('');
     return adminShell('admin-gallery', 'ภาพกิจกรรม', 'สร้างอัลบั้มแล้วอัปโหลดภาพได้ครั้งละหลายภาพ ระบบย่อภาพที่เบราว์เซอร์ (ด้านยาวไม่เกิน 2000 px) ก่อนส่งไป Drive', '<a class="btn" href="#gallery">' + ic('eye', 16) + ' ดูหน้าสาธารณะ</a><button class="btn primary" data-act="c-new" data-k="albums">' + ic('plus', 16) + ' สร้างอัลบั้ม</button>',
@@ -1468,29 +1496,30 @@
   }
   /** อัปโหลดภาพหลายไฟล์ทีละภาพ พร้อมแถบความคืบหน้าจริง */
   function uploadPhotos(aid, files) {
-    var list = Array.prototype.slice.call(files || []).filter(function (f) { return /^image\/(jpeg|png|webp)$/.test(f.type); });
+    var pc = upc('photo'), list = Array.prototype.slice.call(files || []).filter(function (f) { return (pc.gif ? /^image\/(jpeg|png|webp|gif)$/ : /^image\/(jpeg|png|webp)$/).test(f.type); });
     var skipped = (files ? files.length : 0) - list.length;
-    if (!list.length) { toast('รองรับเฉพาะ JPG PNG WebP'); return; }
+    if (!list.length) { toast('รองรับเฉพาะ JPG PNG WebP' + (pc.gif ? ' และ GIF' : '')); return; }
     if (list.length > 60) { toast('เลือกได้ครั้งละไม่เกิน 60 ภาพ'); list = list.slice(0, 60); }
-    var total = list.length, done = 0, fails = [];
+    var total = list.length, done = 0, fails = [], big = 0;
     showProgress('กำลังอัปโหลดภาพ ' + total + ' ภาพ');
     function step() {
       var f = list.shift();
       if (!f) {
         hideLoader(true); render();
-        toast('อัปโหลดแล้ว ' + done + ' ภาพ' + (fails.length ? ' · ไม่สำเร็จ ' + fails.length + ' ภาพ' : '') + (skipped ? ' · ข้ามไฟล์ที่ไม่ใช่รูป ' + skipped : ''));
+        toast('อัปโหลดแล้ว ' + done + ' ภาพ' + (fails.length ? ' · ไม่สำเร็จ ' + fails.length + ' ภาพ' + (big ? ' (ใหญ่เกิน ' + pc.mb + ' MB ' + big + ' ภาพ)' : '') : '') + (skipped ? ' · ข้ามไฟล์ที่ไม่ใช่รูป ' + skipped : ''));
         return;
       }
       setProgress(done / total * 100, 'ภาพที่ ' + (done + fails.length + 1) + '/' + total + ' · ' + f.name);
-      prepImage(f, 2000, 2000, false, function (err, img) {
+      prepImage(f, pc.px, pc.px, false, function (err, img) {
         if (err) { fails.push(f.name); return step(); }
+        if (img.size > pc.mb * 1048576) { fails.push(f.name); big++; return step(); }
         api('addPhoto', { albumId: aid, mime: img.mime, b64: img.b64, name: f.name.replace(/\.[^.]+$/, ''), caption: '', w: img.w, h: img.h, last: !list.length, batch: total }, { loader: false, timeout: 120000 }, function (e2, res) {
           if (e2) { fails.push(f.name); if (/AUTH|เข้าสู่ระบบ/.test(e2)) { hideLoader(true); return; } return step(); }
           done++; D.content.photos.push(res.photo); D.content.albums = res.albums;
           setProgress(done / total * 100, 'อัปโหลดแล้ว ' + done + '/' + total);
           step();
         });
-      });
+      }, upOpt(pc));
     }
     step();
   }
@@ -1512,7 +1541,7 @@
         (isCov ? '' : '<button class="btn sm" data-act="pm-cover" data-id="' + p.id + '">ตั้งเป็นภาพปก</button>') + '</div></div>';
     }).join('');
     S.pm.list = order.map(function (p) { return p.id; });
-    return adminShell('admin-gallery', esc(a.title), fd(a.date) + ' · ' + ps.length + ' ภาพ · ' + VIS[a.vis], '<a class="btn" href="#admin-gallery">' + ic('left', 16) + ' ทุกอัลบั้ม</a><a class="btn" href="#album-' + id + '">' + ic('eye', 16) + ' ดูหน้าสาธารณะ</a><label class="btn primary" for="up-pm">' + ic('upload', 16) + ' อัปโหลดภาพ</label><input type="file" id="up-pm" data-up-alb="' + id + '" accept="image/jpeg,image/png,image/webp" multiple style="display:none">',
+    return adminShell('admin-gallery', esc(a.title), fd(a.date) + ' · ' + ps.length + ' ภาพ · ' + VIS[a.vis], '<a class="btn" href="#admin-gallery">' + ic('left', 16) + ' ทุกอัลบั้ม</a><a class="btn" href="#album-' + id + '">' + ic('eye', 16) + ' ดูหน้าสาธารณะ</a><label class="btn primary" for="up-pm">' + ic('upload', 16) + ' อัปโหลดภาพ</label><input type="file" id="up-pm" data-up-alb="' + id + '" accept="' + upAccept('photo') + '" multiple style="display:none">',
       '<div class="pm-bar card"><span class="small">' + (nSel ? 'เลือก ' + nSel + ' ภาพ' : 'ติ๊กมุมภาพเพื่อเลือกหลายภาพ') + '</span><span class="sp" style="flex:1"></span>' +
         '<button class="btn sm" data-act="pm-all">' + ic('check', 14) + ' เลือกทั้งหมด</button>' + (nSel ? '<button class="btn sm danger" data-act="pm-del">' + ic('trash', 14) + ' ลบที่เลือก</button>' : '') +
         '<button class="btn sm primary" data-act="pm-save"' + (dirty ? '' : ' disabled') + '>' + ic('check', 14) + ' บันทึกคำบรรยายและลำดับ</button></div>' +
@@ -1539,7 +1568,7 @@
       return '<div class="cs-row"><div class="cs-thumb"><img src="' + esc(x.still || x.url) + '" alt=""></div><input class="inp" data-cs="' + i + '" value="' + esc(x.cap || '') + '" placeholder="คำบรรยายภาพ (ไม่บังคับ)" aria-label="คำบรรยายสไลด์ ' + (i + 2) + '">' +
         '<span class="row" style="gap:2px;flex-wrap:nowrap"><button class="btn icon sm" data-act="cs-mv" data-i="' + i + '" data-d="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนขึ้น">↑</button><button class="btn icon sm" data-act="cs-mv" data-i="' + i + '" data-d="1"' + (i === list.length - 1 ? ' disabled' : '') + ' aria-label="เลื่อนลง">↓</button><button class="btn icon sm danger" data-act="cs-del" data-i="' + i + '" aria-label="ลบสไลด์ ' + (i + 2) + '">' + ic('trash', 15) + '</button></span></div>';
     }).join('');
-    return '<div class="card" style="display:flex;flex-direction:column;gap:12px;margin-top:16px"><div class="sec-h"><h3>สไลด์ภาพปกเพิ่มเติม (วนสลับ)</h3><span class="row"><label class="btn sm" for="cs-up">' + ic('upload', 15) + ' เพิ่มภาพ</label><input id="cs-up" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple style="display:none"></span></div>' +
+    return '<div class="card" style="display:flex;flex-direction:column;gap:12px;margin-top:16px"><div class="sec-h"><h3>สไลด์ภาพปกเพิ่มเติม (วนสลับ)</h3><span class="row"><label class="btn sm" for="cs-up">' + ic('upload', 15) + ' เพิ่มภาพ</label><input id="cs-up" type="file" accept="' + upAccept('cover') + '" multiple style="display:none"></span></div>' +
       '<p class="small muted">ภาพปกหลักด้านบนเป็นสไลด์แรก ตามด้วยรายการนี้ (สูงสุด 8 ภาพ) · เฟดสลับทุก ' + (+s.rotSec || 0) + ' วินาที ตั้งได้ที่หน้าตั้งค่า · หยุดเมื่อชี้เมาส์ค้าง · เพิ่ม ลบ เรียง และแก้คำบรรยายบันทึกทันที</p>' + (rows || '<p class="small muted">ยังไม่มีสไลด์เพิ่ม</p>') +
       '<div class="field"><label for="tl-lines">ข้อความใต้ชื่อ (บรรทัดละข้อความ ถ้ามีหลายบรรทัดจะวนสลับ)</label><textarea id="tl-lines" class="inp" rows="3" data-b="taglines">' + esc(((s.taglines || []).length ? s.taglines : [s.tagline || '']).join('\n')) + '</textarea></div></div>';
   }
@@ -1766,7 +1795,7 @@
       }
       return '<div class="card pa-card" id="pa-' + x.code.replace('.', '-') + '"><div class="pa-card-h"><span class="code">' + x.code + '</span><div style="flex:1;min-width:220px"><b>' + esc(indName(x.code)) + '</b><div class="small muted">' + (x.task ? esc(x.task.length > 120 ? x.task.slice(0, 120) + '…' : x.task) : '<span style="color:var(--warn)">ยังไม่ได้เขียนงาน ผลลัพธ์ ตัวชี้วัด</span>') + '</div></div>' +
         (filled(x) ? '<span class="pill good">เขียนครบ</span>' : '<span class="pill off">ยังไม่ครบ</span>') + '<span class="pill ' + (n ? 'good' : 'warn') + '">หลักฐาน ' + n + ' ชิ้น</span><button class="btn sm" data-act="pa-edit" data-k="' + x.code + '">' + ic('edit', 15) + ' เขียนข้อความ</button></div>' +
-        '<div class="ph-label">' + ic('image', 14) + ' ภาพประกอบ ' + x.photos.length + '/6 · กดช่องว่างเพื่อเพิ่ม เลือกหลายรูปพร้อมกันได้</div><div class="slots">' + slots + '</div><input type="file" id="indup-' + x.code + '" data-indup="' + x.code + '" accept="image/jpeg,image/png,image/webp" multiple style="display:none"></div>';
+        '<div class="ph-label">' + ic('image', 14) + ' ภาพประกอบ ' + x.photos.length + '/6 · กดช่องว่างเพื่อเพิ่ม เลือกหลายรูปพร้อมกันได้</div><div class="slots">' + slots + '</div><input type="file" id="indup-' + x.code + '" data-indup="' + x.code + '" accept="' + upAccept('paphoto') + '" multiple style="display:none"></div>';
     }).join('');
     var sideNav = '<div class="row" style="gap:4px">' + pa.ind.map(function (x) { return '<a class="chip ' + (filled(x) ? 'ind' : '') + '" href="javascript:void 0" data-act="pa-jump" data-k="' + x.code + '">' + x.code + '</a>'; }).join('') + '</div>';
     return adminShell('admin-pa', 'แฟ้ม PA ปีงบประมาณ ' + S.fy, 'งาน ผลลัพธ์ ตัวชี้วัด 15 ข้อ ภาพประกอบข้อละ 6 ช่อง และประเด็นท้าทาย · ข้อความชุดนี้ใช้ในแบบข้อตกลงด้วย',
@@ -1809,24 +1838,25 @@
   }
   function uploadIndPhotos(code, files) {
     var x = find(docsOf(S.fy).pa.ind, 'code', code), room = 6 - x.photos.length;
-    var list = Array.prototype.slice.call(files || []).filter(function (f) { return /^image\/(jpeg|png|webp)$/.test(f.type); });
-    if (!list.length) { toast('รองรับเฉพาะ JPG PNG WebP'); return; }
+    var gifOk = upc('paphoto').gif, list = Array.prototype.slice.call(files || []).filter(function (f) { return (gifOk ? /^image\/(jpeg|png|webp|gif)$/ : /^image\/(jpeg|png|webp)$/).test(f.type); });
+    if (!list.length) { toast('รองรับเฉพาะ JPG PNG WebP' + (gifOk ? ' และ GIF' : '')); return; }
     if (room <= 0) { toast('ตัวชี้วัด ' + code + ' มีภาพครบ 6 ภาพแล้ว'); return; }
     if (list.length > room) { toast('เพิ่มได้อีก ' + room + ' ภาพ ระบบจะใช้ ' + room + ' ภาพแรก'); list = list.slice(0, room); }
-    var total = list.length, done = 0, fy = S.fy;
+    var total = list.length, done = 0, fy = S.fy, ppc = upc('paphoto');
     showProgress('กำลังอัปโหลดภาพประกอบตัวชี้วัด ' + code);
     (function step() {
       var f = list.shift();
       if (!f) { hideLoader(true); render(); toast('เพิ่มภาพประกอบ ' + done + ' ภาพ'); return; }
       setProgress(done / total * 100, 'ภาพที่ ' + (done + 1) + '/' + total + ' · ' + f.name);
-      prepImage(f, 1600, 1600, false, function (err, img) {
+      prepImage(f, ppc.px, ppc.px, false, function (err, img) {
         if (err) { toast(err); return step(); }
+        if (img.size > ppc.mb * 1048576) { toast(f.name + ' ใหญ่เกิน ' + ppc.mb + ' MB'); return step(); }
         api('addIndPhoto', { fy: fy, code: code, mime: img.mime, b64: img.b64, name: f.name.replace(/\.[^.]+$/, ''), caption: '', last: !list.length }, { loader: false, timeout: 120000 }, function (e2, res) {
           if (e2) { hideLoader(true); toast(e2); render(); return; }
           done++; var dd = docsOf(fy); if (dd) find(dd.pa.ind, 'code', code).photos = res.photos;
           setProgress(done / total * 100, 'อัปโหลดแล้ว ' + done + '/' + total); step();
         });
-      });
+      }, upOpt(ppc));
     })();
   }
   function saveIndPhotos(code, photos, msg) {
@@ -4231,6 +4261,33 @@
     return '<div class="card" style="margin-top:16px"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3>ประวัติการแจ้งเตือน LINE</h3><button class="btn sm" data-act="nf-reload">' + ic('refresh', 14) + ' โหลดใหม่</button></div>' + body + '</div>';
   }
 
+  /* ---------- 10) ตั้งค่าขนาดไฟล์รูปภาพและ GIF ---------- */
+  function upCfgCard() {
+    var groups = Object.keys(UPG_DEF).map(function (g) {
+      var d = UPG_DEF[g], c = upc(g), id = 'upc-' + g;
+      function num(k, lbl, mn, mx, stp, unit) { return '<div class="field"><label for="' + id + '-' + k + '">' + lbl + '</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="' + id + '-' + k + '" class="inp num" type="number" min="' + mn + '" max="' + mx + '" step="' + stp + '" value="' + c[k] + '"><span class="small muted">' + unit + '</span></div></div>'; }
+      return '<div class="up-g"><div><b>' + esc(d.t) + '</b><div class="small muted">' + esc(d.u) + '</div></div>' +
+        '<div class="grid3">' + num('mb', 'ขนาดไฟล์สูงสุด', 0.2, 30, 0.5, 'MB') + num('px', 'ย่อด้านยาวสุดเหลือ', 200, 8000, 100, 'px') + num('q', 'คุณภาพ JPEG', 40, 100, 1, '%') + '</div>' +
+        chk(id + '-gif', c.gif, 'อนุญาตไฟล์ GIF เคลื่อนไหว (ไม่ถูกย่อ ต้องไม่เกินขนาดสูงสุด)') + chk(id + '-orig', c.orig, 'ไม่ย่อภาพ ใช้ไฟล์ต้นฉบับ ถ้าไม่เกินขนาดสูงสุด') +
+        (c.mb !== d.mb || c.px !== d.px || c.q !== d.q || c.gif !== d.gif || c.orig !== d.orig ? '<span class="small muted">ค่าเริ่มต้น: ' + d.mb + ' MB · ' + d.px + ' px · ' + d.q + '%' + (d.gif ? ' · GIF' : '') + '</span>' : '') + '</div>';
+    }).join('');
+    return '<div class="card" id="up-cfg" style="display:flex;flex-direction:column;gap:12px;margin-top:16px"><div class="sec-h"><div><h3>' + ic('image', 18) + ' ขนาดไฟล์รูปภาพและ GIF</h3><span class="small muted">กำหนดเองแยกตามประเภทภาพ ระบบย่อภาพในเครื่องก่อนส่ง ทำให้อัปโหลดเร็วและหน้าเว็บโหลดไว</span></div></div>' +
+      '<div class="up-grid">' + groups + '</div>' +
+      '<div class="note small">' + ic('shield', 14) + ' สูงสุดได้ไฟล์ละ 30 MB · GIF ส่งไฟล์เดิมเพื่อให้ยังเคลื่อนไหว จึงควรบีบอัด GIF ก่อน (เช่น ezgif.com) · ภาพใหญ่มากทำให้หน้าเว็บโหลดช้าบนมือถือ · ค่าใหม่ใช้กับไฟล์ที่อัปโหลดหลังบันทึกเท่านั้น</div>' +
+      '<div class="row" style="gap:8px"><button class="btn primary" data-act="upc-save">' + ic('check', 16) + ' บันทึกขนาดไฟล์</button><button class="btn" data-act="upc-reset">คืนค่าเริ่มต้น</button></div></div>';
+  }
+  function upCfgRead() {
+    var o = {}, bad = '';
+    Object.keys(UPG_DEF).forEach(function (g) {
+      var v = function (k) { var e = $('upc-' + g + '-' + k); return e ? e.value : ''; };
+      o[g] = { mb: +v('mb'), px: +v('px'), q: +v('q'), gif: $('upc-' + g + '-gif').checked, orig: $('upc-' + g + '-orig').checked };
+      if (!(o[g].mb >= 0.2 && o[g].mb <= 30)) bad = bad || UPG_DEF[g].t + ': ขนาดไฟล์ต้องอยู่ระหว่าง 0.2–30 MB';
+      if (!(o[g].px >= 200 && o[g].px <= 8000)) bad = bad || UPG_DEF[g].t + ': ด้านยาวต้องอยู่ระหว่าง 200–8000 px';
+      if (!(o[g].q >= 40 && o[g].q <= 100)) bad = bad || UPG_DEF[g].t + ': คุณภาพต้องอยู่ระหว่าง 40–100%';
+    });
+    return bad ? { err: bad } : { cfg: o };
+  }
+
   /* ---------- คลิก / พิมพ์ ---------- */
   document.addEventListener('click', function (e) {
     var el = e.target.closest ? e.target.closest('[data-act]') : null;
@@ -4290,6 +4347,8 @@
         adminCall('paPastSave', { past: past }, 'บันทึกคะแนนย้อนหลังแล้ว', function (res) { S.trend = res; closeModal(); render(); });
         break;
       case 'nf-reload': needNotifs(true); break;
+      case 'upc-save': var ur = upCfgRead(); if (ur.err) { toast(ur.err); break; } adminCall('upCfgSave', { cfg: ur.cfg }, 'บันทึกขนาดไฟล์รูปภาพแล้ว', function (res) { D.admin.upCfg = res.upCfg; render(); }); break;
+      case 'upc-reset': confirmBox('คืนค่าขนาดไฟล์รูปภาพทุกประเภทเป็นค่าเริ่มต้น?', 'คืนค่า', function () { adminCall('upCfgSave', { reset: true }, 'คืนค่าเริ่มต้นแล้ว', function (res) { D.admin.upCfg = res.upCfg; render(); }); }); break;
     }
   });
   document.addEventListener('input', function (e) {
@@ -4319,6 +4378,7 @@
     // เฟส 8
     'admin-requests': aRequests, 'admin-calc': aCalc, 'admin-checklist': aChecklist, 'admin-sync': aSync, 'admin-ai': aAi };
   ADMIN_PAGES['admin-idplan'] = function () { var h = aIdplan(); return docsOf(S.fy) ? injectEnd(h, paTrendCard()) : h; };
+  ADMIN_PAGES['admin-settings'] = function () { var h = aSettings(); return D.admin && !D.admin.mustChange ? injectEnd(h, upCfgCard()) : h; };
   ADMIN_PAGES['admin-ops'] = function () { var h = aOps(); return S.ops ? injectEnd(h, notifCard()) : h; };
   var PUB_PAGES = { 'pa': pPA, 'agreement': pAgreement, 'idplan': pIdplan, 'profile': pProfile, 'works': pWorks, 'gallery': pGallery, 'videos': pVideos, 'awards': pAwards, 'systems': pSystems, 'login': pLogin, 'committee': pCommittee, 'pa-forms': pForms, 'survey': pSurvey, 'salary-print': salaryPrint, 'survey-poster': svPoster, 'survey-report': svReport, 'verify': function () { return pVerify(''); }, 'report': pReport, 'present': pPresent, 'calendar': pCalendar };
   function route() { var h = (location.hash || '').replace('#', ''); return h || 'home'; }
