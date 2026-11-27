@@ -290,13 +290,19 @@
     car: { g: 'logo', png: true, label: 'โลโก้ที่ทำงาน' },
     slide: { g: 'cover', png: false, label: 'สไลด์ภาพปก' }
   };
+  /** ตรวจชนิด/ขนาดไฟล์ก่อนเปิดหน้าตรวจภาพ · คืนข้อความผิดพลาด หรือ '' ถ้าใช้ได้ */
+  function upCheck(kind, file) {
+    var u = UP[kind], c = upc(u.g);
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) return 'รองรับเฉพาะ JPG PNG WebP' + (c.gif ? ' และ GIF' : '');
+    if (file.type === 'image/gif' && !c.gif) return u.label + ' ยังไม่เปิดให้ใช้ GIF (เปิดได้ที่ ตั้งค่า › ขนาดไฟล์รูปภาพ)';
+    if (file.type === 'image/gif' && file.size > c.mb * 1048576) return 'ไฟล์ GIF ใหญ่ ' + fix(file.size / 1048576, 1) + ' MB เกินที่ตั้งไว้ ' + c.mb + ' MB';
+    if (file.size > 60 * 1048576) return 'ไฟล์ใหญ่เกินไป';
+    return '';
+  }
   function doUpload(kind, file, extra, cb) {
     var u = UP[kind], c = upc(u.g);
     if (!file) return;
-    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) { toast('รองรับเฉพาะ JPG PNG WebP' + (c.gif ? ' และ GIF' : '')); return; }
-    if (file.type === 'image/gif' && !c.gif) { toast(u.label + ' ยังไม่เปิดให้ใช้ GIF (เปิดได้ที่ ตั้งค่า › ขนาดไฟล์รูปภาพ)'); return; }
-    if (file.type === 'image/gif' && file.size > c.mb * 1048576) { toast('ไฟล์ GIF ใหญ่ ' + fix(file.size / 1048576, 1) + ' MB เกินที่ตั้งไว้ ' + c.mb + ' MB'); return; }
-    if (file.size > 60 * 1048576) { toast('ไฟล์ใหญ่เกินไป'); return; }
+    var bad = upCheck(kind, file); if (bad) { toast(bad); return; }
     showLoader('กำลังเตรียมไฟล์');
     prepImage(file, c.px, c.px, u.png, function (err, img) {
       hideLoader();
@@ -399,8 +405,8 @@
     if (!ys.length) return '';
     return '<label class="fy-pick" title="เปลี่ยนปีงบประมาณ"><span class="fy-dot"></span><select id="' + id + '" class="fy-sel" data-fy-sel="1" aria-label="เลือกปีงบประมาณ">' + ys.map(function (y) { return '<option value="' + y.fy + '"' + (y.fy === S.fy ? ' selected' : '') + '>ปีงบ ' + y.fy + '</option>'; }).join('') + '</select></label>';
   }
-  function ph(h, icon, cap, cls, img) {
-    return '<div class="ph ' + (cls || '') + '" style="--h:' + h + '">' + (img ? '<img src="' + esc(img) + '" alt="' + esc(cap || '') + '">' : ic(icon || 'image', 30)) + (cap ? '<span class="cap">' + esc(cap) + '</span>' : '') + '</div>';
+  function ph(h, icon, cap, cls, img, pos) {
+    return '<div class="ph ' + (cls || '') + '" style="--h:' + h + '">' + (img ? frImg(img, pos, cap || '') : ic(icon || 'image', 30)) + (cap ? '<span class="cap">' + esc(cap) + '</span>' : '') + '</div>';
   }
   function chk(id, on, label) { return '<label class="row small" style="gap:8px"><input type="checkbox" id="' + id + '"' + (on ? ' checked' : '') + ' style="width:18px;height:18px;accent-color:var(--accent)"> ' + label + '</label>'; }
   function profileScore() {
@@ -971,7 +977,7 @@
   function VIDS() { return C().videos.filter(function (v) { return shown(v) && (!v.fy || v.fy === S.fy); }); }
   function vThumb(v, size) {
     var can = canOpen(v), big = size === 'big', sm = size === 'sm', img = vImg(v);
-    return '<div class="vthumb' + (sm ? ' sm' : '') + (img ? ' has-img' : '') + '" style="--h:' + hueOf(v.id) + '">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy">' : '') +
+    return '<div class="vthumb' + (sm ? ' sm' : '') + (img ? ' has-img' : '') + '" style="--h:' + hueOf(v.id) + '">' + (img ? frImg(img, v.thumbUrl ? v.imgPos : null, '') : '') +
       '<span class="play">' + ic(can ? 'play' : 'lock', big ? 30 : (sm ? 16 : 22)) + '</span>' + (v.dur ? '<span class="dur num">' + esc(v.dur) + '</span>' : '') +
       (v.vis === 'committee' ? '<span class="badge chip gold">' + ic('lock', 12) + ' เฉพาะกรรมการ</span>' : (v.vis === 'private' ? '<span class="badge chip">' + ic('lock', 12) + ' ส่วนตัว</span>' : '')) + '</div>';
   }
@@ -1018,7 +1024,7 @@
   function shot(sy) {
     var pl = primaryLink(sy), first = sy.links.filter(function (l) { return l.url; })[0];
     return '<div class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>' + esc(pl ? hostOf(pl.url) : (first && canSeeLink(first, sy) ? hostOf(first.url) : (sy.locked ? 'เฉพาะกรรมการ' : 'ยังไม่ได้ใส่ลิงก์เว็บ'))) + '</span></div>' +
-      (sy.imgUrl ? '<img src="' + esc(sy.imgUrl) + '" alt="ภาพหน้าจอ ' + esc(sy.name) + '" loading="lazy">' : '<div class="shot-body" style="--h:' + hueOf(sy.id) + '"><span class="sb1"></span><span class="sb2"></span><span class="sb3"></span></div>') + '</div>';
+      (sy.imgUrl ? frImg(sy.imgUrl, sy.imgPos, 'ภาพหน้าจอ ' + sy.name) : '<div class="shot-body" style="--h:' + hueOf(sy.id) + '"><span class="sb1"></span><span class="sb2"></span><span class="sb3"></span></div>') + '</div>';
   }
   function linksHtml(sy) {
     return sy.links.filter(function (l) { return S.admin ? l.url : true; }).map(function (l) {
@@ -1045,7 +1051,7 @@
 
   /* ---------- รางวัล เกียรติบัตร การอบรม ---------- */
   function certThumb(a) {
-    if (a.imgUrl) return '<div class="ph cert-img" style="--h:' + hueOf(a.id) + ';aspect-ratio:4/3"><img src="' + esc(a.imgUrl) + '" alt="' + esc(a.title) + '" loading="lazy"></div>';
+    if (a.imgUrl) return '<div class="ph cert-img" style="--h:' + hueOf(a.id) + ';aspect-ratio:4/3">' + frImg(a.imgUrl, a.imgPos, a.title) + '</div>';
     return '<div class="cert' + (a.type === 'award' ? ' award' : '') + '"><span class="cert-in"><span class="cert-k">' + (a.type === 'training' ? 'วุฒิบัตร' : (a.type === 'award' ? 'รางวัล' : 'เกียรติบัตร')) + '</span><span class="cert-l"></span><span class="cert-s">' + esc(a.level) + ' · ' + fd(a.date) + '</span>' + (a.locked ? '<span class="cert-s">' + ic('lock', 12) + ' เฉพาะกรรมการ</span>' : '') + '</span></div>';
   }
   function awardCard(a) {
@@ -1067,7 +1073,7 @@
   function isImg(m) { return /^image\//.test(m || ''); }
   function workCard(w) {
     var c = CATS[w.cat] || CATS.media, img = canOpen(w) && isImg(w.fileMime) ? w.fileUrl : '';
-    return '<button class="wcard" data-act="open-work" data-id="' + w.id + '">' + ph(hueOf(w.id), c.icon, c.label, '', img) +
+    return '<button class="wcard" data-act="open-work" data-id="' + w.id + '">' + ph(hueOf(w.id), c.icon, c.label, '', img, w.imgPos) +
       '<div class="t">' + esc(w.title) + '</div><div class="m"><span class="small muted">' + fd(w.date) + '</span>' + indChips(w.ind) + ((S.admin || S.com) && w.vis !== 'public' ? visChip(w.vis) : '') + '</div>' +
       (w.locked ? '<span class="lockline">' + ic('lock', 13) + ' เปิดไฟล์ได้เฉพาะกรรมการ</span>' : '') + '</button>';
   }
@@ -1125,8 +1131,8 @@
   function albumCard(a) {
     var ps = photosOf(a.id), cov = find(ps, 'id', a.coverId) || ps[0], n = albumCount(a);
     var sl = cov ? [cov].concat(ps.filter(function (p) { return p !== cov; })).slice(0, 5) : [];
-    var media = sl.length > 1 ? '<div class="alb-media"><div class="rot rot-thumb">' + sl.map(function (p, i) { return '<div class="rot-i' + (i === 0 ? ' on' : '') + '">' + ph(hueOf(a.id), 'image', '', '', p.url) + '</div>'; }).join('') + '</div><span class="alb-n">' + ic('image', 13) + ' ' + n + ' ภาพ</span></div>'
-      : ph(hueOf(a.id), a.locked ? 'lock' : 'image', a.locked ? 'เฉพาะกรรมการ · ' + n + ' ภาพ' : n + ' ภาพ', '', cov && cov.url);
+    var media = sl.length > 1 ? '<div class="alb-media"><div class="rot rot-thumb">' + sl.map(function (p, i) { return '<div class="rot-i' + (i === 0 ? ' on' : '') + '">' + ph(hueOf(a.id), 'image', '', '', p.url, p.pos) + '</div>'; }).join('') + '</div><span class="alb-n">' + ic('image', 13) + ' ' + n + ' ภาพ</span></div>'
+      : ph(hueOf(a.id), a.locked ? 'lock' : 'image', a.locked ? 'เฉพาะกรรมการ · ' + n + ' ภาพ' : n + ' ภาพ', '', cov && cov.url, cov && cov.pos);
     return '<a class="album" href="#album-' + a.id + '">' + media + '<span class="t">' + esc(a.title) + '</span><span class="small muted">' + fd(a.date) + (a.desc ? ' · ' + esc(a.desc) : '') + '</span>' + ((S.admin || S.com) && a.vis !== 'public' ? '<span>' + visChip(a.vis) + '</span>' : '') + '</a>';
   }
   function pGallery() {
@@ -1140,14 +1146,14 @@
     var all = photosOf(id), per = 12;
     if (a.locked && !S.admin) return pub('album-' + id, '<a href="#gallery" class="small">' + ic('left', 14) + ' ทุกอัลบั้ม</a><div class="sec-h" style="margin-top:8px"><div><span class="eyebrow">' + fd(a.date) + '</span><h1>' + esc(a.title) + '</h1><p class="muted">' + esc(a.desc) + '</p></div></div>' + lockNote('อัลบั้ม'));
     var ps = pageOf(all, 'album-' + id, per), base = (S.pageInfo['album-' + id].p - 1) * S.pageInfo['album-' + id].per;
-    var grid = ps.map(function (p, j) { return '<button data-act="open-photo" data-a="' + id + '" data-i="' + (base + j) + '" aria-label="' + esc(p.caption || ('ภาพที่ ' + (base + j + 1))) + '">' + ph(hueOf(p.id), 'image', '', 'sq', p.url) + '</button>'; }).join('');
+    var grid = ps.map(function (p, j) { return '<button data-act="open-photo" data-a="' + id + '" data-i="' + (base + j) + '" aria-label="' + esc(p.caption || ('ภาพที่ ' + (base + j + 1))) + '">' + ph(hueOf(p.id), 'image', '', 'sq', p.url, p.pos) + '</button>'; }).join('');
     return pub('album-' + id, '<a href="#gallery" class="small">' + ic('left', 14) + ' ทุกอัลบั้ม</a><div class="sec-h" style="margin-top:8px"><div><span class="eyebrow">' + fd(a.date) + '</span><h1>' + esc(a.title) + '</h1><p class="muted">' + (a.desc ? esc(a.desc) + ' · ' : '') + all.length + ' ภาพ</p></div>' + (S.admin ? '<a class="btn" href="#admin-gallery">' + ic('edit', 16) + ' จัดการอัลบั้ม</a>' : '') + '</div>' +
       albumHero(a, all) + (all.length ? '<div class="photos" style="margin-top:18px">' + grid + '</div>' + pagerNav('album-' + id) : '<div class="card empty" style="margin-top:16px">อัลบั้มนี้ยังไม่มีภาพ</div>'));
   }
   function albumHero(a, all) {
     var cov = find(all, 'id', a.coverId), list = (cov ? [cov].concat(all.filter(function (p) { return p !== cov; })) : all).slice(0, 12);
     if (list.length < 2) return '';
-    return '<div class="alb-hero" data-rot-host="1" aria-label="สไลด์โชว์อัลบั้ม"><div class="rot rot-kb" data-cap="alb-cap-t">' + list.map(function (p, i) { return '<div class="rot-i' + (i === 0 ? ' on' : '') + '" data-cap="' + esc(p.caption) + '">' + ph(hueOf(p.id), 'image', '', '', p.url) + '</div>'; }).join('') + '</div>' +
+    return '<div class="alb-hero" data-rot-host="1" aria-label="สไลด์โชว์อัลบั้ม"><div class="rot rot-kb" data-cap="alb-cap-t">' + list.map(function (p, i) { return '<div class="rot-i' + (i === 0 ? ' on' : '') + '" data-cap="' + esc(p.caption) + '">' + ph(hueOf(p.id), 'image', '', '', p.url, p.pos) + '</div>'; }).join('') + '</div>' +
       '<button class="alb-nav prev" data-act="rot-step" data-d="-1" aria-label="ภาพก่อนหน้า">' + ic('left', 18) + '</button><button class="alb-nav next" data-act="rot-step" data-d="1" aria-label="ภาพถัดไป">' + ic('chev', 18) + '</button>' +
       '<div class="alb-hero-cap"><span id="alb-cap-t" class="cap-t">' + esc(list[0].caption) + '</span>' + rotDots(list.length, 'ภาพที่') + '</div></div>';
   }
@@ -1253,7 +1259,7 @@
     var r = fileRule(key), f = S.form.files[key.split('.')[1]], cleared = S.form.clear.indexOf(key.split('.')[1]) > -1;
     var now = f ? ic('check', 15) + ' ' + esc(f.name) + ' (' + fix(f.size / 1048576, 1) + ' MB)' : (cur && !cleared ? ic('file', 15) + ' มีไฟล์แล้ว' + (curName ? ': ' + esc(curName) : '') + ' · คลิกเพื่อเปลี่ยน' : 'คลิกเพื่อเลือกไฟล์');
     return '<div class="field"><label>' + label + '</label><label class="drop" for="ff-' + key.replace('.', '-') + '">' + ic('upload', 22) + '<span>' + now + '</span><span class="small">' + r.label + '</span></label><input id="ff-' + key.replace('.', '-') + '" type="file" data-ff="' + key + '" accept="' + r.mimes.join(',') + '" style="display:none">' +
-      (cur && !cleared && !f ? '<button class="btn sm danger" type="button" data-act="ff-clear" data-k="' + key + '" style="align-self:flex-start">' + ic('trash', 14) + ' ลบไฟล์นี้</button>' : '') + '</div>';
+      (cur && !cleared && !f ? '<button class="btn sm danger" type="button" data-act="ff-clear" data-k="' + key + '" style="align-self:flex-start">' + ic('trash', 14) + ' ลบไฟล์นี้</button>' : '') + formImgEditor(key, cur) + '</div>';
   }
   /** กติกาไฟล์ในฟอร์ม + ขนาดรูปภาพที่ครูตั้งเอง (กลุ่ม “รูปในคลังผลงาน”) */
   function fileRule(key) {
@@ -1274,6 +1280,7 @@
   /** บันทึกรายการพร้อมไฟล์ (ถ้ามี) ในคำขอเดียว */
   function saveContent(kind, item, btn, msg) {
     var F = S.form, fields = Object.keys(F.files).filter(function (k) { return F.files[k]; });
+    if (F.posOn && F.pos && F.posTouched) item.imgPos = { x: F.pos.x, y: F.pos.y, z: F.pos.z, fit: F.pos.fit };
     function send(upload, extraUploads) {
       busy(btn, true);
       api('saveItem', { kind: kind, item: item, upload: upload, clear: F.clear }, { loader: upload ? 'กำลังอัปโหลดไฟล์และบันทึก' : 'กำลังบันทึก', timeout: 180000 }, function (err, res) {
@@ -1470,7 +1477,7 @@
     var list = C().albums.slice().sort(byDate);
     var cards = pageOf(list, 'a-gallery', perA()).map(function (a) {
       var ps = photosOf(a.id), cov = find(ps, 'id', a.coverId) || ps[0];
-      return '<div class="card alb-admin">' + ph(hueOf(a.id), 'image', ps.length + ' ภาพ', '', cov && cov.url) + '<div class="row" style="justify-content:space-between;gap:6px"><b>' + esc(a.title) + '</b>' + visChip(a.vis) + '</div><span class="small muted">' + fd(a.date) + (a.featured ? ' · แสดงหน้าแรก' : '') + '</span>' +
+      return '<div class="card alb-admin">' + ph(hueOf(a.id), 'image', ps.length + ' ภาพ', '', cov && cov.url, cov && cov.pos) + '<div class="row" style="justify-content:space-between;gap:6px"><b>' + esc(a.title) + '</b>' + visChip(a.vis) + '</div><span class="small muted">' + fd(a.date) + (a.featured ? ' · แสดงหน้าแรก' : '') + '</span>' +
         '<div class="row" style="gap:6px"><label class="btn sm primary" for="up-' + a.id + '">' + ic('upload', 15) + ' อัปโหลดภาพ</label><input type="file" id="up-' + a.id + '" data-up-alb="' + a.id + '" accept="' + upAccept('photo') + '" multiple style="display:none">' +
         '<a class="btn sm" href="#admin-album-' + a.id + '">' + ic('image', 15) + ' จัดการภาพ</a><button class="btn icon sm" data-act="c-edit" data-k="albums" data-id="' + a.id + '" aria-label="แก้ไขอัลบั้ม">' + ic('edit', 15) + '</button><button class="btn icon sm danger" data-act="c-del" data-k="albums" data-id="' + a.id + '" aria-label="ลบอัลบั้ม">' + ic('trash', 15) + '</button></div></div>';
     }).join('');
@@ -1499,11 +1506,15 @@
     var pc = upc('photo'), list = Array.prototype.slice.call(files || []).filter(function (f) { return (pc.gif ? /^image\/(jpeg|png|webp|gif)$/ : /^image\/(jpeg|png|webp)$/).test(f.type); });
     var skipped = (files ? files.length : 0) - list.length;
     if (!list.length) { toast('รองรับเฉพาะ JPG PNG WebP' + (pc.gif ? ' และ GIF' : '')); return; }
-    if (list.length > 60) { toast('เลือกได้ครั้งละไม่เกิน 60 ภาพ'); list = list.slice(0, 60); }
+    if (skipped) toast('ข้ามไฟล์ที่ไม่ใช่รูป ' + skipped + ' ไฟล์');
+    stageImages(list, { k: 'photo', title: 'ตรวจภาพก่อนอัปโหลดลงอัลบั้ม', max: 60, go: function (items) { uploadPhotosGo(aid, items, skipped); } });
+  }
+  function uploadPhotosGo(aid, items, skipped) {
+    var pc = upc('photo'), list = items.slice();
     var total = list.length, done = 0, fails = [], big = 0;
     showProgress('กำลังอัปโหลดภาพ ' + total + ' ภาพ');
     function step() {
-      var f = list.shift();
+      var itm = list.shift(), f = itm && itm.file;
       if (!f) {
         hideLoader(true); render();
         toast('อัปโหลดแล้ว ' + done + ' ภาพ' + (fails.length ? ' · ไม่สำเร็จ ' + fails.length + ' ภาพ' + (big ? ' (ใหญ่เกิน ' + pc.mb + ' MB ' + big + ' ภาพ)' : '') : '') + (skipped ? ' · ข้ามไฟล์ที่ไม่ใช่รูป ' + skipped : ''));
@@ -1513,7 +1524,7 @@
       prepImage(f, pc.px, pc.px, false, function (err, img) {
         if (err) { fails.push(f.name); return step(); }
         if (img.size > pc.mb * 1048576) { fails.push(f.name); big++; return step(); }
-        api('addPhoto', { albumId: aid, mime: img.mime, b64: img.b64, name: f.name.replace(/\.[^.]+$/, ''), caption: '', w: img.w, h: img.h, last: !list.length, batch: total }, { loader: false, timeout: 120000 }, function (e2, res) {
+        api('addPhoto', { albumId: aid, mime: img.mime, b64: img.b64, name: f.name.replace(/\.[^.]+$/, ''), caption: '', pos: itm.pos, w: img.w, h: img.h, last: !list.length, batch: total }, { loader: false, timeout: 120000 }, function (e2, res) {
           if (e2) { fails.push(f.name); if (/AUTH|เข้าสู่ระบบ/.test(e2)) { hideLoader(true); return; } return step(); }
           done++; D.content.photos.push(res.photo); D.content.albums = res.albums;
           setProgress(done / total * 100, 'อัปโหลดแล้ว ' + done + '/' + total);
@@ -1533,7 +1544,7 @@
     var nSel = Object.keys(S.pm.sel).filter(function (k) { return S.pm.sel[k]; }).length, dirty = !!S.pm.order || Object.keys(S.pm.caps).length;
     var cards = order.map(function (p, i) {
       var cap = S.pm.caps[p.id] !== undefined ? S.pm.caps[p.id] : p.caption, isCov = (a.coverId || (ps[0] && ps[0].id)) === p.id;
-      return '<div class="pm-card' + (S.pm.sel[p.id] ? ' sel' : '') + '">' + '<button type="button" class="pm-img" data-act="open-photo" data-a="' + id + '" data-i="' + ps.indexOf(p) + '" aria-label="ดูภาพ">' + ph(hueOf(p.id), 'image', '', 'sq', p.url) + '</button>' +
+      return '<div class="pm-card' + (S.pm.sel[p.id] ? ' sel' : '') + '">' + '<button type="button" class="pm-img" data-act="open-photo" data-a="' + id + '" data-i="' + ps.indexOf(p) + '" aria-label="ดูภาพ">' + ph(hueOf(p.id), 'image', '', 'sq', p.url, p.pos) + '</button>' + '<button type="button" class="pm-fr" data-act="fr-edit" data-k="photo" data-id="' + p.id + '" aria-label="จุดโฟกัสภาพที่ ' + (i + 1) + '" title="จุดโฟกัส / ย่อ–ขยาย">' + ic('target', 14) + '</button>' +
         (isCov ? '<span class="pm-cov chip gold">' + ic('check', 12) + ' ภาพปก</span>' : '') +
         '<label class="pm-sel"><input type="checkbox" data-pm-sel="' + p.id + '"' + (S.pm.sel[p.id] ? ' checked' : '') + ' aria-label="เลือกภาพที่ ' + (i + 1) + '"></label>' +
         '<input class="inp pm-cap" data-pm-cap="' + p.id + '" value="' + esc(cap) + '" placeholder="คำบรรยายภาพ" aria-label="คำบรรยายภาพที่ ' + (i + 1) + '">' +
@@ -1582,10 +1593,14 @@
     var list = Array.prototype.slice.call(files || []), room = 8 - (D.settings.coverSlides || []).length;
     if (room <= 0) { toast('สไลด์ภาพปกได้ไม่เกิน 8 ภาพ'); return; }
     if (list.length > room) { toast('เพิ่มได้อีก ' + room + ' ภาพ'); list = list.slice(0, room); }
-    (function next() {
-      var f = list.shift(); if (!f) { render(); return; }
-      doUpload('slide', f, { quiet: list.length > 0, caption: '' }, function () { next(); });
-    })();
+    var bad = list.filter(function (f) { return upCheck('slide', f); });
+    if (bad.length) { toast(upCheck('slide', bad[0]) + (bad.length > 1 ? ' (' + bad.length + ' ไฟล์)' : '')); list = list.filter(function (f) { return !upCheck('slide', f); }); if (!list.length) return; }
+    stageImages(list, { k: 'slide', title: 'ตรวจสไลด์ภาพปกก่อนอัปโหลด', go: function (items) {
+      (function next() {
+        var it = items.shift(); if (!it) { render(); return; }
+        doUpload('slide', it.file, { quiet: items.length > 0, caption: '', pos: it.pos }, function () { next(); });
+      })();
+    } });
   }
 
   /* =====================================================================
@@ -1675,7 +1690,7 @@
   function indPhotos(x) {
     if (!x.photos || !x.photos.length) return '';
     return '<div class="ph-label">' + ic('image', 14) + ' ภาพประกอบ ' + x.photos.length + '/6</div><div class="ind-photos">' + x.photos.map(function (p, i) {
-      return '<button data-act="open-indphoto" data-k="' + x.code + '" data-i="' + i + '" aria-label="ดูภาพ ' + esc(p.cap || x.code + ' ภาพที่ ' + (i + 1)) + '">' + ph(hueOf(x.code + i), 'image', p.cap, '', p.url) + '</button>';
+      return '<button data-act="open-indphoto" data-k="' + x.code + '" data-i="' + i + '" aria-label="ดูภาพ ' + esc(p.cap || x.code + ' ภาพที่ ' + (i + 1)) + '">' + ph(hueOf(x.code + i), 'image', p.cap, '', p.url, p.pos) + '</button>';
     }).join('') + '</div>';
   }
 
@@ -1788,7 +1803,7 @@
       var n = evidenceOf(x.code, S.fy).length, slots = '';
       for (var i = 0; i < 6; i++) {
         var p = x.photos[i];
-        if (p) slots += '<div class="slot"><div class="ph" style="--h:' + hueOf(x.code + i) + '"><img src="' + esc(p.url) + '" alt="' + esc(p.cap) + '"><span class="slot-no">' + (i + 1) + '</span><button class="iph-x" data-act="ind-photo-del" data-k="' + x.code + '" data-i="' + i + '" aria-label="ลบรูปที่ ' + (i + 1) + ' ตัวชี้วัด ' + x.code + '">' + ic('x', 14) + '</button></div>' +
+        if (p) slots += '<div class="slot"><div class="ph" style="--h:' + hueOf(x.code + i) + '">' + frImg(p.url, p.pos, p.cap) + '<button class="iph-f" data-act="fr-edit" data-k="indphoto" data-id="' + esc(p.id) + '" data-code="' + x.code + '" aria-label="จุดโฟกัสรูปที่ ' + (i + 1) + ' ตัวชี้วัด ' + x.code + '" title="จุดโฟกัส / ย่อ–ขยาย">' + ic('target', 13) + '</button><span class="slot-no">' + (i + 1) + '</span><button class="iph-x" data-act="ind-photo-del" data-k="' + x.code + '" data-i="' + i + '" aria-label="ลบรูปที่ ' + (i + 1) + ' ตัวชี้วัด ' + x.code + '">' + ic('x', 14) + '</button></div>' +
           '<input class="inp slot-cap" data-capk="' + x.code + '" data-capi="' + i + '" value="' + esc(p.cap) + '" placeholder="คำบรรยายภาพ" aria-label="คำบรรยายรูปที่ ' + (i + 1) + ' ตัวชี้วัด ' + x.code + '">' +
           '<span class="row" style="gap:2px"><button class="btn icon sm" data-act="ind-photo-mv" data-k="' + x.code + '" data-i="' + i + '" data-d="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนไปก่อนหน้า">' + ic('left', 13) + '</button><button class="btn icon sm" data-act="ind-photo-mv" data-k="' + x.code + '" data-i="' + i + '" data-d="1"' + (i === x.photos.length - 1 ? ' disabled' : '') + ' aria-label="เลื่อนไปถัดไป">' + ic('chev', 13) + '</button></span></div>';
         else slots += '<label class="slot empty" for="indup-' + x.code + '">' + ic('plus', 24) + '<span>เพิ่มรูป ช่องที่ ' + (i + 1) + '</span></label>';
@@ -1842,16 +1857,20 @@
     if (!list.length) { toast('รองรับเฉพาะ JPG PNG WebP' + (gifOk ? ' และ GIF' : '')); return; }
     if (room <= 0) { toast('ตัวชี้วัด ' + code + ' มีภาพครบ 6 ภาพแล้ว'); return; }
     if (list.length > room) { toast('เพิ่มได้อีก ' + room + ' ภาพ ระบบจะใช้ ' + room + ' ภาพแรก'); list = list.slice(0, room); }
+    stageImages(list, { k: 'indphoto', title: 'ตรวจภาพประกอบตัวชี้วัด ' + code + ' ก่อนอัปโหลด', go: function (items) { uploadIndPhotosGo(code, items); } });
+  }
+  function uploadIndPhotosGo(code, items) {
+    var list = items.slice();
     var total = list.length, done = 0, fy = S.fy, ppc = upc('paphoto');
     showProgress('กำลังอัปโหลดภาพประกอบตัวชี้วัด ' + code);
     (function step() {
-      var f = list.shift();
+      var itm = list.shift(), f = itm && itm.file;
       if (!f) { hideLoader(true); render(); toast('เพิ่มภาพประกอบ ' + done + ' ภาพ'); return; }
       setProgress(done / total * 100, 'ภาพที่ ' + (done + 1) + '/' + total + ' · ' + f.name);
       prepImage(f, ppc.px, ppc.px, false, function (err, img) {
         if (err) { toast(err); return step(); }
         if (img.size > ppc.mb * 1048576) { toast(f.name + ' ใหญ่เกิน ' + ppc.mb + ' MB'); return step(); }
-        api('addIndPhoto', { fy: fy, code: code, mime: img.mime, b64: img.b64, name: f.name.replace(/\.[^.]+$/, ''), caption: '', last: !list.length }, { loader: false, timeout: 120000 }, function (e2, res) {
+        api('addIndPhoto', { fy: fy, code: code, mime: img.mime, b64: img.b64, name: f.name.replace(/\.[^.]+$/, ''), caption: '', pos: itm.pos, last: !list.length }, { loader: false, timeout: 120000 }, function (e2, res) {
           if (e2) { hideLoader(true); toast(e2); render(); return; }
           done++; var dd = docsOf(fy); if (dd) find(dd.pa.ind, 'code', code).photos = res.photos;
           setProgress(done / total * 100, 'อัปโหลดแล้ว ' + done + '/' + total); step();
@@ -3220,7 +3239,7 @@
         '<div class="sl-stats"><div><b>' + d.pa.ind.length + '</b><span>ตัวชี้วัด</span></div><div><b>' + ev + '</b><span>หลักฐาน</span></div><div><b>' + vids + '</b><span>วิดีโอการสอน</span></div></div></div>';
     } else if (sd.k === 'ind') {
       var x = sd.x, e = evidenceOf(x.code, fy), photos = (x.photos || []).slice(0, 6), cells = '';
-      for (var p = 0; p < 6; p++) cells += photos[p] ? ph(hueOf(x.code + p), 'image', photos[p].cap, '', photos[p].url) : '<div class="sl-empty">ภาพที่ ' + (p + 1) + '</div>';
+      for (var p = 0; p < 6; p++) cells += photos[p] ? ph(hueOf(x.code + p), 'image', photos[p].cap, '', photos[p].url, photos[p].pos) : '<div class="sl-empty">ภาพที่ ' + (p + 1) + '</div>';
       body = '<div class="sl-head"><span class="sl-code">' + x.code + '</span><div><div class="sl-eb">ด้านที่ ' + indSide(x.code) + ' ' + SIDES[indSide(x.code)] + '</div><h2>' + esc(indName(x.code)) + '</h2></div></div>' +
         '<div class="sl-grid"><div class="sl-tri"><div><b>งาน</b><p>' + esc(trim(x.task, 260)) + '</p></div><div><b>ผลลัพธ์</b><p>' + esc(trim(x.out, 220)) + '</p></div><div><b>ตัวชี้วัด</b><p>' + esc(trim(x.kpi, 220)) + '</p></div></div><div class="sl-photos">' + cells + '</div></div>' +
         '<div class="sl-ev"><span class="sl-small"><b>หลักฐาน ' + e.length + ' รายการ</b></span>' + e.slice(0, 3).map(function (w) { return '<span class="chip">' + ic(w.icon, 13) + ' ' + esc(trim(w.title, 38)) + '</span>'; }).join('') + (e.length > 3 ? '<span class="sl-small muted">และอีก ' + (e.length - 3) + ' รายการ</span>' : '') + '</div>';
@@ -4293,40 +4312,63 @@
     p = p || {};
     return { x: p.x != null && isFinite(+p.x) ? +p.x : 50, y: p.y != null && isFinite(+p.y) ? +p.y : 50, z: +p.z >= 50 ? +p.z : 100, fit: p.fit === 'contain' || p.fit === 'cover' ? p.fit : (defFit || 'cover') };
   }
+  function hasPos(p) { return !!(p && typeof p === 'object' && (p.x != null || p.fit)); }
   function frStyle(p) { return 'object-fit:' + p.fit + ';object-position:' + p.x + '% ' + p.y + '%;--fz:' + (p.z / 100) + ';--fo:' + p.x + '% ' + p.y + '%'; }
-  /** <img> ที่ใช้จุดโฟกัส/ย่อขยายที่ครูตั้งไว้ · blur = ใส่พื้นหลังเบลอเมื่อแสดงทั้งภาพ */
+  /** <img> ที่ใช้จุดโฟกัส/ย่อขยายที่ครูตั้งไว้ (ไม่ได้ตั้ง = ใช้ค่าตาม CSS เดิม) · blur = พื้นหลังเบลอเมื่อแสดงทั้งภาพ */
   function frImg(src, pos, alt, blur, defFit) {
-    var p = fpos(pos, defFit), main = '<img class="fr" src="' + esc(src) + '" alt="' + esc(alt || '') + '" style="' + frStyle(p) + '">';
+    var lz = blur ? '' : ' loading="lazy"';
+    if (!hasPos(pos)) return '<img class="fr" src="' + esc(src) + '" alt="' + esc(alt || '') + '"' + lz + '>';
+    var p = fpos(pos, defFit), main = '<img class="fr" src="' + esc(src) + '" alt="' + esc(alt || '') + '" style="' + frStyle(p) + '"' + lz + '>';
     return blur && p.fit === 'contain' ? '<img class="fr-blur" src="' + esc(src) + '" alt="" aria-hidden="true">' + main : main;
   }
-  var FR_T = { cover: 'ภาพปกหลัก', slide: 'สไลด์ภาพปก', avatar: 'รูปครู', logo: 'โลโก้โรงเรียน' };
-  function frSrc(k, id) {
+  var FR_T = { cover: 'ภาพปกหลัก', slide: 'สไลด์ภาพปก', avatar: 'รูปครู', logo: 'โลโก้โรงเรียน', photo: 'ภาพกิจกรรม', indphoto: 'ภาพประกอบตัวชี้วัด PA', works: 'ภาพผลงาน', videos: 'ภาพปกวิดีโอ', awards: 'ภาพเกียรติบัตร', systems: 'ภาพหน้าจอระบบ' };
+  /** กรอบตัวอย่างตามขนาดที่แสดงจริงของภาพแต่ละประเภท */
+  function frBoxes(k) {
+    return {
+      avatar: [{ l: 'บนหน้าปก', w: 156, h: 188, c: 'r10' }, { l: 'ขนาดเล็ก', w: 112, h: 136, c: 'r10' }],
+      logo: [{ l: 'ตราโรงเรียน', w: 120, h: 120, c: 'round' }, { l: 'ขนาดเล็ก', w: 46, h: 46, c: 'round' }],
+      photo: [{ l: 'ในอัลบั้ม', w: 140, h: 140, c: 'r10' }, { l: 'การ์ดอัลบั้ม', w: 208, h: 130, c: 'r10' }, { l: 'สไลด์อัลบั้ม', w: 300, h: 114, c: 'r10' }],
+      indphoto: [{ l: 'ภาพประกอบ PA', w: 200, h: 150, c: 'r10' }],
+      works: [{ l: 'การ์ดผลงาน', w: 224, h: 140, c: 'r10' }],
+      videos: [{ l: 'ภาพปกวิดีโอ', w: 240, h: 135, c: 'r10' }],
+      awards: [{ l: 'ภาพเกียรติบัตร', w: 200, h: 150, c: 'r10' }],
+      systems: [{ l: 'ภาพหน้าจอระบบ', w: 240, h: 135, c: 'r10' }]
+    }[k] || [{ l: 'จอคอมพิวเตอร์', w: 340, h: 110 }, { l: 'มือถือ', w: 120, h: 192 }];
+  }
+  function frBlur(k) { return k === 'cover' || k === 'slide'; }
+  function frSrc(k, id, code) {
     var s = D.settings;
     if (k === 'slide') { var x = find(s.coverSlides || [], 'id', id); return x ? { src: x.url, pos: x.pos } : null; }
-    return s[k] ? { src: s[k], pos: s[k + 'Pos'] } : null;
+    if (k === 'photo') { var ph2 = find(D.content.photos, 'id', id); return ph2 ? { src: ph2.url, pos: ph2.pos } : null; }
+    if (k === 'indphoto') { var dd = docsOf(S.fy), it = dd && find(dd.pa.ind, 'code', code), pp = it && find(it.photos, 'id', id); return pp ? { src: pp.url, pos: pp.pos } : null; }
+    if (k === 'cover' || k === 'avatar' || k === 'logo') return s[k] ? { src: s[k], pos: s[k + 'Pos'] } : null;
+    return null;
   }
-  function frBoxes(k) {
-    if (k === 'avatar') return [{ l: 'บนหน้าปก', w: 156, h: 188, c: 'r10' }, { l: 'ขนาดเล็ก', w: 112, h: 136, c: 'r10' }];
-    if (k === 'logo') return [{ l: 'ตราโรงเรียน', w: 120, h: 120, c: 'round' }, { l: 'ขนาดเล็ก', w: 46, h: 46, c: 'round' }];
-    return [{ l: 'จอคอมพิวเตอร์', w: 340, h: 110 }, { l: 'มือถือ', w: 120, h: 192 }];
+  /** ส่วนตัวอย่าง + ปุ่มปรับ (ใช้ทั้งหน้าต่างปรับภาพ ตอนตรวจก่อนอัปโหลด และในฟอร์ม) */
+  function frControls(src, P, k, compact) {
+    var boxes = frBoxes(k), blur = frBlur(k);
+    return '<div class="fr-ctl"><div class="small muted">' + (compact ? 'ลากในกรอบเพื่อเลือกส่วนที่จะแสดง · หมุนล้อเมาส์เพื่อย่อ–ขยาย' : 'ตัวอย่างตามขนาดที่แสดงจริง (ลากในกรอบเพื่อเลื่อนภาพ หมุนล้อเมาส์เพื่อย่อ–ขยาย)') + '</div><div class="fr-pvs">' +
+      boxes.map(function (b, i) { return '<div class="fr-pv"><div class="fr-box ' + (b.c || '') + (blur ? ' dark' : '') + '" data-frbox="' + i + '" style="width:' + b.w + 'px;aspect-ratio:' + b.w + '/' + b.h + '">' + (blur ? '<img class="fr-blur fr-bl" src="' + esc(src) + '" alt="" aria-hidden="true"' + (P.fit === 'contain' ? '' : ' style="display:none"') + '>' : '') + '<img class="fr fr-live" src="' + esc(src) + '" alt="" style="' + frStyle(P) + '"></div><span class="small muted">' + b.l + '</span></div>'; }).join('') + '</div>' +
+      '<div class="field"><label>การแสดงภาพ</label><div class="seg" role="group" aria-label="การแสดงภาพ"><button type="button" data-act="fr-fit" data-k="cover" class="' + (P.fit === 'cover' ? 'on' : '') + '">เต็มกรอบ (ตัดขอบ)</button><button type="button" data-act="fr-fit" data-k="contain" class="' + (P.fit === 'contain' ? 'on' : '') + '">เห็นทั้งภาพ</button></div></div>' +
+      '<div class="field"><label for="fr-z">ย่อ–ขยาย <b id="fr-zv">' + P.z + '%</b></label><input id="fr-z" type="range" min="50" max="300" step="5" value="' + P.z + '" data-fr="z"></div>' +
+      (compact ? '' : '<div class="grid2"><div class="field"><label for="fr-x">แนวนอน <span id="fr-xv">' + Math.round(P.x) + '%</span></label><input id="fr-x" type="range" min="0" max="100" step="1" value="' + P.x + '" data-fr="x"></div>' +
+        '<div class="field"><label for="fr-y">แนวตั้ง <span id="fr-yv">' + Math.round(P.y) + '%</span></label><input id="fr-y" type="range" min="0" max="100" step="1" value="' + P.y + '" data-fr="y"></div></div>') +
+      '<div class="row" style="gap:6px"><button type="button" class="btn sm" data-act="fr-center">' + ic('target', 14) + ' จัดกึ่งกลาง 100%</button><button type="button" class="btn sm" data-act="fr-zoom" data-k="-10" aria-label="ย่อ">−</button><button type="button" class="btn sm" data-act="fr-zoom" data-k="10" aria-label="ขยาย">+</button></div></div>';
   }
-  function frEdit(k, id) {
-    var o = frSrc(k, id); if (!o) { toast('ยังไม่มีภาพ'); return; }
+  function frSrcPane(src) {
+    var P = S.fr.p;
+    return '<div><div class="small muted" style="margin-bottom:6px">ลากหรือคลิกบนภาพเพื่อเลือกจุดที่ต้องการให้เห็น (จุดโฟกัส)</div>' +
+      '<div class="fr-src" id="fr-src"><img src="' + esc(src) + '" alt="ภาพต้นฉบับ" draggable="false"><span class="fr-dot" id="fr-dot" style="left:' + P.x + '%;top:' + P.y + '%"></span></div></div>';
+  }
+  function frEdit(k, id, code) {
+    var o = frSrc(k, id, code); if (!o) { toast('ยังไม่มีภาพ'); return; }
     var def = k === 'logo' ? 'contain' : 'cover';
-    S.fr = { k: k, id: id || '', src: o.src, p: fpos(o.pos, def), def: def };
-    var P = S.fr.p, boxes = frBoxes(k);
-    var body = '<div class="fr-ed"><div><div class="small muted" style="margin-bottom:6px">ลากหรือคลิกบนภาพเพื่อเลือกจุดที่ต้องการให้เห็น (จุดโฟกัส)</div>' +
-      '<div class="fr-src" id="fr-src"><img src="' + esc(o.src) + '" alt="ภาพต้นฉบับ" draggable="false"><span class="fr-dot" id="fr-dot" style="left:' + P.x + '%;top:' + P.y + '%"></span></div></div>' +
-      '<div style="display:flex;flex-direction:column;gap:12px"><div class="small muted">ตัวอย่างตามขนาดที่แสดงจริง (ลากในกรอบเพื่อเลื่อนภาพ หมุนล้อเมาส์เพื่อย่อ–ขยาย)</div><div class="fr-pvs">' +
-        boxes.map(function (b, i) { return '<div class="fr-pv"><div class="fr-box ' + (b.c || '') + (k === 'cover' || k === 'slide' ? ' dark' : '') + '" data-frbox="' + i + '" style="width:' + b.w + 'px;height:' + b.h + 'px">' + (k === 'cover' || k === 'slide' ? '<img class="fr-blur fr-bl" src="' + esc(o.src) + '" alt="" aria-hidden="true"' + (P.fit === 'contain' ? '' : ' style="display:none"') + '>' : '') + '<img class="fr fr-live" src="' + esc(o.src) + '" alt="" style="' + frStyle(P) + '">' + '</div><span class="small muted">' + b.l + '</span></div>'; }).join('') + '</div>' +
-        '<div class="field"><label>การแสดงภาพ</label><div class="seg" role="group" aria-label="การแสดงภาพ"><button type="button" data-act="fr-fit" data-k="cover" class="' + (P.fit === 'cover' ? 'on' : '') + '">เต็มกรอบ (ตัดขอบ)</button><button type="button" data-act="fr-fit" data-k="contain" class="' + (P.fit === 'contain' ? 'on' : '') + '">เห็นทั้งภาพ</button></div></div>' +
-        '<div class="field"><label for="fr-z">ย่อ–ขยาย <b id="fr-zv">' + P.z + '%</b></label><input id="fr-z" type="range" min="50" max="300" step="5" value="' + P.z + '" data-fr="z"></div>' +
-        '<div class="grid2"><div class="field"><label for="fr-x">แนวนอน <span id="fr-xv">' + Math.round(P.x) + '%</span></label><input id="fr-x" type="range" min="0" max="100" step="1" value="' + P.x + '" data-fr="x"></div>' +
-        '<div class="field"><label for="fr-y">แนวตั้ง <span id="fr-yv">' + Math.round(P.y) + '%</span></label><input id="fr-y" type="range" min="0" max="100" step="1" value="' + P.y + '" data-fr="y"></div></div>' +
-        '<div class="row" style="gap:6px"><button class="btn sm" data-act="fr-center">' + ic('target', 14) + ' จัดกึ่งกลาง 100%</button><button class="btn sm" data-act="fr-zoom" data-k="-10">−</button><button class="btn sm" data-act="fr-zoom" data-k="10">+</button></div></div></div>';
-    openModal('จุดโฟกัสและย่อ–ขยาย · ' + FR_T[k], body, '<button class="btn" data-act="fr-reset">คืนค่าเริ่มต้น</button><span style="flex:1"></span><button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="fr-save">' + ic('check', 16) + ' บันทึก</button>', true);
+    S.fr = { k: k, id: id || '', code: code || '', src: o.src, p: fpos(o.pos, def), def: def };
+    openModal('จุดโฟกัสและย่อ–ขยาย · ' + FR_T[k], '<div class="fr-ed">' + frSrcPane(o.src) + frControls(o.src, S.fr.p, k) + '</div>',
+      '<button class="btn" data-act="fr-reset">คืนค่าเริ่มต้น</button><span style="flex:1"></span><button class="btn" data-act="close-modal">ยกเลิก</button><button class="btn primary" data-act="fr-save">' + ic('check', 16) + ' บันทึก</button>', true);
   }
   function frApply() {
+    if (!S.fr) return;
     var P = S.fr.p, st2 = frStyle(P), l = document.querySelectorAll('.fr-live'), i;
     for (i = 0; i < l.length; i++) l[i].setAttribute('style', st2);
     var bl = document.querySelectorAll('.fr-bl'); for (i = 0; i < bl.length; i++) bl[i].style.display = P.fit === 'contain' ? '' : 'none';
@@ -4336,17 +4378,67 @@
     var zv = $('fr-zv'); if (zv) zv.textContent = P.z + '%';
     var xv = $('fr-xv'); if (xv) xv.textContent = Math.round(P.x) + '%';
     var yv = $('fr-yv'); if (yv) yv.textContent = Math.round(P.y) + '%';
+    if (S.fr.k === 'stage' && S.stage) { var th = document.querySelector('.stg-th.on img'); if (th) th.setAttribute('style', st2); }
+    if (S.fr.k === 'form' && S.form) S.form.posTouched = true;
   }
   function frClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, Math.round(v * 10) / 10)); }
   function frSave(reset) {
     var f = S.fr; if (!f) return;
-    api('saveFrame', { k: f.k, id: f.id, pos: f.p, reset: !!reset }, { loader: 'กำลังบันทึกตำแหน่งภาพ' }, function (err, res) {
+    api('saveFrame', { k: f.k, id: f.id, code: f.code, fy: S.fy, pos: f.p, reset: !!reset }, { loader: 'กำลังบันทึกตำแหน่งภาพ' }, function (err, res) {
       if (err) { toast(err); return; }
       D.settings = res.settings;
       if (S.draft) ['coverPos', 'avatarPos', 'logoPos', 'coverSlides'].forEach(function (k2) { S.draft.s[k2] = res.settings[k2]; });
+      if (res.photos && f.k === 'photo') D.content.photos = res.photos;
+      if (res.photos && f.k === 'indphoto') { var dd = docsOf(S.fy), it = dd && find(dd.pa.ind, 'code', res.code); if (it) it.photos = res.photos; }
       cachePublic(); closeModal(); S.fr = null; render(); toast(reset ? 'คืนค่าตำแหน่งภาพแล้ว' : 'บันทึกจุดโฟกัสและขนาดภาพแล้ว');
     });
   }
+
+  /* ---------- ตรวจภาพก่อนอัปโหลด (ดูตัวอย่าง + เลือกจุดโฟกัสรายภาพ) ---------- */
+  function objUrl(f) { try { return URL.createObjectURL(f); } catch (e) { return ''; } }
+  /** cfg = { k: ชนิดกรอบตัวอย่าง, title, max, go: function (items[{file,pos}]) } */
+  function stageImages(files, cfg) {
+    var list = Array.prototype.slice.call(files || []);
+    if (!list.length) return;
+    if (cfg.max && list.length > cfg.max) { toast('เลือกได้ครั้งละไม่เกิน ' + cfg.max + ' ภาพ ระบบจะใช้ ' + cfg.max + ' ภาพแรก'); list = list.slice(0, cfg.max); }
+    var def = cfg.k === 'logo' ? 'contain' : 'cover';
+    S.stage = { cfg: cfg, i: 0, def: def, items: list.map(function (f) { return { file: f, url: objUrl(f), p: fpos(null, def) }; }) };
+    stageOpen();
+  }
+  function stageOpen() {
+    var g = S.stage, it = g.items[g.i], k = g.cfg.k;
+    if (!it) { stageClose(); return; }
+    S.fr = { k: 'stage', p: it.p };
+    var strip = g.items.length > 1 ? '<div class="stg-strip" role="listbox" aria-label="ภาพที่เลือก">' + g.items.map(function (x, i) {
+      return '<div class="stg-th' + (i === g.i ? ' on' : '') + '"><button type="button" data-act="stg-pick" data-i="' + i + '" aria-label="ภาพที่ ' + (i + 1) + ' ' + esc(x.file.name) + '"><img src="' + esc(x.url) + '" alt="" style="' + frStyle(x.p) + '"></button><button type="button" class="iph-x" data-act="stg-del" data-i="' + i + '" aria-label="ไม่อัปโหลดภาพที่ ' + (i + 1) + '">' + ic('x', 12) + '</button></div>';
+    }).join('') + '</div>' : '';
+    var info = '<div class="small muted">' + esc(it.file.name) + ' · ' + (it.file.size > 1048576 ? fix(it.file.size / 1048576, 1) + ' MB' : Math.max(1, Math.round(it.file.size / 1024)) + ' KB') + (g.items.length > 1 ? ' · ภาพที่ ' + (g.i + 1) + ' จาก ' + g.items.length : '') + '</div>';
+    openModal((g.cfg.title || 'ตรวจภาพก่อนอัปโหลด') + (g.items.length > 1 ? ' (' + g.items.length + ' ภาพ)' : ''), strip + info + '<div class="fr-ed">' + frSrcPane(it.url) + frControls(it.url, it.p, k) + '</div>',
+      (g.items.length > 1 ? '<button class="btn" data-act="stg-all">ใช้ค่านี้กับทุกภาพ</button>' : '') + '<span style="flex:1"></span><button class="btn" data-act="stg-cancel">ยกเลิก</button><button class="btn primary" data-act="stg-go">' + ic('upload', 16) + ' อัปโหลด' + (g.items.length > 1 ? ' ' + g.items.length + ' ภาพ' : '') + '</button>', true);
+  }
+  function stageClose() {
+    if (S.stage) S.stage.items.forEach(function (x) { try { URL.revokeObjectURL(x.url); } catch (e) { } });
+    S.stage = null; S.fr = null;
+  }
+  function stageGo() {
+    var g = S.stage; if (!g) return;
+    var items = g.items.map(function (x) { return { file: x.file, pos: { x: x.p.x, y: x.p.y, z: x.p.z, fit: x.p.fit } }; }), go = g.cfg.go;
+    closeModal(); stageClose(); go(items);
+  }
+
+  /* ---------- ฟอร์มผลงาน/วิดีโอ/รางวัล/ระบบ: ตัวอย่างภาพในฟอร์ม + จุดโฟกัส ---------- */
+  var FORM_IMG = { 'works.file': 'works', 'videos.thumb': 'videos', 'awards.img': 'awards', 'systems.img': 'systems' };
+  function formImgEditor(key, cur) {
+    var F = S.form; if (!F || !FORM_IMG[key]) return '';
+    var field = key.split('.')[1], f = F.files[field], it = F.id ? find(D.content[F.kind], 'id', F.id) || {} : {}, src = '';
+    if (f && /^image\//.test(f.type)) { F.urls = F.urls || {}; if (!F.urls[field] || F.urls[field].f !== f) F.urls[field] = { f: f, u: objUrl(f) }; src = F.urls[field].u; }
+    else if (!f && cur && F.clear.indexOf(field) < 0 && (F.kind !== 'works' || /^image\//.test(it.fileMime || ''))) src = cur;
+    if (!src) { F.posOn = false; return ''; }
+    if (!F.pos || F.posFor !== src) { F.pos = fpos(f ? null : it.imgPos); F.posFor = src; F.posTouched = false; }
+    F.posOn = true; S.fr = { k: 'form', p: F.pos };
+    return '<div class="fr-inline"><div class="row" style="gap:6px;justify-content:space-between"><b class="small">' + ic('target', 14) + ' ' + (f ? 'ตัวอย่างก่อนอัปโหลด · ' : '') + 'จุดโฟกัสและย่อ–ขยาย</b>' + (f ? '<span class="pill info">ภาพใหม่ยังไม่อัปโหลด</span>' : '') + '</div>' + frControls(src, F.pos, FORM_IMG[key], true) + '</div>';
+  }
+
   var frDrag = null;
   document.addEventListener('pointerdown', function (e) {
     if (!S.fr || !e.target.closest) return;
@@ -4433,7 +4525,12 @@
         adminCall('paPastSave', { past: past }, 'บันทึกคะแนนย้อนหลังแล้ว', function (res) { S.trend = res; closeModal(); render(); });
         break;
       case 'nf-reload': needNotifs(true); break;
-      case 'fr-edit': frEdit(k, id); break;
+      case 'fr-edit': frEdit(k, id, el.getAttribute('data-code')); break;
+      case 'stg-pick': if (S.stage) { S.stage.i = i; stageOpen(); } break;
+      case 'stg-del': if (S.stage) { try { URL.revokeObjectURL(S.stage.items[i].url); } catch (e1) { } S.stage.items.splice(i, 1); if (!S.stage.items.length) { closeModal(); stageClose(); break; } S.stage.i = Math.min(S.stage.i, S.stage.items.length - 1); stageOpen(); } break;
+      case 'stg-all': if (S.stage) { var cp = S.stage.items[S.stage.i].p; S.stage.items.forEach(function (x) { x.p.x = cp.x; x.p.y = cp.y; x.p.z = cp.z; x.p.fit = cp.fit; }); stageOpen(); toast('ใช้ตำแหน่งและขนาดนี้กับทุกภาพแล้ว'); } break;
+      case 'stg-cancel': closeModal(); stageClose(); break;
+      case 'stg-go': stageGo(); break;
       case 'fr-fit': if (S.fr) { S.fr.p.fit = k; var fb = document.querySelectorAll('[data-act="fr-fit"]'); for (var q = 0; q < fb.length; q++) fb[q].classList.toggle('on', fb[q].getAttribute('data-k') === k); frApply(); } break;
       case 'fr-zoom': if (S.fr) { S.fr.p.z = Math.max(50, Math.min(300, S.fr.p.z + +k)); frApply(); } break;
       case 'fr-center': if (S.fr) { S.fr.p.x = 50; S.fr.p.y = 50; S.fr.p.z = 100; frApply(); } break;
@@ -4718,7 +4815,7 @@
     if (t.getAttribute && t.getAttribute('data-lk') && S.form && S.form.links && t.tagName === 'SELECT') { var lq = t.getAttribute('data-lk').split(':'); S.form.links[+lq[0]][lq[1]] = t.value; }
     if (t.getAttribute && t.getAttribute('data-ff') && S.form) {
       var ffk = t.getAttribute('data-ff'), ff = t.files && t.files[0];
-      if (ff) { var fr = FILE_RULE[ffk]; if (fr.mimes.indexOf(ff.type) < 0) toast('ไฟล์ชนิดนี้ใช้ไม่ได้ · ' + fr.label); else if (ff.size > fr.max * 1048576 && !(fr.img && /^image\//.test(ff.type))) toast('ไฟล์ใหญ่เกิน ' + fr.max + ' MB'); else { S.form.files[ffk.split('.')[1]] = ff; S.form.clear = S.form.clear.filter(function (x) { return x !== ffk.split('.')[1]; }); } }
+      if (ff) { var fr = fileRule(ffk); if (fr.mimes.indexOf(ff.type) < 0) toast('ไฟล์ชนิดนี้ใช้ไม่ได้ · ' + fr.label); else if (ff.size > fr.max * 1048576 && !(fr.img && /^image\//.test(ff.type))) toast('ไฟล์ใหญ่เกิน ' + fr.max + ' MB'); else { S.form.files[ffk.split('.')[1]] = ff; S.form.clear = S.form.clear.filter(function (x) { return x !== ffk.split('.')[1]; }); } }
       refreshFileBox();
     }
     if (t.getAttribute && t.getAttribute('data-up-alb')) { uploadPhotos(t.getAttribute('data-up-alb'), t.files); t.value = ''; }
@@ -4736,6 +4833,8 @@
           if (saved) { saved.logoUrl = res.file.url; saved.logoId = res.file.id; } else markDirty(kind);
           render();
         });
+      } else if (f && (kind === 'cover' || kind === 'avatar' || kind === 'logo') && !upCheck(kind, f)) {
+        stageImages([f], { k: kind, title: 'ตรวจภาพก่อนอัปโหลด · ' + FR_T[kind], go: function (items) { doUpload(kind, items[0].file, { pos: items[0].pos }, function () { render(); }); } });
       } else doUpload(kind, f, {}, function () { render(); });
       t.value = '';
     }
